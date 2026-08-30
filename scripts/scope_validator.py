@@ -2,19 +2,30 @@
 """
 OPENCLAW / HERMES — Scope Validator Utility
 Validates whether target domains, IPs, URLs, and ports are strictly within authorized engagement scope.
+Tuned to .env and environment variable interpolation.
 """
 
+import os
 import sys
 import ipaddress
 import urllib.parse
 import fnmatch
-import yaml
 from pathlib import Path
 
+# Auto-import env_loader
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from env_loader import load_config, load_env
+except ImportError:
+    import yaml
+    def load_config(p):
+        with open(p, "r", encoding="utf-8") as f: return yaml.safe_load(f) or {}
+    def load_env(): pass
+
 class ScopeValidator:
-    def __init__(self, config_path: str):
-        with open(config_path, "r", encoding="utf-8") as f:
-            self.config = yaml.safe_load(f)
+    def __init__(self, config_path: str = "config/engagement_template.yaml"):
+        load_env()
+        self.config = load_config(config_path)
         
         self.in_scope = self.config.get("scope", {}).get("in_scope", {})
         self.out_of_scope = self.config.get("scope", {}).get("out_of_scope", {})
@@ -79,12 +90,12 @@ class ScopeValidator:
             return self.is_ip_in_scope(target)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python scope_validator.py <engagement_config.yaml> <target>")
+    if len(sys.argv) < 2:
+        print("Usage: python scope_validator.py <target> [engagement_config.yaml]")
         sys.exit(1)
         
-    config_file = sys.argv[1]
-    test_target = sys.argv[2]
+    test_target = sys.argv[1]
+    config_file = sys.argv[2] if len(sys.argv) > 2 else "config/engagement_template.yaml"
     
     validator = ScopeValidator(config_file)
     result = validator.validate_target(test_target)

@@ -2,22 +2,36 @@
 """
 OPENCLAW / HERMES — Report Compiler with Framework Mapping
 Compiles structured findings into Markdown assessment reports mapped to MITRE ATT&CK & D3FEND.
+Tuned to .env and environment variable interpolation.
 """
 
+import os
 import sys
 import json
-import yaml
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
+# Auto-import env_loader
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from env_loader import load_config, load_env
+except ImportError:
+    def load_config(p): return {}
+    def load_env(): pass
+
 def generate_report(engagement_config_path: str, findings_file: str, output_report_path: str):
-    with open(engagement_config_path, "r", encoding="utf-8") as f:
-        engagement = yaml.safe_load(f)
+    load_env()
+    engagement = load_config(engagement_config_path)
 
     findings = []
-    if Path(findings_file).exists():
-        with open(findings_file, "r", encoding="utf-8") as f:
-            findings = yaml.safe_load(f) or []
+    f_path = Path(findings_file)
+    if f_path.exists():
+        with open(f_path, "r", encoding="utf-8") as f:
+            try:
+                findings = json.load(f)
+            except Exception:
+                import yaml
+                findings = yaml.safe_load(f) or []
 
     # Count by severity
     stats = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
@@ -34,11 +48,12 @@ def generate_report(engagement_config_path: str, findings_file: str, output_repo
         else:
             stats["info"] += 1
 
+    utc_now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
     report_lines = [
         f"# 🦅 Penetration Testing Assessment Report",
         f"**Engagement:** {engagement.get('engagement', {}).get('name', 'Security Assessment')}",
         f"**Client:** {engagement.get('engagement', {}).get('client', 'Target Organization')}",
-        f"**Date:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}",
+        f"**Date:** {utc_now}",
         f"**Orchestrated By:** HERMES Swarm Agent (OPENCLAW Framework)\n",
         f"---",
         f"## 1. Executive Summary\n",
@@ -85,6 +100,6 @@ def generate_report(engagement_config_path: str, findings_file: str, output_repo
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print("Usage: python report_compiler.py <config.yaml> <findings.yaml> <output_report.md>")
+        print("Usage: python report_compiler.py <config.yaml> <findings.json> <output_report.md>")
         sys.exit(1)
     generate_report(sys.argv[1], sys.argv[2], sys.argv[3])

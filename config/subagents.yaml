@@ -472,7 +472,7 @@ reporter_agent:
   role: "Report Generator"
   description: >-
     Compiles all findings into structured reports. Executive summaries,
-    detailed walkthroughs, remediation roadmaps, Telegram updates.
+    detailed walkthroughs, remediation roadmaps, and Telegram updates.
   skills:
     - reporting
     - remediation-advisor
@@ -513,6 +513,7 @@ hermes_orchestrator:
     - scope-management
     - memory-management
     - telegram-hitl
+    - token-optimizer
     - attack-chain-analysis
     - evidence-collection
     - reporting
