@@ -1,0 +1,107 @@
+# OPENCLAW/HERMES Engagement Configuration Template
+# Fill this out and provide to HERMES to start an engagement
+
+engagement:
+  name: ""               # Engagement name/identifier
+  client: ""             # Client name (for reporting)
+  type: ""               # blackbox | greybox | whitebox
+  start_date: ""         # YYYY-MM-DD
+  end_date: ""           # YYYY-MM-DD
+  operator: ""           # Your name/handle
+
+# Scope Definition
+scope:
+  in_scope:
+    domains: []
+    #  - "*.example.com"
+    #  - "api.example.com"
+    
+    ips: []
+    #  - "192.168.1.0/24"
+    #  - "10.0.0.1"
+    
+    urls: []
+    #  - "https://app.example.com/*"
+    #  - "https://api.example.com/v2/*"
+    
+    ports: []
+    #  - "80,443,8080,8443"
+    #  - "1-65535"  # all ports
+
+  out_of_scope:
+    domains: []
+    ips: []
+    urls: []
+    notes: []
+    #  - "No denial of service testing"
+    #  - "No social engineering"
+
+# Credentials (if greybox/whitebox)
+credentials: []
+  # - role: "regular_user"
+  #   username: ""
+  #   password: ""
+  # - role: "admin"
+  #   username: ""
+  #   password: ""
+
+# Rules of Engagement & Performance
+rules:
+  testing_window: "24/7" # e.g., "24/7" or "Mon-Fri 09:00-18:00 UTC"
+  max_scan_rate: 100     # requests per second
+  stealth_mode: false    # true = use slower, stealthier techniques
+  auto_exploit: false    # true = exploit without asking (NOT RECOMMENDED - ALWAYS KEEP FALSE)
+  
+  # Token Optimization / Caveman Mode (Toggleable via /terse on|off)
+  # When true: cuts token overhead by 40-60% during scans while keeping reports and PoCs exact.
+  token_efficiency: false # true | false
+  
+  allowed_techniques:
+    - passive_recon
+    - active_recon
+    - vulnerability_scanning
+    - web_app_testing
+    - api_testing
+    - ai_llm_testing
+    - network_testing
+    - cloud_testing
+  
+  reporting:
+    format: "markdown"   # markdown | pdf | html
+    telegram_updates: true
+    update_frequency: "per_finding"  # per_finding | hourly | per_phase
+    include_evidence: true
+    map_mitre_attack: true
+    map_d3fend: true
+
+# Telegram Bot Configuration (Primary HITL Channel)
+telegram:
+  bot_token: ""         # Your Telegram bot token from @BotFather
+  chat_id: ""           # Your numerical Telegram chat ID
+  notify_on:
+    - findings
+    - phase_changes
+    - permission_requests
+    - engagement_complete
+
+# Multi-Channel Alerting & Incident Integrations (Optional)
+integrations:
+  slack:
+    enabled: false
+    webhook_url: ""     # https://hooks.slack.com/services/...
+  discord:
+    enabled: false
+    webhook_url: ""     # https://discord.com/api/webhooks/...
+  jira:
+    enabled: false
+    host: ""            # https://yourcompany.atlassian.net
+    project_key: "SEC"
+    auto_ticket_min_severity: 7
+
+# Agent Swarm Configuration
+agent:
+  max_concurrent_agents: 7
+  timeout_per_task: 3600    # seconds
+  retry_on_failure: true
+  max_retries: 3
+  mcp_config_path: "config/mcp_servers.yaml"

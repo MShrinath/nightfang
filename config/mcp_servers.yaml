@@ -1,0 +1,86 @@
+# OPENCLAW / HERMES — Model Context Protocol (MCP) Server Registry
+# Connects HERMES to external tools, browser engines, ticketing systems, and threat intel feeds
+
+mcp_servers:
+  # ─────────────────────────────────────────────────────
+  # BROWSER AUTOMATION (Playwright / Puppeteer)
+  # ─────────────────────────────────────────────────────
+  browser_automation:
+    enabled: true
+    description: "Headless browser automation for dynamic DOM inspection, screenshot capture, and SPA crawling"
+    command: "npx"
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-puppeteer"
+    capabilities:
+      - navigate
+      - screenshot
+      - click
+      - fill
+      - evaluate_js
+
+  # ─────────────────────────────────────────────────────
+  # THREAT INTELLIGENCE & OSINT (Shodan / Censys)
+  # ─────────────────────────────────────────────────────
+  shodan_intel:
+    enabled: false
+    description: "Query Internet-wide scan data and banner intelligence"
+    command: "python"
+    args:
+      - "-m"
+      - "mcp_server_shodan"
+    env:
+      SHODAN_API_KEY: "${SHODAN_API_KEY}"
+    capabilities:
+      - host_lookup
+      - search_banners
+      - exploit_search
+
+  # ─────────────────────────────────────────────────────
+  # COLLABORATION & ISSUE TRACKING (Jira / GitHub / Slack)
+  # ─────────────────────────────────────────────────────
+  jira_integration:
+    enabled: false
+    description: "Automated vulnerability ticket creation and tracking in Jira"
+    command: "npx"
+    args:
+      - "-y"
+      - "@atlassian/jira-mcp-server"
+    env:
+      JIRA_HOST: "${JIRA_HOST}"
+      JIRA_EMAIL: "${JIRA_EMAIL}"
+      JIRA_API_TOKEN: "${JIRA_API_TOKEN}"
+    capabilities:
+      - create_issue
+      - update_issue
+      - add_comment
+
+  slack_notifier:
+    enabled: false
+    description: "Real-time vulnerability alert cards and digest dispatching to Slack"
+    command: "npx"
+    args:
+      - "-y"
+      - "@slack/mcp-server"
+    env:
+      SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+      SLACK_CHANNEL_ID: "${SLACK_CHANNEL_ID}"
+    capabilities:
+      - post_message
+      - send_alert_card
+
+  # ─────────────────────────────────────────────────────
+  # FILE SYSTEM & ARTIFACT VAULT
+  # ─────────────────────────────────────────────────────
+  filesystem_vault:
+    enabled: true
+    description: "Sandboxed evidence storage and engagement logs access"
+    command: "npx"
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-filesystem"
+      - "engagements"
+    capabilities:
+      - read_file
+      - write_file
+      - list_directory
