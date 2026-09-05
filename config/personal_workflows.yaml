@@ -1,0 +1,557 @@
+# AEGIS Personal Workflow Orchestration
+# Extends HERMES config/workflows.yaml with operator-calibrated phases,
+# custom hooks, and personal decision points
+
+# ═══════════════════════════════════════════════════════════
+# ENGAGEMENT LIFECYCLE (AEGIS Enhanced)
+# ═══════════════════════════════════════════════════════════
+
+lifecycle:
+  phases:
+    # ─────────────────────────────────────────────────────
+    # PHASE 0: INTAKE & GOVERNANCE (AEGIS Enhanced)
+    # ─────────────────────────────────────────────────────
+    - name: "INTAKE"
+      id: "phase_0"
+      description: "Receive, validate, and establish engagement scope & governance with AEGIS personal calibration"
+      automated: true
+      steps:
+        - action: "load_soul"
+          description: "Load SOUL.md identity and behavioral directives"
+          skill: "personal-context"
+        
+        - action: "load_operator_profile"
+          description: "Load OPERATOR_PROFILE.md governance contract"
+          skill: "operator-prefs"
+        
+        - action: "load_personal_memory"
+          description: "Load PERSONAL_MEMORY.md cross-engagement knowledge"
+          skill: "memory-management"
+        
+        - action: "parse_scope"
+          skill: "scope-management"
+          description: "Parse operator-provided scope definition"
+        
+        - action: "validate_scope"
+          skill: "scope-management"
+          description: "Validate scope for conflicts and ambiguities"
+        
+        - action: "apply_learned_evasion"
+          description: "Apply learned WAF/rate-limit profiles from PERSONAL_MEMORY.md"
+          skill: "personal-context"
+        
+        - action: "calibrate_tools"
+          description: "Apply tool effectiveness calibration from PERSONAL_MEMORY.md"
+          skill: "custom-tooling"
+        
+        - action: "confirm_scope"
+          skill: "telegram-hitl"
+          description: "Present parsed scope to operator for confirmation"
+          hitl: true
+          hitl_message: |
+            🦅 AEGIS Engagement Initialization
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Scope: {engagement_name}
+            🏢 Target: {client_name}
+            🌐 Domains: {domain_count} | IPs: {ip_count} | URLs: {url_count}
+            ⚡ Caveman: {'ON' if token_efficiency else 'OFF'}
+            🛡️ Learned Evasion: {waf_profiles_loaded} profiles
+            🔧 Tool Calibration: {tools_calibrated} tools
+            
+            Ready to begin Phase 1: Passive Recon.
+            Reply: /go to initiate or /hold to modify scope
+        
+        - action: "initialize_memory"
+          skill: "memory-management"
+          description: "Initialize engagement memory stores (HERMES + AEGIS)"
+        
+        - action: "create_evidence_dirs"
+          skill: "evidence-collection"
+          description: "Create evidence directory structure"
+        
+        - action: "sync_personal_memory"
+          description: "Sync relevant personal patterns to engagement memory"
+          skill: "personal-context"
+      exit_criteria:
+        - "Scope confirmed by operator"
+        - "Soul, operator profile, and personal memory loaded"
+        - "Memory stores initialized"
+        - "Evidence directories created"
+        - "Learned evasion profiles applied"
+      next_phase: "phase_1"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 1: PASSIVE RECONNAISSANCE (AEGIS Calibrated)
+    # ─────────────────────────────────────────────────────
+    - name: "PASSIVE_RECON"
+      id: "phase_1"
+      description: "Non-intrusive intelligence gathering with AEGIS custom sources & learned signatures"
+      automated: true
+      agents:
+        - aegis_recon_passive_agent
+      parallel: false
+      steps:
+        - action: "whois_lookup"
+          description: "Domain registration data"
+        - action: "dns_enumeration"
+          description: "DNS record queries (A, AAAA, MX, NS, TXT, SOA, CNAME, CAA)"
+        - action: "subdomain_discovery"
+          description: "Passive subdomain enum via subfinder, amass, crt.sh, GitHub dorks"
+        - action: "cert_transparency"
+          description: "Certificate transparency log search (crt.sh, CertSpotter)"
+        - action: "technology_fingerprint"
+          description: "Technology stack identification with whatweb + custom signatures"
+        - action: "waf_detection"
+          description: "WAF presence detection with wafw00f + learned signatures"
+        - action: "github_dorks"
+          description: "GitHub code search for exposed secrets, subdomains, endpoints"
+        - action: "osint_correlation"
+          description: "Cross-reference all passive findings with PERSONAL_MEMORY.md"
+        - action: "build_evasion_profiles"
+          description: "Create per-target evasion profiles for active phase"
+      on_complete:
+        - action: "update_personal_memory"
+          description: "Store new target signatures in PERSONAL_MEMORY.md"
+        - action: "update_hermes_memory"
+          description: "Store discovered assets in HERMES MEMORY.md"
+        - action: "send_telegram_update"
+          skill: "telegram-hitl"
+          message: |
+            📊 AEGIS Phase 1 Complete: Passive Recon
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🌐 Subdomains: {subdomain_count} ({new_count} new)
+            🔧 Technologies: {tech_list}
+            🛡️ WAFs: {waf_list}
+            📜 Certificates: {cert_count}
+            🐙 GitHub finds: {github_find_count}
+            🎯 Evasion profiles built: {profile_count}
+            
+            Ready for active scanning.
+            Reply: /go to proceed to Phase 2
+      exit_criteria:
+        - "All passive techniques executed"
+        - "Results correlated with personal memory"
+        - "Evasion profiles built for each target"
+        - "Operator notified"
+      next_phase: "phase_2"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 2: ACTIVE RECONNAISSANCE (HITL GATE - AEGIS)
+    # ─────────────────────────────────────────────────────
+    - name: "ACTIVE_RECON"
+      id: "phase_2"
+      description: "Direct scanning with AEGIS calibrated timing, evasion, and learned rate limits"
+      automated: false
+      agents:
+        - aegis_recon_active_agent
+      hitl_gate:
+        message: |
+          ⚠️ AEGIS Permission Request
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          🔧 Action: Active port scanning & service enumeration
+          🎯 Targets: {target_count} hosts
+          ⚡ Timing: T4 (Aggressive)
+          🛡️ Evasion: {evasion_profile_summary}
+          📊 Est. time: {est_time}
+          
+          This sends traffic directly to targets using learned evasion profiles.
+          Reply: /go or /hold
+      steps:
+        - action: "host_discovery"
+          description: "Identify live hosts with calibrated ping/ARP"
+        - action: "port_scan_tcp"
+          description: "Full TCP port scan with masscan/rustscan + nmap validation"
+        - action: "port_scan_udp"
+          description: "Top UDP ports with nmap -sU --top-ports 100"
+        - action: "service_detection"
+          description: "Version detection on open ports with --version-intensity 5"
+        - action: "os_fingerprint"
+          description: "OS identification with nmap -O"
+        - action: "nse_scripts"
+          description: "Targeted safe NSE script scanning (auth, vuln, discovery)"
+        - action: "ssl_tls_discovery"
+          description: "Identify all TLS endpoints for Phase 3 SSL scanner"
+      on_complete:
+        - action: "merge_with_passive"
+          description: "Merge active results with passive recon"
+        - action: "build_attack_surface"
+          description: "Create comprehensive attack surface map"
+        - action: "update_rate_limit_profiles"
+          description: "Update PERSONAL_MEMORY.md with observed rate limits"
+        - action: "send_telegram_update"
+          skill: "telegram-hitl"
+      exit_criteria:
+        - "All in-scope hosts scanned"
+        - "Attack surface map generated"
+        - "Rate limit profiles updated"
+      next_phase: "phase_3"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 3: PARALLEL VULNERABILITY SCANNING (AEGIS Enhanced)
+    # ─────────────────────────────────────────────────────
+    - name: "SCANNING"
+      id: "phase_3"
+      description: "Comprehensive multi-domain vulnerability assessment with AEGIS custom templates"
+      automated: true
+      agents:
+        - aegis_scanner_webapp_agent
+        - aegis_scanner_api_agent
+        - aegis_scanner_ai_agent
+        - network_scanner_agent
+        - ssl_scanner_agent
+        - vuln_scanner_agent
+        - cloud_scanner_agent
+      parallel: true
+      coordination:
+        - "Each agent operates on its relevant targets concurrently"
+        - "Findings merged into central memory in real-time"
+        - "Duplicate findings deduplicated by memory-management"
+        - "Critical findings (severity >= 8) trigger immediate Telegram alert"
+        - "Every finding mapped to MITRE ATT&CK / ATLAS and D3FEND"
+        - "AEGIS custom templates executed alongside framework templates"
+      on_finding:
+        severity_threshold: 7
+        action: "send_finding"
+        skill: "telegram-hitl"
+        aegis_format: true  # Use AEGIS compact finding format
+      on_complete:
+        - action: "correlate_findings"
+          description: "Cross-reference findings from all scanners"
+        - action: "build_attack_chains"
+          skill: "attack-chain-analysis"
+          description: "Build initial attack chains with AEGIS templates"
+        - action: "apply_chain_templates"
+          description: "Apply PERSONAL_MEMORY.md attack chain templates"
+          skill: "personal-context"
+        - action: "generate_preliminary_report"
+          skill: "reporting"
+        - action: "send_telegram_summary"
+          skill: "telegram-hitl"
+          message: |
+            📋 AEGIS Phase 3 Complete: Scanning
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🔴 Critical: {critical_count}
+            🟠 High: {high_count}
+            🟡 Medium: {medium_count}
+            🟢 Low: {low_count}
+            ℹ️  Info: {info_count}
+            
+            🔗 Attack chains: {chain_count} ({template_chains} from templates)
+            🎯 Custom template hits: {custom_hits}
+            
+            📄 Preliminary report ready.
+            
+            Awaiting approval for exploitation phase.
+            Reply: /go to proceed with exploitation
+            Reply: /report for detailed findings
+      exit_criteria:
+        - "All scanners completed"
+        - "Findings correlated"
+        - "Attack chains built with templates"
+        - "Preliminary report generated"
+      next_phase: "phase_4"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 4: THREAT HUNTING & ATTACK CHAINS (AEGIS Deep)
+    # ─────────────────────────────────────────────────────
+    - name: "HUNTING"
+      id: "phase_4"
+      description: "Advanced manual vulnerability hunting with AEGIS logic flaw patterns & chain templates"
+      automated: true
+      agents:
+        - aegis_hunter_agent
+      steps:
+        - action: "logic_flaw_hunting"
+          description: "Business logic vulnerability discovery with operator's patterns"
+        - action: "chain_building"
+          description: "Build multi-step attack chains using AEGIS priority formula"
+        - action: "creative_testing"
+          description: "HTTP smuggling, cache poisoning, race conditions, desync"
+        - action: "auth_deep_dive"
+          description: "JWT, OAuth, session, SAML, OIDC deep analysis"
+        - action: "api_logic_testing"
+          description: "GraphQL field suggestions, mass assignment, BOLA chains"
+        - action: "ai_logic_testing"
+          description: "Prompt injection chains, tool calling abuse, RAG poisoning"
+        - action: "cloud_metadata_chains"
+          description: "SSRF -> metadata -> IAM -> lateral cloud chains"
+      on_complete:
+        - action: "merge_chains"
+          description: "Add hunting findings to attack chains"
+        - action: "prioritize_exploitation"
+          description: "Rank findings by chain priority score for Phase 5"
+        - action: "update_personal_chains"
+          description: "Store new chain patterns in PERSONAL_MEMORY.md"
+        - action: "update_report"
+          description: "Update preliminary report with hunting results"
+      exit_criteria:
+        - "All hunting techniques attempted"
+        - "Attack chains updated with priority scores"
+        - "New chain patterns saved to personal memory"
+      next_phase: "phase_5"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 5: EXPLOITATION (STRICT HITL - AEGIS Safety)
+    # ─────────────────────────────────────────────────────
+    - name: "EXPLOITATION"
+      id: "phase_5"
+      description: "Exploit confirmed vulnerabilities with AEGIS POC safety rules & mandatory cleanup"
+      automated: false
+      agents:
+        - aegis_exploiter_agent
+      hitl_gate:
+        required: true
+        per_finding: true
+        message: |
+          ⚠️ AEGIS Exploitation Request
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          🎯 Target: {target}
+          🔧 Vulnerability: {vuln_title}
+          📊 Confidence: {confidence}/10
+          🔴 Severity: {severity}/10
+          💥 Proposed POC: {exploit_description}
+          ⚡ Expected impact: {expected_impact}
+          🛡️ Safety: Benign commands only (id, whoami, version)
+          🧹 Cleanup: Mandatory verification
+          
+          Reply: /go {finding_id} or /hold {finding_id}
+      steps:
+        - action: "pre_exploit_hook"
+          description: "Run AEGIS pre-exploit validation (scope, safety, backup)"
+          skill: "custom-tooling"
+        - action: "payload_preparation"
+          description: "Craft benign exploitation payload per operator rules"
+        - action: "exploitation_attempt"
+          description: "Execute approved benign POC"
+        - action: "impact_assessment"
+          description: "Assess depth of access gained (no data exfil)"
+        - action: "privilege_escalation"
+          description: "Attempt privesc if initial access gained"
+          hitl: true
+        - action: "evidence_capture"
+          description: "Document exploitation evidence with screenshots"
+        - action: "cleanup_execution"
+          description: "Remove all test artifacts, verify clean baseline"
+        - action: "cleanup_verification"
+          description: "Screenshot proof of cleanup completion"
+      on_success:
+        - action: "update_finding_status"
+          description: "Mark finding as 'Exploited', update confidence to 10"
+        - action: "send_telegram_result"
+          skill: "telegram-hitl"
+          message: |
+            ✅ AEGIS Exploitation Successful
+            ━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Finding: #{finding_id} - {title}
+            📊 Confidence: 10/10 (Exploited)
+            🔴 Severity: {severity}/10
+            💥 Access: {access_level}
+            🧹 Cleanup: Verified & Screenshot
+            
+            Continuing engagement queue...
+      on_failure:
+        - action: "log_attempt"
+          description: "Record failed exploitation attempt"
+        - action: "adjust_confidence"
+          description: "May lower confidence score"
+      cleanup:
+        - action: "remove_artifacts"
+          description: "Clean up any test files, accounts, or payloads"
+        - action: "verify_cleanup"
+          description: "Confirm target returns to clean baseline with screenshot"
+      exit_criteria:
+        - "All approved findings attempted"
+        - "All artifacts cleaned up with verification"
+      next_phase: "phase_6"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 6: REPORTING & REMEDIATION (AEGIS Voice)
+    # ─────────────────────────────────────────────────────
+    - name: "REPORTING"
+      id: "phase_6"
+      description: "Generate comprehensive engagement report with AEGIS format, voice, and remediation style"
+      automated: true
+      agents:
+        - aegis_reporter_agent
+      steps:
+        - action: "compile_findings"
+          description: "Gather all findings from all phases"
+        - action: "generate_executive_summary"
+          description: "High-level overview for management (AEGIS voice)"
+        - action: "write_detailed_findings"
+          description: "Full technical details with reproduction steps (AEGIS format)"
+        - action: "create_remediation_roadmap"
+          skill: "remediation-advisor"
+          description: "Prioritized fix recommendations: code, config, architecture"
+        - action: "visualize_attack_chains"
+          skill: "attack-chain-analysis"
+          description: "Mermaid diagrams for attack paths"
+        - action: "compile_evidence"
+          skill: "evidence-collection"
+          description: "Organize all evidence artifacts with hashes"
+        - action: "generate_report"
+          description: "Produce final markdown report (AEGIS template)"
+        - action: "create_tickets"
+          description: "Auto-create Jira/GitHub issues if configured"
+          skill: "custom-tooling"
+        - action: "send_telegram_summary"
+          skill: "telegram-hitl"
+          message: |
+            📋 AEGIS Engagement Complete
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Target: {client_name}
+            ⏱️ Duration: {duration}
+            
+            📊 Final Results:
+            🔴 Critical: {critical} | 🟠 High: {high}
+            🟡 Medium: {medium} | 🟢 Low: {low}
+            ℹ️  Info: {info}
+            
+            🔗 Attack chains: {chains}
+            💥 Exploited: {exploited_count}
+            🧹 Cleanup: All verified
+            
+            📄 Full report: engagements/{engagement_slug}_report.md
+            🎫 Tickets created: {ticket_count}
+            
+            Thank you for operating with AEGIS/OPENCLAW. 🦅
+      exit_criteria:
+        - "Report generated with AEGIS template"
+        - "Operator notified"
+        - "All evidence organized with hashes"
+        - "Tickets created (if configured)"
+        - "Personal memory updated with engagement outcomes"
+
+# ═══════════════════════════════════════════════════════════
+# AEGIS CUSTOM HOOKS
+# ═══════════════════════════════════════════════════════════
+
+hooks:
+  pre_scan:
+    script: "scripts/aegis_pre_scan.py"
+    description: "Validate scope, load evasion profiles, calibrate tools"
+    timeout: 30
+  
+  post_finding:
+    script: "scripts/aegis_post_finding.py"
+    description: "Enrich finding with personal context, apply chain templates"
+    timeout: 15
+  
+  pre_exploit:
+    script: "scripts/aegis_pre_exploit.py"
+    description: "Verify scope, confirm benign POC, snapshot target state"
+    timeout: 30
+  
+  post_engagement:
+    script: "scripts/aegis_post_engagement.py"
+    description: "Update personal memory, calculate tool effectiveness, archive"
+    timeout: 60
+
+# ═══════════════════════════════════════════════════════════
+# ERROR HANDLING & RECOVERY (AEGIS Enhanced)
+# ═══════════════════════════════════════════════════════════
+
+error_handling:
+  agent_failure:
+    action: "retry"
+    max_retries: 3
+    backoff: "exponential"
+    on_max_retries:
+      - "Log failure to PERSONAL_MEMORY.md"
+      - "Notify operator via Telegram with context"
+      - "Continue with remaining agents"
+      - "Update tool effectiveness calibration"
+  
+  scope_violation:
+    action: "block_and_alert"
+    steps:
+      - "Block the action immediately"
+      - "Log the violation with full context"
+      - "Alert operator via Telegram"
+      - "Update scope violation counter in PERSONAL_MEMORY.md"
+      - "Continue testing within scope"
+  
+  rate_limit_hit:
+    action: "adaptive_backoff"
+    steps:
+      - "Pause all agents for 30 seconds"
+      - "Reduce global rate by 50%"
+      - "Log signature to PERSONAL_MEMORY.md:target_signatures"
+      - "Resume with new rate limit"
+      - "Alert operator if repeated"
+  
+  timeout:
+    action: "graceful_stop"
+    steps:
+      - "Save current state to both memories"
+      - "Log partial results"
+      - "Notify operator with resume instructions"
+      - "Allow resume from checkpoint via 'AEGIS, resume ENG-ID'"
+
+# ═══════════════════════════════════════════════════════════
+# PARALLEL EXECUTION RULES (AEGIS Calibrated)
+# ═══════════════════════════════════════════════════════════
+
+parallelism:
+  max_concurrent_agents: 7
+  resource_limits:
+    max_requests_per_second: 150    # AEGIS: Higher than HERMES baseline
+    max_bandwidth_mbps: 100
+  deconfliction:
+    - "Agents must not scan the same IP:Port simultaneously"
+    - "Rate limits shared across all agents via token bucket"
+    - "Memory writes use optimistic locking with engagement ID"
+    - "Finding IDs globally unique: AEGIS-{NNN} or HERMES-{NNN}"
+    - "AEGIS agents register target locks in PERSONAL_MEMORY.md"
+
+# ═══════════════════════════════════════════════════════════
+# AEGIS-SPECIFIC: DECISION HEURISTICS OVERRIDE
+# ═══════════════════════════════════════════════════════════
+
+heuristics_override:
+  # Confidence calibration (from PERSONAL_MEMORY.md)
+  confidence_upgrade_rules:
+    - from: 2   # Banner only
+      to: 5     # Differential response
+      condition: "Independent tool confirmation"
+    - from: 5
+      to: 8
+      condition: "Deterministic reflection or math eval"
+    - from: 8
+      to: 10
+      condition: "Operator /go + demonstrated access + cleanup verified"
+  
+  # Attack chain priority (AEGIS formula)
+  chain_priority:
+    formula: "MaxSeverity * 0.6 + MinConfidence * 0.4 - StepCount * 0.2"
+    tiers:
+      p0: ">= 8.0"    # Immediate focus
+      p1: ">= 6.0"    # High impact
+      p2: ">= 4.0"    # Tactical
+  
+  # Tool selection (from PERSONAL_MEMORY.md:tool_effectiveness)
+  tool_selection:
+    subnet_large: "masscan -> rustscan -> nmap"
+    web_fuzzing: "ffuf -> gobuster -> katana"
+    sql_injection: "manual_poc -> sqlmap_batch"
+    api_testing: "kiterunner -> graphql-cop -> manual"
+    ai_testing: "custom_corpus -> manual_prompting"
+
+# ═══════════════════════════════════════════════════════════
+# TELEGRAM COMMAND EXTENSIONS (AEGIS)
+# ═══════════════════════════════════════════════════════════
+
+telegram_commands:
+  aegis_specific:
+    - command: "/aegis_status"
+      description: "Show AEGIS-specific status (memory sync, calibration, evasion profiles)"
+    - command: "/aegis_memory"
+      description: "Show PERSONAL_MEMORY.md summary"
+    - command: "/aegis_chains"
+      description: "List all attack chain templates from personal memory"
+    - command: "/aegis_tools"
+      description: "Show tool effectiveness calibration matrix"
+    - command: "/aegis_evasion"
+      description: "Show current target evasion profiles"
+    - command: "/aegis_terse"
+      description: "Toggle AEGIS caveman mode (independent of HERMES)"
