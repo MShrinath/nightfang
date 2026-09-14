@@ -1,4 +1,4 @@
-"""CLI entry point for OPNCLAW/HERMES."""
+"""CLI entry point for NIGHTFANG."""
 import asyncio
 import sys
 import argparse
@@ -34,14 +34,14 @@ async def run_engagement(config_path: str, phase: str = 'full', engagement_id: O
 
 def main():
     parser = argparse.ArgumentParser(
-        description='OPNCLAW/HERMES - Autonomous Penetration Testing Swarm',
+        description='NIGHTFANG - Autonomous Penetration Testing Swarm',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  opnclaw start --config config/personal_engagement.yaml
-  opnclaw start --config config/engagement_template.yaml --phase recon
-  opnclaw start --config config/personal_engagement.yaml --phase webapp
-  opnclaw start --config config/personal_engagement.yaml --phase report
+  nightfang start --config config/personal_engagement.yaml
+  nightfang start --config config/engagement_template.yaml --phase recon
+  nightfang start --config config/personal_engagement.yaml --phase webapp
+  nightfang start --config config/personal_engagement.yaml --phase report
         """
     )
     

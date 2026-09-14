@@ -1,4 +1,4 @@
-"""OPNCLAW Agents Package"""
+"""NIGHTFANG Agents Package"""
 from .base import BaseAgent, ToolResult
 from .recon_passive import ReconPassiveAgent
 from .recon_active import ReconActiveAgent

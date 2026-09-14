@@ -12,10 +12,10 @@ from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager
 from ..core.telegram_bot import TelegramBot
 
-from opnclaw.agents.recon_passive import ReconPassiveAgent
-from opnclaw.agents.recon_active import ReconActiveAgent
-from opnclaw.agents.scanner_webapp import WebAppScannerAgent
-from opnclaw.agents.reporter import ReporterAgent
+from nightfang.agents.recon_passive import ReconPassiveAgent
+from nightfang.agents.recon_active import ReconActiveAgent
+from nightfang.agents.scanner_webapp import WebAppScannerAgent
+from nightfang.agents.reporter import ReporterAgent
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +246,7 @@ async def main():
     import sys
     
     if len(sys.argv) < 2:
-        print("Usage: python -m opnclaw.core.orchestrator <config_path> [phase]")
+        print("Usage: python -m nightfang.core.orchestrator <config_path> [phase]")
         print("  config_path: Path to engagement YAML config")
         print("  phase: Optional phase to run (recon, active_recon, webapp, report, full)")
         sys.exit(1)
