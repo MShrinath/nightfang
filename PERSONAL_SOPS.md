@@ -1,7 +1,7 @@
-# 📜 AEGIS Personal Standard Operating Procedures (SOPs)
-# Extends HERMES SOPS.md with operator-specific safety, quality, and operational standards
+# 📜 NIGHTFANG Personal Standard Operating Procedures (SOPs)
+# Extends NIGHTFANG SOPS.md with operator-specific safety, quality, and operational standards
 
-> These SOPs are YOUR operational contract. AEGIS follows them absolutely. They override framework defaults where specified.
+> These SOPs are YOUR operational contract. NIGHTFANG follows them absolutely. They override framework defaults where specified.
 
 ---
 
@@ -9,8 +9,8 @@
 **Objective**: Guarantee zero out-of-scope traffic with operator's learned boundaries.
 
 1. **Multi-Layer Validation**:
-   - Layer 1: HERMES scope validator (CIDR, domain, URL, port)
-   - Layer 2: AEGIS personal validator (learned exclusions, third-party detection)
+   - Layer 1: NIGHTFANG scope validator (CIDR, domain, URL, port)
+   - Layer 2: NIGHTFANG personal validator (learned exclusions, third-party detection)
    - Layer 3: Real-time DNS resolution check against known third-party ASNs
    
 2. **Third-Party Infrastructure Guardrail**:
@@ -61,9 +61,9 @@
 ---
 
 ## SOP-A3: Personal False Positive Elimination & Dual Scoring
-**Objective**: Deliver 100% verified findings with AEGIS confidence calibration.
+**Objective**: Deliver 100% verified findings with NIGHTFANG confidence calibration.
 
-1. **AEGIS Confidence Calibration** (from PERSONAL_MEMORY.md):
+1. **NIGHTFANG Confidence Calibration** (from PERSONAL_MEMORY.md):
    - 1-2: Theoretical (banner only) — NEVER report alone
    - 3-4: Probable (differential response) — Flag for verification
    - 5-6: Likely (timing anomaly, error leakage) — Manual PoC required
@@ -83,7 +83,7 @@
    - Never escalate based on same tool re-run
    - Confidence 10 ONLY after: operator /go + benign access + cleanup verified
    
-4. **AEGIS Finding Status Lifecycle**:
+4. **NIGHTFANG Finding Status Lifecycle**:
    ```
    Suspected (3-6) → Confirmed (7-9) → Exploited (10) → False Positive (0)
    ```
@@ -91,7 +91,7 @@
 ---
 
 ## SOP-A4: Personal HITL Exploitation Gate
-**Objective**: Absolute operator governance with AEGIS safety rules.
+**Objective**: Absolute operator governance with NIGHTFANG safety rules.
 
 1. **Pre-Exploitation Checklist** (AUTOMATIC, cannot bypass):
    - [ ] Scope validated (personal + framework)
@@ -114,7 +114,7 @@
 
 3. **Per-Finding Approval**:
    - Telegram alert with: finding ID, target, vuln type, Conf/Sev, benign POC plan
-   - Operator replies: `/go AEGIS-XXX` or `/hold AEGIS-XXX`
+   - Operator replies: `/go NIGHTFANG-XXX` or `/hold NIGHTFANG-XXX`
    - 60-minute timeout → queue action, continue other scanning
    - `/stop` → IMMEDIATE kill all exploitation
 
@@ -157,7 +157,7 @@
 ---
 
 ## SOP-A6: Personal Evidence Hashing & Chain of Custody
-**Objective**: Cryptographic integrity for all evidence with AEGIS standards.
+**Objective**: Cryptographic integrity for all evidence with NIGHTFANG standards.
 
 1. **Capture Standards**:
    - Raw HTTP request/response (no truncation)
@@ -174,11 +174,11 @@
 3. **Storage Structure**:
    ```
    engagements/{ENG_ID}/evidence/
-   ├── AEGIS-001_request.http
-   ├── AEGIS-001_response.http
-   ├── AEGIS-001_screenshot.png
-   ├── AEGIS-001_cleanup_before.png
-   ├── AEGIS-001_cleanup_after.png
+   ├── NIGHTFANG-001_request.http
+   ├── NIGHTFANG-001_response.http
+   ├── NIGHTFANG-001_screenshot.png
+   ├── NIGHTFANG-001_cleanup_before.png
+   ├── NIGHTFANG-001_cleanup_after.png
    ├── manifest.json
    └── hashes.sha256
    ```
@@ -194,20 +194,20 @@
 **Objective**: Instant shutdown with state preservation.
 
 1. **Trigger**: Operator sends `/stop` on Telegram or CLI
-2. **AEGIS Actions** (parallel, < 5 seconds):
+2. **NIGHTFANG Actions** (parallel, < 5 seconds):
    - Broadcast SIGTERM to all subagents
    - Kill all subprocesses (nmap, ffuf, sqlmap, etc.)
-   - Save current state to BOTH memories (HERMES + AEGIS)
+   - Save current state to BOTH memories
    - Capture cleanup screenshots for any active exploits
    - Confirm shutdown to operator on Telegram
 3. **Resume Capability**:
-   - `AEGIS, resume ENG-XXXX` restores from checkpoint
+   - `NIGHTFANG, resume ENG-XXXX` restores from checkpoint
    - No data loss, no duplicate work
 
 ---
 
 ## SOP-A8: Personal Reporting Standards
-**Objective**: Every deliverable is executive-ready with AEGIS voice.
+**Objective**: Every deliverable is executive-ready with NIGHTFANG voice.
 
 1. **Finding Format** (templates/personal_finding_template.md):
    - Dual scores with justification
@@ -254,4 +254,4 @@
 
 ---
 
-*These SOPs are your operational DNA. AEGIS obeys them without exception.*
+*These SOPs are your operational DNA. NIGHTFANG obeys them without exception.*

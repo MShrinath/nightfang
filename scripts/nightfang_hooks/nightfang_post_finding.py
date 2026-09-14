@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Post-Finding Hook
+NIGHTFANG Post-Finding Hook
 Enriches findings with personal context, applies chain templates
 """
 
@@ -18,10 +18,10 @@ load_env()
 
 
 def enrich_finding(finding: dict, personal_memory: dict) -> dict:
-    """Enrich a finding with AEGIS personal context"""
+    """Enrich a finding with NIGHTFANG personal context"""
     
     # Add personal metadata
-    finding["aegis"] = {
+    finding["nightfang"] = {
         "enriched_at": datetime.now(timezone.utc).isoformat(),
         "operator": personal_memory.get("operator_profile", {}).get("handle", "@SecurityLead"),
         "chain_templates_checked": [],
@@ -37,7 +37,7 @@ def enrich_finding(finding: dict, personal_memory: dict) -> dict:
         template_name = template.get("name", "").lower()
         if any(keyword in vuln_type for keyword in ["bola", "idor", "jwt", "ssrf", "graphql", "ai", "llm"]):
             if any(keyword in template_name for keyword in ["bola", "idor", "jwt", "ssrf", "graphql", "ai", "llm"]):
-                finding["aegis"]["chain_templates_checked"].append(template.get("id"))
+                finding["nightfang"]["chain_templates_checked"].append(template.get("id"))
                 finding["suggested_chain"] = template.get("id")
     
     # Apply evasion profile if target matches
@@ -46,20 +46,20 @@ def enrich_finding(finding: dict, personal_memory: dict) -> dict:
     
     for sig_name, sig_data in signatures.items():
         if sig_name in target or any(h in target for h in sig_data.get("detected_headers", [])):
-            finding["aegis"]["evasion_profile_applied"] = sig_name
+            finding["nightfang"]["evasion_profile_applied"] = sig_name
             finding["evasion_notes"] = sig_data.get("evasion_notes")
             break
     
     # Apply tool calibration
     tool_eff = personal_memory.get("tool_effectiveness", {})
-    finding["aegis"]["tool_calibration_used"] = tool_eff
+    finding["nightfang"]["tool_calibration_used"] = tool_eff
     
     return finding
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: aegis_post_finding.py <finding_json_file>")
+        print("Usage: nightfang_post_finding.py <finding_json_file>")
         return 1
     
     finding_file = Path(sys.argv[1])
@@ -91,11 +91,11 @@ def main():
     with open(finding_file, "w") as f:
         json.dump(enriched, f, indent=2)
     
-    print(f"[AEGIS Post-Finding] Enriched finding {finding.get('id', 'unknown')}")
-    if enriched["aegis"]["chain_templates_checked"]:
-        print(f"  Chain templates: {enriched['aegis']['chain_templates_checked']}")
-    if enriched["aegis"]["evasion_profile_applied"]:
-        print(f"  Evasion profile: {enriched['aegis']['evasion_profile_applied']}")
+    print(f"[NIGHTFANG Post-Finding] Enriched finding {finding.get('id', 'unknown')}")
+    if enriched["nightfang"]["chain_templates_checked"]:
+        print(f"  Chain templates: {enriched['nightfang']['chain_templates_checked']}")
+    if enriched["nightfang"]["evasion_profile_applied"]:
+        print(f"  Evasion profile: {enriched['nightfang']['evasion_profile_applied']}")
     
     return 0
 

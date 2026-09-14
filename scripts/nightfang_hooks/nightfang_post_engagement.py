@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Post-Engagement Hook
+NIGHTFANG Post-Engagement Hook
 Updates personal memory, calculates tool effectiveness, archives engagement
 """
 
@@ -42,7 +42,7 @@ def update_tool_effectiveness(engagement_dir: Path, personal_memory: dict):
             tools[tool] = data
     
     personal_memory["tool_effectiveness"] = tools
-    print(f"[AEGIS Post-Engagement] Updated tool effectiveness for {len(tools)} tools")
+    print(f"[NIGHTFANG Post-Engagement] Updated tool effectiveness for {len(tools)} tools")
 
 
 def extract_new_signatures(engagement_dir: Path, personal_memory: dict):
@@ -64,7 +64,7 @@ def extract_new_signatures(engagement_dir: Path, personal_memory: dict):
     
     if "new_waf_discovered" not in signatures:
         signatures["new_waf_discovered"] = new_sig
-        print("[AEGIS Post-Engagement] Added new WAF signature to personal memory")
+        print("[NIGHTFANG Post-Engagement] Added new WAF signature to personal memory")
     
     personal_memory["target_signatures"] = signatures
 
@@ -85,7 +85,7 @@ def archive_engagement(engagement_dir: Path):
             else:
                 shutil.copy2(src, dst)
     
-    print(f"[AEGIS Post-Engagement] Archived engagement to {archive_dir}")
+    print(f"[NIGHTFANG Post-Engagement] Archived engagement to {archive_dir}")
 
 
 def update_engagement_history(engagement_dir: Path, personal_memory: dict):
@@ -117,7 +117,7 @@ def update_engagement_history(engagement_dir: Path, personal_memory: dict):
         
         history.append(engagement_record)
         personal_memory["engagement_history"] = history
-        print(f"[AEGIS Post-Engagement] Added engagement {engagement_dir.name} to history")
+        print(f"[NIGHTFANG Post-Engagement] Added engagement {engagement_dir.name} to history")
 
 
 def save_personal_memory(personal_memory: dict):
@@ -125,13 +125,13 @@ def save_personal_memory(personal_memory: dict):
     
     # In practice, update the YAML frontmatter sections
     # For now, just log
-    print("[AEGIS Post-Engagement] Personal memory updated (simulated)")
+    print("[NIGHTFANG Post-Engagement] Personal memory updated (simulated)")
     print("  Run manual update of PERSONAL_MEMORY.md with new data")
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: aegis_post_engagement.py <engagement_dir>")
+        print("Usage: nightfang_post_engagement.py <engagement_dir>")
         return 1
     
     engagement_dir = Path(sys.argv[1])
@@ -139,7 +139,7 @@ def main():
         print(f"Engagement directory not found: {engagement_dir}")
         return 1
     
-    print(f"[AEGIS Post-Engagement] Processing {engagement_dir.name}")
+    print(f"[NIGHTFANG Post-Engagement] Processing {engagement_dir.name}")
     
     # Load current personal memory (simulated)
     personal_memory = {
@@ -155,7 +155,7 @@ def main():
     archive_engagement(engagement_dir)
     save_personal_memory(personal_memory)
     
-    print("[AEGIS Post-Engagement] Complete")
+    print("[NIGHTFANG Post-Engagement] Complete")
     return 0
 
 

@@ -2,7 +2,7 @@
 **Engagement:** [ENGAGEMENT_NAME]
 **Target Organization:** [CLIENT_NAME]
 **Assessment Window:** [START_DATE] – [END_DATE]
-**Lead Orchestrator:** HERMES / OPENCLAW Framework
+**Lead Orchestrator:** NIGHTFANG Framework
 **Operator Handle:** [OPERATOR_HANDLE]
 
 ---
@@ -50,7 +50,7 @@
 - Testing constraints: [No DoS, no data destruction, HITL approval required for exploitation]
 
 ### 2.3 Assessment Methodology
-The engagement followed the OPENCLAW 6-Phase Swarm Methodology:
+The engagement followed the NIGHTFANG 6-Phase Swarm Methodology:
 1. **Passive Reconnaissance** (OSINT, DNS, Cert Transparency)
 2. **Active Reconnaissance** (Port scanning, service fingerprinting)
 3. **Vulnerability Scanning & Enumeration** (OWASP Web/API & Network)
@@ -79,8 +79,8 @@ graph LR
 
 | # | ID | Title | Target Asset | Confidence | Severity | Status |
 |---|----|-------|--------------|------------|----------|--------|
-| 1 | HERMES-001 | [Title] | `[Endpoint]` | [X]/10 | [Y]/10 | `[Status]` |
-| 2 | HERMES-002 | [Title] | `[Endpoint]` | [X]/10 | [Y]/10 | `[Status]` |
+| 1 | NIGHTFANG-001 | [Title] | `[Endpoint]` | [X]/10 | [Y]/10 | `[Status]` |
+| 2 | NIGHTFANG-002 | [Title] | `[Endpoint]` | [X]/10 | [Y]/10 | `[Status]` |
 
 ---
 

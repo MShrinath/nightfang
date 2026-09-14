@@ -1,4 +1,4 @@
-# 📱 HERMES Telegram Message Templates & Protocols
+# 📱 NIGHTFANG Telegram Message Templates & Protocols
 
 Standardized message formats sent to the operator via Telegram.
 
@@ -6,7 +6,7 @@ Standardized message formats sent to the operator via Telegram.
 
 ## 1. Engagement Initialization
 ```
-🦅 HERMES Orchestrator Online
+🦅 NIGHTFANG Orchestrator Online
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Engagement: {engagement_name}
 🏢 Target: {client_name}
@@ -22,7 +22,7 @@ Reply: /go to initiate swarm or /hold to adjust scope.
 
 ## 2. Phase Transition Update
 ```
-📊 HERMES Phase Update [{phase_name}]
+📊 NIGHTFANG Phase Update [{phase_name}]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🕐 Current Phase: {current_phase} (Phase {phase_num}/6)
 ⏱️ Elapsed: {elapsed_time}
@@ -39,7 +39,7 @@ Reply: /go to proceed or /status for full breakdown.
 
 ## 3. High/Critical Finding Alert & Exploitation Request (HITL Gate)
 ```
-🔍 HERMES Finding #{finding_id}
+🔍 NIGHTFANG Finding #{finding_id}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📎 Target: {target_endpoint}
 🎯 Type: {vulnerability_title}
@@ -61,7 +61,7 @@ Reply: /go {finding_id} or /hold {finding_id}
 
 ## 4. Exploitation Outcome Notification
 ```
-✅ HERMES Exploitation Result
+✅ NIGHTFANG Exploitation Result
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Finding: #{finding_id} — {vulnerability_title}
 📊 Updated Confidence: 10/10 (Demonstrated)
@@ -76,7 +76,7 @@ Continuing engagement queue...
 
 ## 5. Live Status Response (`/status`)
 ```
-📊 HERMES Live Engagement Status
+📊 NIGHTFANG Live Engagement Status
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Engagement: {engagement_name}
 🕐 Active Phase: {active_phase}
@@ -105,7 +105,7 @@ Reply: /findings for list or /report for markdown export.
 
 ## 6. Final Engagement Summary
 ```
-📋 HERMES Pentest Complete
+📋 NIGHTFANG Pentest Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Target: {client_name}
 ⏱️ Total Duration: {total_duration}
@@ -119,5 +119,5 @@ Reply: /findings for list or /report for markdown export.
 `engagements/{engagement_slug}_report.md`
 
 Type /report to receive document stream.
-Thank you for operating with OPENCLAW / HERMES. 🦅
+Thank you for operating with NIGHTFANG. 🦅
 ```

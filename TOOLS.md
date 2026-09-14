@@ -1,6 +1,6 @@
-# 🛠️ OPENCLAW / HERMES — Tool Inventory & Fallback Matrix
+# 🛠️ NIGHTFANG — Tool Inventory & Fallback Matrix
 
-This document defines all external security tools utilized across the OPENCLAW swarm, including standard command lines, timeouts, safety flags, and fallback alternatives.
+This document defines all external security tools utilized across the NIGHTFANG swarm, including standard command lines, timeouts, safety flags, and fallback alternatives.
 
 ---
 

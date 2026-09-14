@@ -1,4 +1,4 @@
-# OPENCLAW/HERMES Engagement Configuration Template
+# NIGHTFANG Engagement Configuration Template
 # Tuned to .env: secrets automatically resolve from your .env file!
 
 engagement:
@@ -7,7 +7,7 @@ engagement:
   type: "blackbox"       # blackbox | greybox | whitebox
   start_date: ""         # YYYY-MM-DD
   end_date: ""           # YYYY-MM-DD
-  operator: "${HERMES_OPERATOR:@SecurityLead}"
+  operator: "${NIGHTFANG_OPERATOR:@SecurityLead}"
 
 # Scope Definition
 scope:
@@ -49,7 +49,7 @@ rules:
   auto_exploit: false    # ALWAYS FALSE - exploitation requires HITL /go approval
   
   # Token Optimization (Caveman Mode) — Toggleable via /terse on|off or .env
-  token_efficiency: ${HERMES_TOKEN_EFFICIENCY:false}
+  token_efficiency: ${NIGHTFANG_TOKEN_EFFICIENCY:false}
   
   allowed_techniques:
     - passive_recon
@@ -81,7 +81,7 @@ telegram:
 
 # Agent Swarm Configuration
 agent:
-  max_concurrent_agents: ${HERMES_MAX_CONCURRENT_AGENTS:7}
+  max_concurrent_agents: ${NIGHTFANG_MAX_CONCURRENT_AGENTS:7}
   timeout_per_task: 3600
   retry_on_failure: true
   max_retries: 3

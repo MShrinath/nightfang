@@ -1,4 +1,4 @@
-# OPENCLAW/HERMES Workflow Orchestration
+# NIGHTFANG Workflow Orchestration
 # Defines the engagement lifecycle, phase transitions, and agent coordination
 
 # ═══════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@ lifecycle:
           description: "Present parsed scope to operator for confirmation"
           hitl: true
           hitl_message: |
-            📋 HERMES Engagement Initialization
+            📋 NIGHTFANG Engagement Initialization
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             🎯 Scope Summary:
             {scope_summary}
@@ -80,7 +80,7 @@ lifecycle:
         - action: "send_update"
           skill: "telegram-hitl"
           message: |
-            📊 HERMES Phase 1 Complete: Passive Recon
+            📊 NIGHTFANG Phase 1 Complete: Passive Recon
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             🌐 Subdomains found: {subdomain_count}
             🔧 Technologies: {tech_list}
@@ -106,7 +106,7 @@ lifecycle:
         - recon_active_agent
       hitl_gate:
         message: |
-          ⚠️ HERMES Permission Request
+          ⚠️ NIGHTFANG Permission Request
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           🔧 Action: Active port scanning & service enumeration
           🎯 Targets: {target_count} hosts
@@ -174,7 +174,7 @@ lifecycle:
         - action: "send_summary"
           skill: "telegram-hitl"
           message: |
-            📋 HERMES Phase 3 Complete: Scanning
+            📋 NIGHTFANG Phase 3 Complete: Scanning
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             🔴 Critical: {critical_count}
             🟠 High: {high_count}
@@ -236,7 +236,7 @@ lifecycle:
         required: true
         per_finding: true
         message: |
-          ⚠️ HERMES Exploitation Request
+          ⚠️ NIGHTFANG Exploitation Request
           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           🎯 Target: {target}
           🔧 Vulnerability: {vuln_title}
@@ -317,7 +317,7 @@ lifecycle:
         - action: "send_telegram_summary"
           skill: "telegram-hitl"
           message: |
-            📋 HERMES Engagement Complete
+            📋 NIGHTFANG Engagement Complete
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             🎯 Scope: {scope_summary}
             ⏱️ Duration: {duration}
@@ -332,7 +332,7 @@ lifecycle:
             
             📄 Full report attached.
             
-            Thank you for using OPENCLAW/HERMES. 🦅
+            Thank you for using NIGHTFANG. 🦅
       exit_criteria:
         - "Report generated"
         - "Operator notified"
@@ -381,4 +381,4 @@ parallelism:
     - "Agents must not scan the same port simultaneously"
     - "Rate limits are shared across all agents"
     - "Memory writes use optimistic locking"
-    - "Finding IDs are globally unique (HERMES-NNN)"
+    - "Finding IDs are globally unique (NIGHTFANG-NNN)"

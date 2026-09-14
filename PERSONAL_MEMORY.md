@@ -1,6 +1,6 @@
-# 🧠 PERSONAL_MEMORY.md — AEGIS Long-Term Memory & Knowledge Base
+# 🧠 PERSONAL_MEMORY.md — NIGHTFANG Long-Term Memory & Knowledge Base
 
-> This is YOUR personal agent's persistent memory store. Distinct from HERMES's shared MEMORY.md — this holds *your* patterns, *your* preferences, *your* learned evasions, and *your* engagement history. AEGIS reads/writes this automatically across all sessions.
+> This is YOUR personal agent's persistent memory store. Distinct from NIGHTFANG's shared MEMORY.md — this holds *your* patterns, *your* preferences, *your* learned evasions, and *your* engagement history. NIGHTFANG reads/writes this automatically across all sessions.
 
 ---
 
@@ -257,9 +257,9 @@ active_engagement:
 
 ---
 
-## 8. Memory Update Protocol (AEGIS Personal)
+## 8. Memory Update Protocol (NIGHTFANG Personal)
 
-> Rules for how AEGIS updates this file across engagements.
+> Rules for how NIGHTFANG updates this file across engagements.
 
 ```yaml
 update_rules:
@@ -286,12 +286,12 @@ update_rules:
 
 | Memory Type | Location | Sync Direction |
 |-------------|----------|----------------|
-| HERMES Shared Assets | `MEMORY.md` → `assets` | READ-only (AEGIS consumes) |
-| HERMES Findings | `MEMORY.md` → `findings` | READ-only |
-| HERMES Decisions | `MEMORY.md` → `decisions` | READ-only |
-| Personal Signatures | `PERSONAL_MEMORY.md` → `target_signatures` | WRITE (AEGIS owns) |
-| Personal Chains | `PERSONAL_MEMORY.md` → `attack_chain_templates` | WRITE (AEGIS owns) |
-| Personal Tool Calibration | `PERSONAL_MEMORY.md` → `tool_effectiveness` | WRITE (AEGIS owns) |
+| NIGHTFANG Shared Assets | `MEMORY.md` → `assets` | READ-only (NIGHTFANG consumes) |
+| NIGHTFANG Findings | `MEMORY.md` → `findings` | READ-only |
+| NIGHTFANG Decisions | `MEMORY.md` → `decisions` | READ-only |
+| Personal Signatures | `PERSONAL_MEMORY.md` → `target_signatures` | WRITE (NIGHTFANG owns) |
+| Personal Chains | `PERSONAL_MEMORY.md` → `attack_chain_templates` | WRITE (NIGHTFANG owns) |
+| Personal Tool Calibration | `PERSONAL_MEMORY.md` → `tool_effectiveness` | WRITE (NIGHTFANG owns) |
 
 ---
 

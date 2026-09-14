@@ -39,7 +39,7 @@ Manage operator communication through Telegram bot.
 
 ### Finding Report
 ```
-🔍 HERMES Finding #[ID]
+🔍 NIGHTFANG Finding #[ID]
 ━━━━━━━━━━━━━━━━━━━━━━
 📎 Target: [endpoint/host]
 🎯 Type: [vulnerability type]
@@ -49,7 +49,7 @@ Manage operator communication through Telegram bot.
 📝 Summary: [brief description]
 💡 Details: [technical details]
 
-🔧 Proposed Action: [what HERMES wants to do]
+🔧 Proposed Action: [what NIGHTFANG wants to do]
 ⚠️ Risk: [potential impact of the action]
 
 Reply: /go [ID] or /hold [ID]
@@ -65,7 +65,7 @@ Reply: /go [ID] or /hold [ID]
 
 ### Progress Update
 ```
-📊 HERMES Status Update
+📊 NIGHTFANG Status Update
 ━━━━━━━━━━━━━━━━━━━━━━
 🕐 Phase: [current phase]
 ⏱️ Duration: [time elapsed]
@@ -79,7 +79,7 @@ Next: [what's planned next]
 ## Approval Workflow
 
 ```
-HERMES discovers potential vulnerability
+NIGHTFANG discovers potential vulnerability
          ↓
 Formats finding with Confidence/Severity scores & ATT&CK ID
          ↓

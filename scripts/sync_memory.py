@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / AEGIS — Memory Synchronization Utility
-Syncs personal memory (PERSONAL_MEMORY.md) with HERMES shared memory (MEMORY.md)
+NIGHTFANG — Memory Synchronization Utility
+Syncs personal memory (PERSONAL_MEMORY.md) with NIGHTFANG shared memory (MEMORY.md)
 and engagement session state.
 """
 
@@ -44,8 +44,8 @@ def parse_personal_memory(filepath: Path) -> dict:
     return sections
 
 
-def load_hermes_memory(filepath: Path) -> dict:
-    """Load HERMES MEMORY.md"""
+def load_nightfang_memory(filepath: Path) -> dict:
+    """Load NIGHTFANG MEMORY.md"""
     return parse_personal_memory(filepath)  # Same format
 
 
@@ -68,7 +68,7 @@ def sync_personal_to_engagement(personal_memory: dict, engagement_dir: Path):
         "operator_preferences": personal_memory.get("operator_profile", {}),
     }
     
-    mem_file = engagement_dir / "aegis_personal_memory.json"
+    mem_file = engagement_dir / "nightfang_personal_memory.json"
     with open(mem_file, "w") as f:
         json.dump(engagement_memory, f, indent=2)
     
@@ -120,7 +120,7 @@ def sync_engagement_to_personal(engagement_dir: Path, personal_memory: dict):
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description="AEGIS Memory Sync")
+    parser = argparse.ArgumentParser(description="NIGHTFANG Memory Sync")
     parser.add_argument("--sync-personal", action="store_true", help="Sync personal -> engagement")
     parser.add_argument("--sync-engagement", action="store_true", help="Sync engagement -> personal")
     parser.add_argument("--engagement-dir", default="engagements/current", help="Engagement directory")

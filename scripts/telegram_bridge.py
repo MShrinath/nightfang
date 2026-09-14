@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / HERMES — Telegram HITL Bridge Script
+NIGHTFANG — Telegram HITL Bridge Script
 Provides a lightweight Telegram bot bridge for Human-in-the-Loop operator approvals and alerts.
 Fully integrates with .env and environment variable interpolation.
 """
@@ -74,7 +74,7 @@ class TelegramHITLBridge:
 
 if __name__ == "__main__":
     bridge = TelegramHITLBridge()
-    print("[*] OPENCLAW / HERMES Telegram HITL Bridge Initialized.")
+    print("[*] NIGHTFANG Telegram HITL Bridge Initialized.")
     if bridge.token and bridge.chat_id:
         masked_token = bridge.token[:6] + "..." if len(bridge.token) > 6 else "(set)"
         print(f"[+] Loaded Telegram credentials from .env / config (Token: {masked_token}, Chat ID: {bridge.chat_id})")

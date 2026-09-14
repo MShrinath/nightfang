@@ -1,4 +1,4 @@
-# 🦅 OPENCLAW / HERMES
+# 🦅 NIGHTFANG
 
 **Autonomous Penetration Testing Swarm Agent Framework**
 
@@ -15,7 +15,7 @@
                     └───────────┬────────────┘
                                 │ HITL Controls (/go, /hold, /stop, /terse)
                     ┌───────────▼────────────┐
-                    │         HERMES         │
+                    │         NIGHTFANG         │
                     │   Master Orchestrator  │
                     │ (MEMORY, SOPS & Scope) │
                     └───────────┬────────────┘
@@ -48,7 +48,7 @@
 ## 📁 Repository Structure
 
 ```
-OPENCLAW/
+NIGHTFANG/
 ├── AGENTS.md                                # Master Orchestrator identity & HITL rules
 ├── GEMINI.md                                # Project-wide safety guidelines
 ├── MEMORY.md                                # Persistent agent memory & learned target patterns
@@ -85,9 +85,9 @@ OPENCLAW/
 
 1. Copy `.env.example` to `.env` and fill in your `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.
 2. Edit `config/engagement_template.yaml` with your target scope and rules of engagement.
-3. Start the assessment with HERMES:
+3. Start the assessment with NIGHTFANG:
    ```
-   HERMES, initialize engagement with config/engagement_template.yaml
+   NIGHTFANG, initialize engagement with config/engagement_template.yaml
    ```
 4. Control testing live via Telegram with `/go [ID]`, `/hold [ID]`, `/terse on|off`, `/status`, and `/report`.
 
@@ -96,4 +96,4 @@ OPENCLAW/
 ## ⚖️ Ethics & Authorization
 
 > [!CAUTION]
-> OPENCLAW / HERMES is strictly designed for **authorized security testing and educational research**. Explicit written authorization is mandatory prior to assessing any computer system or network.
+> NIGHTFANG is strictly designed for **authorized security testing and educational research**. Explicit written authorization is mandatory prior to assessing any computer system or network.

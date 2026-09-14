@@ -1,6 +1,6 @@
-# 🧭 HERMES Decision Heuristics & Triage Logic
+# 🧭 NIGHTFANG Decision Heuristics & Triage Logic
 
-This document specifies the internal decision-making heuristics used by HERMES to prioritize attack vectors, score findings, resolve conflicts, and guide subagents.
+This document specifies the internal decision-making heuristics used by NIGHTFANG to prioritize attack vectors, score findings, resolve conflicts, and guide subagents.
 
 ---
 
@@ -65,7 +65,7 @@ $$\text{Chain Priority Score} = \text{Max Severity} \times 0.6 + \text{Min Confi
 To prevent redundant scanning and conflicting network requests:
 1. **Target Port Locking**: Two subagents must never scan the same IP:Port simultaneously.
 2. **Path Deduplication**: If `SCANNER-WEBAPP` discovers `/api/v1/users`, it registers the route in `MEMORY.md` so `SCANNER-API` does not re-crawl the same static assets.
-3. **Optimistic Locking**: Findings are registered with unique IDs (`HERMES-001`, `HERMES-002`) and locked during active exploitation.
+3. **Optimistic Locking**: Findings are registered with unique IDs (`NIGHTFANG-001`, `NIGHTFANG-002`) and locked during active exploitation.
 
 ---
 

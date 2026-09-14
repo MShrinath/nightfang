@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AEGIS Pre-Scan Hook
+NIGHTFANG Pre-Scan Hook
 Validates scope, loads evasion profiles, calibrates tools before scanning
 """
 
@@ -21,7 +21,7 @@ def main():
     engagement_config = "config/personal_engagement.yaml"
     config = load_config(engagement_config)
     
-    print("[AEGIS Pre-Scan] Validating engagement configuration...")
+    print("[NIGHTFANG Pre-Scan] Validating engagement configuration...")
     
     # 1. Validate scope
     scope = config.get("scope", {})
@@ -38,7 +38,7 @@ def main():
     # 2. Load personal memory for evasion profiles
     memory_file = Path("PERSONAL_MEMORY.md")
     if memory_file.exists():
-        print("[AEGIS Pre-Scan] Loading personal memory for evasion profiles...")
+        print("[NIGHTFANG Pre-Scan] Loading personal memory for evasion profiles...")
         # In practice, parse YAML frontmatter from PERSONAL_MEMORY.md
         # For now, just confirm file exists
         print("  Personal memory found - evasion profiles available")
@@ -47,13 +47,13 @@ def main():
     agent_config = config.get("agent", {})
     calibration = agent_config.get("calibration", {})
     
-    print("[AEGIS Pre-Scan] Tool calibration:")
+    print("[NIGHTFANG Pre-Scan] Tool calibration:")
     for tool, value in calibration.items():
         print(f"  {tool}: {value}")
     
     # 4. Verify critical tools
     critical_tools = ["nmap", "ffuf", "nuclei", "sqlmap", "masscan", "subfinder", "katana"]
-    print("[AEGIS Pre-Scan] Verifying critical tools...")
+    print("[NIGHTFANG Pre-Scan] Verifying critical tools...")
     for tool in critical_tools:
         # In practice, check with `which` or `command -v`
         print(f"  {tool}: ASSUMED_AVAILABLE")
@@ -61,9 +61,9 @@ def main():
     # 5. Check rate limits
     rules = config.get("rules", {})
     max_rate = rules.get("max_scan_rate", 100)
-    print(f"[AEGIS Pre-Scan] Global rate limit: {max_rate} req/sec")
+    print(f"[NIGHTFANG Pre-Scan] Global rate limit: {max_rate} req/sec")
     
-    print("[AEGIS Pre-Scan] Complete - ready for scanning")
+    print("[NIGHTFANG Pre-Scan] Complete - ready for scanning")
     return 0
 
 

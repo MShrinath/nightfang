@@ -1,5 +1,5 @@
-# OPENCLAW Subagent Definitions
-# Defines each specialized swarm agent that HERMES can spawn
+# NIGHTFANG Subagent Definitions
+# Defines each specialized swarm agent that NIGHTFANG can spawn
 
 # ═══════════════════════════════════════════════════════════
 # RECON SWARM
@@ -499,11 +499,11 @@ reporter_agent:
     - hunter_agent
 
 # ═══════════════════════════════════════════════════════════
-# ORCHESTRATOR (HERMES Master)
+# ORCHESTRATOR (NIGHTFANG Master)
 # ═══════════════════════════════════════════════════════════
 
-hermes_orchestrator:
-  name: "HERMES"
+nightfang_orchestrator:
+  name: "NIGHTFANG"
   role: "Engagement Orchestrator"
   description: >-
     The master orchestrator. Manages engagement lifecycle, delegates

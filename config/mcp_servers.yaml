@@ -1,5 +1,5 @@
-# OPENCLAW / HERMES — Model Context Protocol (MCP) Server Registry
-# Connects HERMES to external tools, browser engines, and threat intel feeds
+# NIGHTFANG — Model Context Protocol (MCP) Server Registry
+# Connects NIGHTFANG to external tools, browser engines, and threat intel feeds
 
 mcp_servers:
   # ─────────────────────────────────────────────────────

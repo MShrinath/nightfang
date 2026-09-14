@@ -88,7 +88,7 @@ For each finding:
 For quick Telegram updates:
 
 ```
-📋 HERMES Engagement Report
+📋 NIGHTFANG Engagement Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Target: [scope summary]
 📅 Date: [date]

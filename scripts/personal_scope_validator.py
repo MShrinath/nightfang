@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AEGIS Personal Scope Validator
-Extends HERMES scope validator with operator-specific rules and learned boundaries
+NIGHTFANG Personal Scope Validator
+Extends NIGHTFANG scope validator with operator-specific rules and learned boundaries
 """
 
 import sys
@@ -19,11 +19,11 @@ load_env()
 
 
 class PersonalScopeValidator:
-    """Extended scope validator with AEGIS personal rules"""
+    """Extended scope validator with NIGHTFANG personal rules"""
     
     def __init__(self, config_path: str = "config/personal_engagement.yaml"):
         self.config = load_config(config_path)
-        self.hermes_config = load_config("config/engagement_template.yaml")
+        self.nightfang_config = load_config("config/engagement_template.yaml")
         
         # Merge scopes (personal overrides framework)
         self.scope = self._merge_scopes()
@@ -35,26 +35,23 @@ class PersonalScopeValidator:
         self.learned_boundaries = self._load_learned_boundaries()
     
     def _merge_scopes(self) -> Dict:
-        """Merge HERMES and AEGIS scopes, personal takes precedence"""
-        hermes_scope = self.hermes_config.get("scope", {})
-        aegis_scope = self.config.get("scope", {})
+        """Merge NIGHTFANG scopes, personal takes precedence"""
+        nightfang_scope = self.nightfang_config.get("scope", {})
+        nightfang_scope = self.config.get("scope", {})
         
         merged = {}
         for key in ["in_scope", "out_of_scope"]:
-            hermes_part = hermes_scope.get(key, {})
-            aegis_part = aegis_scope.get(key, {})
+            nightfang_part = nightfang_scope.get(key, {})
             
             merged[key] = {}
             for subkey in ["domains", "ips", "urls", "ports"]:
-                hermes_list = hermes_part.get(subkey, [])
-                aegis_list = aegis_part.get(subkey, [])
-                # AEGIS overrides, but include HERMES as fallback
-                merged[key][subkey] = aegis_list if aegis_list else hermes_list
+                nightfang_list = nightfang_part.get(subkey, [])
+                # NIGHTFANG overrides
+                merged[key][subkey] = nightfang_list
             
             # Notes - combine
-            hermes_notes = hermes_part.get("notes", [])
-            aegis_notes = aegis_part.get("notes", [])
-            merged[key]["notes"] = aegis_notes + hermes_notes
+            nightfang_notes = nightfang_part.get("notes", [])
+            merged[key]["notes"] = nightfang_notes
         
         return merged
     
@@ -270,7 +267,7 @@ class PersonalScopeValidator:
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description="AEGIS Personal Scope Validator")
+    parser = argparse.ArgumentParser(description="NIGHTFANG Personal Scope Validator")
     parser.add_argument("target", nargs="?", help="Target to validate")
     parser.add_argument("--port", type=int, help="Port to validate with target")
     parser.add_argument("--config", default="config/personal_engagement.yaml", help="Config file")

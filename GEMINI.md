@@ -1,4 +1,4 @@
-# OPENCLAW Project Rules
+# NIGHTFANG Project Rules
 
 ## Security & Ethics
 - Only operate against explicitly authorized targets

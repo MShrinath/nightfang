@@ -11,7 +11,7 @@ tags: [token-optimization, caveman-mode, context-compression, efficiency, cost-s
 version: "1.0"
 ---
 
-# Token Optimizer (Caveman Mode) for HERMES Swarms
+# Token Optimizer (Caveman Mode) for NIGHTFANG Swarms
 
 High-efficiency communication and context compression protocol for autonomous agent swarms.
 
@@ -59,7 +59,7 @@ High-efficiency communication and context compression protocol for autonomous ag
 - **Verbose (Standard):**
   > "We have detected a potential Broken Object Level Authorization vulnerability on the endpoint /api/v1/users/profile. When changing user ID from 1 to 2, sensitive data is returned without proper authorization checks. Severity is 8/10 and Confidence is 8/10."
 - **Terse (Caveman Mode):**
-  > `Finding HERMES-002: BOLA on /api/v1/users/profile. Param 'id' lacks auth check. Conf: 8/10. Sev: 8/10. Exploit test? /go HERMES-002 or /hold HERMES-002`
+  > `Finding NIGHTFANG-002: BOLA on /api/v1/users/profile. Param 'id' lacks auth check. Conf: 8/10. Sev: 8/10. Exploit test? /go NIGHTFANG-002 or /hold NIGHTFANG-002`
 
 ## Toggle Control
 - Enable: `/terse on` or `/caveman on`

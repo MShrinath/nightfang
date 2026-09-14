@@ -44,7 +44,7 @@ assets:
 ### 3. Findings Log
 ```yaml
 findings:
-  - id: "HERMES-001"
+  - id: "NIGHTFANG-001"
     title: ""
     target: ""
     type: ""

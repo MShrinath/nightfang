@@ -1,5 +1,5 @@
-# AEGIS Personal Engagement Configuration Template
-# Extends HERMES config/engagement_template.yaml with operator-specific defaults
+# NIGHTFANG Personal Engagement Configuration Template
+# Extends NIGHTFANG config/engagement_template.yaml with operator-specific defaults
 # Tuned to .env: secrets automatically resolve from your .env file!
 
 engagement:
@@ -8,8 +8,8 @@ engagement:
   type: "greybox"              # blackbox | greybox | whitebox
   start_date: ""               # YYYY-MM-DD
   end_date: ""                 # YYYY-MM-DD
-  operator: "${HERMES_OPERATOR:@SecurityLead}"
-  aegis_version: "1.0.0"
+  operator: "${NIGHTFANG_OPERATOR:@SecurityLead}"
+  nightfang_version: "1.0.0"
 
 # ─────────────────────────────────────────────────────
 # SCOPE DEFINITION (Operator-specific defaults)
@@ -31,11 +31,11 @@ scope:
       - "https://graphql.example.com/*"
     ports:
       - "80,443,8080,8443,3000,4000,5000,8000,9000"
-    # AEGIS-specific: API specifications
+    # NIGHTFANG-specific: API specifications
     api_specs:
       - "https://api.example.com/openapi.json"
       - "https://graphql.example.com/schema.graphql"
-    # AEGIS-specific: AI/LLM endpoints
+    # NIGHTFANG-specific: AI/LLM endpoints
     ai_endpoints:
       - "https://api.example.com/v1/ai/assistant"
       - "https://api.example.com/v1/ai/chat"
@@ -89,18 +89,18 @@ credentials:
     session_token: "${TEST_AI_SESSION_TOKEN}"
 
 # ─────────────────────────────────────────────────────
-# RULES OF ENGAGEMENT & PERFORMANCE (AEGIS Calibrated)
+# RULES OF ENGAGEMENT & PERFORMANCE (NIGHTFANG Calibrated)
 # ─────────────────────────────────────────────────────
 rules:
   testing_window: "24/7"
-  max_scan_rate: 150             # AEGIS default: higher than HERMES baseline
+  max_scan_rate: 150             # NIGHTFANG default: higher than baseline
   stealth_mode: false
   auto_exploit: false            # ALWAYS FALSE — exploitation requires HITL /go
   
   # Token Optimization (Caveman Mode)
-  token_efficiency: ${HERMES_TOKEN_EFFICIENCY:false}
+  token_efficiency: ${NIGHTFANG_TOKEN_EFFICIENCY:false}
   
-  # AEGIS-specific: Custom wordlists & templates
+  # NIGHTFANG-specific: Custom wordlists & templates
   custom_wordlists:
     directories: "~/wordlists/raft-medium-directories.txt,~/wordlists/custom-api-endpoints.txt"
     parameters: "~/wordlists/arjun-params.txt,~/wordlists/custom-graphql-fields.txt"
@@ -122,7 +122,7 @@ rules:
     - cloud_testing
     - ssl_tls_testing
   
-  # AEGIS-specific: Technique-specific configs
+  # NIGHTFANG-specific: Technique-specific configs
   technique_config:
     passive_recon:
       subfinder_sources: "all"
@@ -200,21 +200,21 @@ telegram:
     - engagement_complete
     - scope_violations
     - rate_limit_events
-  # AEGIS-specific: Compact mode for mobile
+  # NIGHTFANG-specific: Compact mode for mobile
   compact_mode: true
   max_message_length: 4000
 
 # ─────────────────────────────────────────────────────
-# AGENT SWARM CONFIGURATION (AEGIS Enhanced)
+# AGENT SWARM CONFIGURATION (NIGHTFANG Enhanced)
 # ─────────────────────────────────────────────────────
 agent:
-  max_concurrent_agents: ${HERMES_MAX_CONCURRENT_AGENTS:7}
+  max_concurrent_agents: ${NIGHTFANG_MAX_CONCURRENT_AGENTS:7}
   timeout_per_task: 3600
   retry_on_failure: true
   max_retries: 3
   mcp_config_path: "config/mcp_servers.yaml"
   
-  # AEGIS-specific: Agent calibration
+  # NIGHTFANG-specific: Agent calibration
   calibration:
     nmap_timing_override: "T4"
     ffuf_rate_override: 150
@@ -226,9 +226,9 @@ agent:
     amass_timeout: 600
 
 # ─────────────────────────────────────────────────────
-# AEGIS PERSONAL INTEGRATION
+# NIGHTFANG PERSONAL INTEGRATION
 # ─────────────────────────────────────────────────────
-aegis:
+nightfang:
   soul_file: "SOUL.md"
   memory_file: "PERSONAL_MEMORY.md"
   operator_profile: "OPERATOR_PROFILE.md"
@@ -252,7 +252,7 @@ aegis:
   calibration_source: "PERSONAL_MEMORY.md:tool_effectiveness"
   
   # Custom hooks
-  pre_scan_hook: "scripts/aegis_pre_scan.py"
-  post_finding_hook: "scripts/aegis_post_finding.py"
-  pre_exploit_hook: "scripts/aegis_pre_exploit.py"
-  post_engagement_hook: "scripts/aegis_post_engagement.py"
+  pre_scan_hook: "scripts/nightfang.py"
+  post_finding_hook: "scripts/nightfang_post_finding.py"
+  pre_exploit_hook: "scripts/nightfang_pre_exploit.py"
+  post_engagement_hook: "scripts/nightfang_post_engagement.py"

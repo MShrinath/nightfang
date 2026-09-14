@@ -1,6 +1,6 @@
-# 🧠 HERMES Long-Term Agent Memory & Knowledge Base
+# 🧠 NIGHTFANG Long-Term Agent Memory & Knowledge Base
 
-This file serves as the **persistent long-term memory store** for HERMES across engagements and sessions. HERMES automatically updates and references this file to retain operator preferences, target architecture patterns, learned evasion behaviors, and historical findings.
+This file serves as the **persistent long-term memory store** for NIGHTFANG across engagements and sessions. NIGHTFANG automatically updates and references this file to retain operator preferences, target architecture patterns, learned evasion behaviors, and historical findings.
 
 ---
 
@@ -20,7 +20,7 @@ operator_profile:
 
 ## 2. Learned Target Patterns & Evasion Signatures
 
-HERMES records observed WAF behaviors, rate limits, and defenses across engagements:
+NIGHTFANG records observed WAF behaviors, rate limits, and defenses across engagements:
 
 ```yaml
 target_signatures:

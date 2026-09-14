@@ -1,6 +1,6 @@
-# 🎓 OPENCLAW / HERMES — Complete Operator Tutorial & Runbook
+# 🎓 NIGHTFANG — Complete Operator Tutorial & Runbook
 
-Welcome to **OPENCLAW / HERMES**. This guide provides an end-to-end walkthrough on how to configure, operate, and master the autonomous penetration testing swarm framework with Human-in-the-Loop (HITL) Telegram controls, toggleable token optimization, and multi-framework industry mapping.
+Welcome to **NIGHTFANG**. This guide provides an end-to-end walkthrough on how to configure, operate, and master the autonomous penetration testing swarm framework with Human-in-the-Loop (HITL) Telegram controls, toggleable token optimization, and multi-framework industry mapping.
 
 ---
 
@@ -21,7 +21,7 @@ Welcome to **OPENCLAW / HERMES**. This guide provides an end-to-end walkthrough 
 
 ## 1. System Overview & Architecture
 
-HERMES acts as the **Central Master Orchestrator**, managing a swarm of specialized subagents across 6 engagement phases.
+NIGHTFANG acts as the **Central Master Orchestrator**, managing a swarm of specialized subagents across 6 engagement phases.
 
 ```
                                   ┌───────────────────────┐
@@ -30,7 +30,7 @@ HERMES acts as the **Central Master Orchestrator**, managing a swarm of speciali
                                   └───────────┬───────────┘
                                               │ Telegram /go, /hold, /stop, /terse
                                   ┌───────────▼───────────┐
-                                  │  HERMES Orchestrator  │
+                                  │  NIGHTFANG Orchestrator  │
                                   │ (Scope, Memory, HITL) │
                                   └───────────┬───────────┘
                ┌──────────────────────────────┼──────────────────────────────┐
@@ -72,11 +72,11 @@ HERMES acts as the **Central Master Orchestrator**, managing a swarm of speciali
 
 ## 3. Telegram Bot Integration Setup
 
-HERMES communicates live updates and requests exploitation permissions via Telegram.
+NIGHTFANG communicates live updates and requests exploitation permissions via Telegram.
 
 ### Step 1: Create your Telegram Bot
 1. Open Telegram and search for `@BotFather`.
-2. Send `/newbot` and follow prompts (e.g., Name: `Hermes Pentest Bot`, Username: `hermes_sec_bot`).
+2. Send `/newbot` and follow prompts (e.g., Name: `NIGHTFANG Pentest Bot`, Username: `nightfang_sec_bot`).
 3. Save the **HTTP API Token** (e.g., `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`).
 
 ### Step 2: Obtain your Telegram Chat ID
@@ -139,7 +139,7 @@ rules:
 
 ## 5. The Dual-Scoring Ranking Matrix
 
-Every finding reported by HERMES is rated on two independent 1-to-10 scales:
+Every finding reported by NIGHTFANG is rated on two independent 1-to-10 scales:
 
 ```
                   ┌─────────────────────────────────────────────────────────────┐
@@ -166,12 +166,12 @@ Every finding reported by HERMES is rated on two independent 1-to-10 scales:
 
 ## 6. Human-in-the-Loop (HITL) Protocol & Commands
 
-HERMES will **NEVER** run intrusive exploitation commands without explicit operator authorization.
+NIGHTFANG will **NEVER** run intrusive exploitation commands without explicit operator authorization.
 
 ### Telegram Commands
 | Command | Action |
 |---------|--------|
-| `/go [ID]` | Approve exploitation of a specific finding (e.g. `/go HERMES-003`) |
+| `/go [ID]` | Approve exploitation of a specific finding (e.g. `/go NIGHTFANG-003`) |
 | `/go` | Approve current phase gate to proceed |
 | `/hold [ID]` | Reject or pause testing on that vector |
 | `/terse on` | **Enable Caveman Mode** (40-60% token savings, punchy telegram updates) |
@@ -185,7 +185,7 @@ HERMES will **NEVER** run intrusive exploitation commands without explicit opera
 
 ## 7. Toggleable Token Optimizer (Caveman Mode)
 
-HERMES includes an integrated **Caveman / Terse Mode** that reduces token usage by 40-60% during scans:
+NIGHTFANG includes an integrated **Caveman / Terse Mode** that reduces token usage by 40-60% during scans:
 
 ### How to Toggle:
 1. **In Config**: Set `token_efficiency: true` in `config/engagement_template.yaml`.
@@ -201,7 +201,7 @@ HERMES includes an integrated **Caveman / Terse Mode** that reduces token usage 
 
 ## 8. Swarm Agents & Skill Delegation
 
-HERMES orchestrates 21 specialized skills across dedicated agents:
+NIGHTFANG orchestrates 21 specialized skills across dedicated agents:
 
 | Swarm Agent | Primary Skills Used | Phase | Objective |
 |-------------|---------------------|-------|-----------|
@@ -223,9 +223,9 @@ HERMES orchestrates 21 specialized skills across dedicated agents:
 ## 9. End-to-End Engagement Walkthrough (Realistic Simulation)
 
 ### Step 1: Launch Engagement
-Operator prompts HERMES:
+Operator prompts NIGHTFANG:
 ```
-HERMES, initialize engagement with config: engagements/target_engagement.yaml
+NIGHTFANG, initialize engagement with config: engagements/target_engagement.yaml
 ```
 
 ### Step 2: Phase 1 — Passive Reconnaissance
@@ -233,7 +233,7 @@ HERMES, initialize engagement with config: engagements/target_engagement.yaml
 - Telegram notification sent to operator with asset count.
 
 ### Step 3: Phase 2 — Active Reconnaissance (HITL Gate)
-- HERMES asks via Telegram: *"Ready to run nmap port scans on 2 live hosts. Proceed?"*
+- NIGHTFANG asks via Telegram: *"Ready to run nmap port scans on 2 live hosts. Proceed?"*
 - Operator replies: `/go`
 - **RECON-ACTIVE** identifies open ports and versions.
 
@@ -247,7 +247,7 @@ HERMES, initialize engagement with config: engagements/target_engagement.yaml
 - Constructs Attack Chain with Mermaid visual mapping.
 
 ### Step 6: Phase 5 — Exploitation with HITL
-- Operator sends: `/go HERMES-001`
+- Operator sends: `/go NIGHTFANG-001`
 - **EXPLOITER** executes benign verification query and proves access. Confidence updated to **10/10**.
 
 ### Step 7: Phase 6 — Final Deliverable & Jira Ticketing
@@ -258,10 +258,10 @@ HERMES, initialize engagement with config: engagements/target_engagement.yaml
 
 ## 10. Report Generation & Reproduction Verification
 
-Every report generated by OPENCLAW guarantees 100% reproduction accuracy:
+Every report generated by NIGHTFANG guarantees 100% reproduction accuracy:
 
 ```markdown
-### Steps to Reproduce Finding #HERMES-001:
+### Steps to Reproduce Finding #NIGHTFANG-001:
 
 1. Authenticate as low-privileged test user:
    curl -s -X POST https://api.acme.example.com/v1/auth/login \
@@ -282,11 +282,11 @@ Every report generated by OPENCLAW guarantees 100% reproduction accuracy:
 
 ## 11. Troubleshooting, Safety, & Best Practices
 
-1. **Scope Boundary Safety**: HERMES automatically matches every target host against CIDR/domain regex. Any third-party host is automatically blocked unless explicitly listed in `in_scope`.
+1. **Scope Boundary Safety**: NIGHTFANG automatically matches every target host against CIDR/domain regex. Any third-party host is automatically blocked unless explicitly listed in `in_scope`.
 2. **Emergency Stop**: Send `/stop` at any time on Telegram to immediately kill all running subagents and network processes.
 3. **Caveman Mode Efficiency**: Use `/terse on` for large scans to cut token costs by up to 60%.
-4. **Artifact Cleanup**: After any exploit test, HERMES verifies that temporary files or test payloads created on target systems are cleaned up.
+4. **Artifact Cleanup**: After any exploit test, NIGHTFANG verifies that temporary files or test payloads created on target systems are cleaned up.
 5. **Rate Limit Control**: Adjust `max_scan_rate: 50` in your YAML config if testing environments with aggressive WAFs or load constraints.
 
 ---
-*OPENCLAW / HERMES Swarm Framework — Engineered for precision, speed, and safety.* 🦅
+*NIGHTFANG Swarm Framework — Engineered for precision, speed, and safety.* 🦅

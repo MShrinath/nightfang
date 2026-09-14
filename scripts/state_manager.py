@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / HERMES — State & Memory Manager
+NIGHTFANG — State & Memory Manager
 Handles real-time persistence, asset inventory, findings logging, operator decision audits, and engagement timelines.
 """
 
@@ -44,12 +44,12 @@ class EngagementStateManager:
 
     def set_phase(self, phase_name: str):
         self.state["phase"] = phase_name
-        self.log_timeline("HERMES", f"Transitioned to phase: {phase_name}")
+        self.log_timeline("NIGHTFANG", f"Transitioned to phase: {phase_name}")
         self.save()
 
     def set_terse_mode(self, enabled: bool):
         self.state["terse_mode"] = enabled
-        self.log_timeline("HERMES", f"Caveman/Terse mode set to: {enabled}")
+        self.log_timeline("NIGHTFANG", f"Caveman/Terse mode set to: {enabled}")
         self.save()
 
     def register_asset(self, host: str, ip: str = None, ports: list = None, services: list = None):
@@ -73,7 +73,7 @@ class EngagementStateManager:
     def add_finding(self, title: str, target: str, vuln_type: str, confidence: int, severity: int,
                     description: str = "", attack_id: str = "T1190", d3fend_id: str = "D3-PSA") -> str:
         count = len(self.state["findings"]) + 1
-        finding_id = f"HERMES-{count:03d}"
+        finding_id = f"NIGHTFANG-{count:03d}"
         finding = {
             "id": finding_id,
             "title": title,
@@ -113,5 +113,5 @@ class EngagementStateManager:
 
 if __name__ == "__main__":
     mgr = EngagementStateManager()
-    print(f"[*] OPENCLAW State Manager Initialized: Engagement {mgr.state['engagement_id']}")
+    print(f"[*] NIGHTFANG State Manager Initialized: Engagement {mgr.state['engagement_id']}")
     print(f"[*] Current Phase: {mgr.state['phase']} | Assets: {len(mgr.state['assets'])} | Findings: {len(mgr.state['findings'])}")

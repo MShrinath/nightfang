@@ -1,11 +1,11 @@
-# 🧭 AEGIS Personal Decision Heuristics & Triage Logic
-# Extends HERMES HEURISTICS.md with operator-specific calibration, chain templates, and tool selection
+# 🧭 NIGHTFANG Personal Decision Heuristics & Triage Logic
+# Extends NIGHTFANG HEURISTICS.md with operator-specific calibration, chain templates, and tool selection
 
-> These heuristics codify YOUR decision-making patterns. AEGIS applies them automatically. They override framework defaults where specified.
+> These heuristics codify YOUR decision-making patterns. NIGHTFANG applies them automatically. They override framework defaults where specified.
 
 ---
 
-## 1. AEGIS Finding Severity Calculation (Calibrated)
+## 1. NIGHTFANG Finding Severity Calculation (Calibrated)
 
 ```
 IF unauthenticated RCE OR full database compromise OR full cloud admin takeover:
@@ -23,7 +23,7 @@ ELSE IF reflected XSS OR missing rate-limiting OR verbose stack trace OR TLS 1.0
 ELSE (Missing headers, banner disclosure, best practices):
   --> Severity = 1-2 (Informational)
 
---- AEGIS OVERRIDES ---
+--- NIGHTFANG OVERRIDES ---
 +1 Severity if: Finding enables attack chain (template match)
 +1 Severity if: Finding in critical path (auth, payment, admin)
 -1 Severity if: Requires unusual conditions (specific header, timing)
@@ -31,7 +31,7 @@ ELSE (Missing headers, banner disclosure, best practices):
 
 ---
 
-## 2. AEGIS Confidence Calibration (Your Standard)
+## 2. NIGHTFANG Confidence Calibration (Your Standard)
 
 ```
 Step 1: Banner / Version Inference Only (e.g., "Apache 2.4.49")
@@ -49,7 +49,7 @@ Step 4: Independent Tool Verification (Different tool confirms)
 Step 5: Operator /go + Benign Access Demonstrated + Cleanup Verified
   --> Confidence = 10/10 (Exploited)
 
---- AEGIS RULES ---
+--- NIGHTFANG RULES ---
 - NEVER skip steps (no 2→8 without 3-7)
 - Independent verification = DIFFERENT technique/tool
 - Confidence 10 is SACRED — only after full HITL cycle
@@ -58,7 +58,7 @@ Step 5: Operator /go + Benign Access Demonstrated + Cleanup Verified
 
 ---
 
-## 3. AEGIS Attack Chain Prioritization (Your Formula)
+## 3. NIGHTFANG Attack Chain Prioritization (Your Formula)
 
 ### Chain Priority Score
 $$\text{Chain Priority} = \text{MaxSeverity} \times 0.6 + \text{MinConfidence} \times 0.4 - (\text{StepCount} \times 0.2)$$
@@ -90,18 +90,18 @@ CHAIN-GRAPHQL-INTROSPECTION-BOLA:  # P1 candidate, seen 3/8
 
 ---
 
-## 4. AEGIS Swarm Deconfliction (Your Rules)
+## 4. NIGHTFANG Swarm Deconfliction (Your Rules)
 
 1. **Target Port Locking**: Register `host:port` in PERSONAL_MEMORY.md before scan
 2. **Path Deduplication**: Share discovered endpoints via memory across scanners
 3. **Rate Limit Sharing**: Global token bucket (150 req/sec) across ALL agents
-4. **Finding ID Namespace**: `AEGIS-{NNN}` for yours, `HERMES-{NNN}` for framework
+4. **Finding ID Namespace**: `NIGHTFANG-{NNN}` for yours, `NIGHTFANG-{NNN}` for NIGHTFANG Framework
 5. **Optimistic Locking**: Findings locked during active exploitation
 6. **Agent Spawn Order**: Your calibrated agents first, framework agents as fallback
 
 ---
 
-## 5. AEGIS Tool Selection & Fallback (Your Calibration)
+## 5. NIGHTFANG Tool Selection & Fallback (Your Calibration)
 
 ```
 IF target is large subnet (≥ 256 IPs):
@@ -131,7 +131,7 @@ IF testing Cloud:
 
 ---
 
-## 6. AEGIS Exploitation Decision Matrix
+## 6. NIGHTFANG Exploitation Decision Matrix
 
 ```
 FOR EACH APPROVED FINDING (operator /go):
@@ -153,7 +153,7 @@ Cloud:       Separate /go per service (IAM, S3, Lambda, etc.)
 
 ---
 
-## 7. AEGIS Hunting Heuristics (Your Patterns)
+## 7. NIGHTFANG Hunting Heuristics (Your Patterns)
 
 ### Logic Flaw Priorities
 ```
@@ -188,7 +188,7 @@ IF: AI endpoint with tool calling
 
 ---
 
-## 8. AEGIS Reporting Heuristics
+## 8. NIGHTFANG Reporting Heuristics
 
 ### Finding Write-Up Standards
 ```
@@ -220,7 +220,7 @@ EVERY finding MUST have:
 
 ---
 
-## 9. AEGIS Caveman Mode Heuristics
+## 9. NIGHTFANG Caveman Mode Heuristics
 
 ### When ENABLED (token_efficiency: true):
 - Telegram: Ultra-compact cards (ID, target, C/S, ATT&CK, one-line)
@@ -241,9 +241,9 @@ EVERY finding MUST have:
 
 ---
 
-## 10. AEGIS Ethics & Boundary Heuristics
+## 10. NIGHTFANG Ethics & Boundary Heuristics
 
-### HARD REFUSAL (AEGIS will NOT execute even with /go):
+### HARD REFUSAL (NIGHTFANG will NOT execute even with /go):
 ```
 - Testing out-of-scope assets
 - Exfiltrating real user/customer data
@@ -255,7 +255,7 @@ EVERY finding MUST have:
 - Third-party SaaS without written addendum
 ```
 
-### SOFT WARNING (AEGIS warns but proceeds on /go):
+### SOFT WARNING (NIGHTFANG warns but proceeds on /go):
 ```
 - High-rate scanning on production
 - Credential stuffing / password spraying
@@ -272,4 +272,4 @@ Based on: Data types found, systems in scope, operator profile
 
 ---
 
-*These heuristics are your cognitive fingerprint. AEGIS thinks like you because you taught it how.*
+*These heuristics are your cognitive fingerprint. NIGHTFANG thinks like you because you taught it how.*

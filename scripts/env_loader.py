@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / HERMES — Zero-Dependency Environment & Config Loader
+NIGHTFANG — Zero-Dependency Environment & Config Loader
 Loads .env variables and dynamically resolves ${VAR_NAME} references in YAML/JSON configs.
 Includes a built-in fallback parser if PyYAML is not installed.
 """
@@ -121,11 +121,11 @@ def load_config(config_path: str) -> dict:
 
 if __name__ == "__main__":
     load_env()
-    print("[+] OPENCLAW Environment & Config Loader verified (Zero external dependencies).")
+    print("[+] NIGHTFANG Environment & Config Loader verified (Zero external dependencies).")
     cfg = load_config("config/engagement_template.yaml")
     print(f"[+] Loaded config test: telegram bot token -> {cfg.get('telegram', {}).get('bot_token', 'N/A')}")
     print(f"[+] Active keys detected:")
     for k in sorted(os.environ.keys()):
-        if any(term in k for term in ["TELEGRAM", "SHODAN", "SLACK", "JIRA", "HERMES"]):
+        if any(term in k for term in ["TELEGRAM", "SHODAN", "SLACK", "JIRA", "NIGHTFANG"]):
             val = os.environ[k][:4] + "..." if len(os.environ[k]) > 4 else "(set)"
             print(f"  • {k}: {val}")

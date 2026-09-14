@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / HERMES — Scope Validator Utility
+NIGHTFANG — Scope Validator Utility
 Validates whether target domains, IPs, URLs, and ports are strictly within authorized engagement scope.
 Tuned to .env and environment variable interpolation.
 """

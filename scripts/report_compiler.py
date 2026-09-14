@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OPENCLAW / HERMES — Report Compiler with Framework Mapping
+NIGHTFANG — Report Compiler with Framework Mapping
 Compiles structured findings into Markdown assessment reports mapped to MITRE ATT&CK & D3FEND.
 Tuned to .env and environment variable interpolation.
 """
@@ -54,7 +54,7 @@ def generate_report(engagement_config_path: str, findings_file: str, output_repo
         f"**Engagement:** {engagement.get('engagement', {}).get('name', 'Security Assessment')}",
         f"**Client:** {engagement.get('engagement', {}).get('client', 'Target Organization')}",
         f"**Date:** {utc_now}",
-        f"**Orchestrated By:** HERMES Swarm Agent (OPENCLAW Framework)\n",
+        f"**Orchestrated By:** NIGHTFANG Swarm Agent\n",
         f"---",
         f"## 1. Executive Summary\n",
         f"| Severity Level | Count |",
@@ -74,7 +74,7 @@ def generate_report(engagement_config_path: str, findings_file: str, output_repo
         attack_id = f_item.get('mitre_attack', 'T1190')
         d3fend_id = f_item.get('d3fend', 'D3-PSA')
         report_lines.append(
-            f"| {f_item.get('id', 'HERMES-XXX')} | {f_item.get('title')} | `{f_item.get('target')}` | {f_item.get('confidence')}/10 (C) / {f_item.get('severity')}/10 (S) | `{attack_id}` | `{d3fend_id}` | `{f_item.get('status', 'Confirmed')}` |"
+            f"| {f_item.get('id', 'NIGHTFANG-XXX')} | {f_item.get('title')} | `{f_item.get('target')}` | {f_item.get('confidence')}/10 (C) / {f_item.get('severity')}/10 (S) | `{attack_id}` | `{d3fend_id}` | `{f_item.get('status', 'Confirmed')}` |"
         )
 
     report_lines.append("\n---\n## 3. Detailed Findings Walkthroughs\n")

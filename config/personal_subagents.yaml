@@ -1,13 +1,13 @@
-# AEGIS Personal Subagent Definitions
-# Extends HERMES config/subagents.yaml with operator-calibrated agents
-# These agents inherit from HERMES framework agents but add personal calibration
+# NIGHTFANG Personal Subagent Definitions
+# Extends NIGHTFANG config/subagents.yaml with operator-calibrated agents
+# These agents inherit from NIGHTFANG framework agents but add personal calibration
 
 # ═══════════════════════════════════════════════════════════
-# AEGIS PERSONAL RECON SWARM
+# NIGHTFANG PERSONAL RECON SWARM
 # ═══════════════════════════════════════════════════════════
 
-aegis_recon_passive_agent:
-  name: "AEGIS-RECON-PASSIVE"
+nightfang_recon_passive_agent:
+  name: "NIGHTFANG-RECON-PASSIVE"
   role: "Personal Passive Reconnaissance Specialist"
   description: >-
     Extended passive recon with operator's learned evasion profiles,
@@ -22,8 +22,8 @@ aegis_recon_passive_agent:
     - scope-management
     - memory-management
     - evidence-collection
-    - personal-context          # AEGIS: Load learned signatures
-    - operator-prefs            # AEGIS: Apply operator preferences
+    - personal-context          # NIGHTFANG: Load learned signatures
+    - operator-prefs            # NIGHTFANG: Apply operator preferences
   tools_required:
     - whois
     - dig
@@ -35,14 +35,14 @@ aegis_recon_passive_agent:
     - whatweb
     - wafw00f
     - dnsrecon
-    - github-subdomains        # AEGIS: Custom tool
-    - crtsh-api                # AEGIS: Custom tool
+    - github-subdomains        # NIGHTFANG: Custom tool
+    - crtsh-api                # NIGHTFANG: Custom tool
   inputs:
     - scope_definition
     - target_domains
     - target_organization_name
-    - learned_waf_signatures    # AEGIS: From PERSONAL_MEMORY.md
-    - learned_rate_limits       # AEGIS: From PERSONAL_MEMORY.md
+    - learned_waf_signatures    # NIGHTFANG: From PERSONAL_MEMORY.md
+    - learned_rate_limits       # NIGHTFANG: From PERSONAL_MEMORY.md
   outputs:
     - subdomain_list
     - dns_records
@@ -50,10 +50,10 @@ aegis_recon_passive_agent:
     - whois_data
     - certificate_inventory
     - attack_surface_map
-    - waf_evasion_profile       # AEGIS: Personal output
-    - rate_limit_profile        # AEGIS: Personal output
+    - waf_evasion_profile       # NIGHTFANG: Personal output
+    - rate_limit_profile        # NIGHTFANG: Personal output
   hitl_required: false
-  max_runtime_minutes: 45       # AEGIS: Extended for custom sources
+  max_runtime_minutes: 45       # NIGHTFANG: Extended for custom sources
   priority: 1
   calibration:
     subfinder_sources: "all"
@@ -61,8 +61,8 @@ aegis_recon_passive_agent:
     github_dorks_enabled: true
     crtsh_depth: 3
 
-aegis_recon_active_agent:
-  name: "AEGIS-RECON-ACTIVE"
+nightfang_recon_active_agent:
+  name: "NIGHTFANG-RECON-ACTIVE"
   role: "Personal Active Reconnaissance Specialist"
   description: >-
     Calibrated port scanning with operator's preferred timing,
@@ -86,25 +86,25 @@ aegis_recon_active_agent:
     - enum4linux
     - snmpwalk
     - nbtscan
-    - zmap                      # AEGIS: For large subnets
+    - zmap                      # NIGHTFANG: For large subnets
   inputs:
     - scope_definition
     - passive_recon_results
     - scan_aggressiveness_preference
-    - learned_evasion_profiles  # AEGIS: From PERSONAL_MEMORY.md
+    - learned_evasion_profiles  # NIGHTFANG: From PERSONAL_MEMORY.md
   outputs:
     - host_inventory
     - port_service_map
     - os_fingerprints
     - nse_script_results
     - entry_point_list
-    - evasion_effectiveness     # AEGIS: Personal output
+    - evasion_effectiveness     # NIGHTFANG: Personal output
   hitl_required: true
-  hitl_message: "AEGIS Active Scan Ready: {target_count} hosts. Timing: T4. Evasion: {evasion_profile}. Est: {est_time}. /go to proceed?"
-  max_runtime_minutes: 90       # AEGIS: Extended for thorough enumeration
+  hitl_message: "NIGHTFANG Active Scan Ready: {target_count} hosts. Timing: T4. Evasion: {evasion_profile}. Est: {est_time}. /go to proceed?"
+  max_runtime_minutes: 90       # NIGHTFANG: Extended for thorough enumeration
   priority: 2
   depends_on:
-    - aegis_recon_passive_agent
+    - nightfang_recon_passive_agent
   calibration:
     nmap_timing: "T4"
     nmap_flags: "-sS -sV -sC --version-intensity 5 --min-rate 2000 --max-retries 1"
@@ -113,11 +113,11 @@ aegis_recon_active_agent:
     evasion_mode: "adaptive"    # Uses learned WAF profiles
 
 # ═══════════════════════════════════════════════════════════
-# AEGIS PERSONAL SCANNER SWARM
+# NIGHTFANG PERSONAL SCANNER SWARM
 # ═══════════════════════════════════════════════════════════
 
-aegis_scanner_webapp_agent:
-  name: "AEGIS-SCANNER-WEBAPP"
+nightfang_scanner_webapp_agent:
+  name: "NIGHTFANG-SCANNER-WEBAPP"
   role: "Personal Web Application Security Tester"
   description: >-
     OWASP Top 10 testing with operator's custom wordlists,
@@ -147,33 +147,33 @@ aegis_scanner_webapp_agent:
     - paramspider
     - wpscan
     - jwt_tool
-    - graphql-cop              # AEGIS: GraphQL testing
-    - custom-fuzzer            # AEGIS: Operator's custom fuzzer
+    - graphql-cop              # NIGHTFANG: GraphQL testing
+    - custom-fuzzer            # NIGHTFANG: Operator's custom fuzzer
   inputs:
     - scope_definition
     - web_endpoints_list
     - credentials
     - technology_stack
-    - custom_wordlists          # AEGIS: From engagement config
-    - custom_nuclei_templates   # AEGIS: From engagement config
+    - custom_wordlists          # NIGHTFANG: From engagement config
+    - custom_nuclei_templates   # NIGHTFANG: From engagement config
   outputs:
     - vulnerability_findings
     - injection_test_results
     - access_control_findings
     - session_management_findings
-    - business_logic_findings   # AEGIS: Emphasis on logic flaws
+    - business_logic_findings   # NIGHTFANG: Emphasis on logic flaws
     - evidence_artifacts
-    - custom_template_hits      # AEGIS: Personal output
+    - custom_template_hits      # NIGHTFANG: Personal output
   hitl_required: true
   hitl_checkpoints:
     - "Before SQLMap exploitation (--os-shell, --dump)"
     - "Before command injection exploitation"
     - "Before any file upload testing with shells"
     - "Before business logic abuse with financial impact"
-  max_runtime_minutes: 180      # AEGIS: Extended for thorough testing
+  max_runtime_minutes: 180      # NIGHTFANG: Extended for thorough testing
   priority: 3
   depends_on:
-    - aegis_recon_active_agent
+    - nightfang_recon_active_agent
   calibration:
     ffuf_threads: 50
     ffuf_rate: 150
@@ -183,8 +183,8 @@ aegis_scanner_webapp_agent:
     sqlmap_level: 3
     custom_fuzzing_enabled: true
 
-aegis_scanner_api_agent:
-  name: "AEGIS-SCANNER-API"
+nightfang_scanner_api_agent:
+  name: "NIGHTFANG-SCANNER-API"
   role: "Personal API Security Tester"
   description: >-
     REST, GraphQL, gRPC, SOAP testing with operator's
@@ -211,22 +211,22 @@ aegis_scanner_api_agent:
     - jwt_tool
     - mitmproxy
     - nuclei
-    - postman-cli              # AEGIS: Collection-based testing
+    - postman-cli              # NIGHTFANG: Collection-based testing
   inputs:
     - scope_definition
     - api_endpoints
     - api_documentation
     - auth_tokens
-    - graphql_schema            # AEGIS: From introspection
-    - custom_graphql_fields     # AEGIS: From field suggestions
+    - graphql_schema            # NIGHTFANG: From introspection
+    - custom_graphql_fields     # NIGHTFANG: From field suggestions
   outputs:
     - endpoint_inventory
     - bola_findings
     - auth_findings
     - rate_limit_findings
     - injection_findings
-    - graphql_findings          # AEGIS: GraphQL-specific
-    - jwt_analysis              # AEGIS: Algorithm confusion, weak secrets
+    - graphql_findings          # NIGHTFANG: GraphQL-specific
+    - jwt_analysis              # NIGHTFANG: Algorithm confusion, weak secrets
     - poc_curl_commands
   hitl_required: true
   hitl_checkpoints:
@@ -237,14 +237,14 @@ aegis_scanner_api_agent:
   max_runtime_minutes: 120
   priority: 3
   depends_on:
-    - aegis_recon_active_agent
+    - nightfang_recon_active_agent
   calibration:
     kiterunner_wordlist: "~/wordlists/kiterunner-routes.txt"
     jwt_algorithm_tests: ["HS256", "RS256", "ES256", "none", "kid"]
     graphql_field_suggestion_depth: 5
 
-aegis_scanner_ai_agent:
-  name: "AEGIS-SCANNER-AI"
+nightfang_scanner_ai_agent:
+  name: "NIGHTFANG-SCANNER-AI"
   role: "Personal LLM & AI Security Specialist"
   description: >-
     AI/LLM testing with operator's prompt injection corpus,
@@ -266,21 +266,21 @@ aegis_scanner_ai_agent:
     - curl
     - requests
     - python
-    - playwright                # AEGIS: For browser-based AI interfaces
+    - playwright                # NIGHTFANG: For browser-based AI interfaces
   inputs:
     - scope_definition
     - ai_endpoints
     - tool_schemas
-    - prompt_injection_corpus   # AEGIS: From ~/prompts/injection-corpus.txt
-    - system_prompt_templates   # AEGIS: Known patterns
-    - mcp_server_definitions    # AEGIS: From config/mcp_servers.yaml
+    - prompt_injection_corpus   # NIGHTFANG: From ~/prompts/injection-corpus.txt
+    - system_prompt_templates   # NIGHTFANG: Known patterns
+    - mcp_server_definitions    # NIGHTFANG: From config/mcp_servers.yaml
   outputs:
     - prompt_injection_findings
     - system_prompt_extraction_findings
     - insecure_output_findings
     - mcp_tool_tampering_findings
-    - rag_poisoning_findings    # AEGIS: RAG-specific
-    - agent_hijacking_findings  # AEGIS: Agentic workflow abuse
+    - rag_poisoning_findings    # NIGHTFANG: RAG-specific
+    - agent_hijacking_findings  # NIGHTFANG: Agentic workflow abuse
     - evidence_artifacts
   hitl_required: true
   hitl_checkpoints:
@@ -290,18 +290,18 @@ aegis_scanner_ai_agent:
   max_runtime_minutes: 90
   priority: 3
   depends_on:
-    - aegis_recon_active_agent
+    - nightfang_recon_active_agent
   calibration:
     injection_corpus_size: "full"
     multi_turn_testing: true
     context_window_probing: true
 
 # ═══════════════════════════════════════════════════════════
-# AEGIS PERSONAL HUNTER & EXPLOITER
+# NIGHTFANG PERSONAL HUNTER & EXPLOITER
 # ═══════════════════════════════════════════════════════════
 
-aegis_hunter_agent:
-  name: "AEGIS-HUNTER"
+nightfang_hunter_agent:
+  name: "NIGHTFANG-HUNTER"
   role: "Personal Threat Hunter & Chain Builder"
   description: >-
     Advanced hunting with operator's attack chain templates,
@@ -322,22 +322,22 @@ aegis_hunter_agent:
     - all_findings
     - asset_inventory
     - technology_stack
-    - attack_chain_templates    # AEGIS: From PERSONAL_MEMORY.md
-    - logic_flaw_patterns       # AEGIS: Operator's known patterns
+    - attack_chain_templates    # NIGHTFANG: From PERSONAL_MEMORY.md
+    - logic_flaw_patterns       # NIGHTFANG: Operator's known patterns
   outputs:
     - attack_chains
     - logic_flaw_findings
     - compound_risk_assessment
     - novel_findings
-    - chain_visualizations      # AEGIS: Mermaid diagrams
-    - prioritized_exploit_list  # AEGIS: Ranked by chain priority
+    - chain_visualizations      # NIGHTFANG: Mermaid diagrams
+    - prioritized_exploit_list  # NIGHTFANG: Ranked by chain priority
   hitl_required: true
-  max_runtime_minutes: 180      # AEGIS: Extended for deep hunting
+  max_runtime_minutes: 180      # NIGHTFANG: Extended for deep hunting
   priority: 4
   depends_on:
-    - aegis_scanner_webapp_agent
-    - aegis_scanner_api_agent
-    - aegis_scanner_ai_agent
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
   calibration:
     chain_priority_formula: "MaxSeverity*0.6 + MinConfidence*0.4 - StepCount*0.2"
     logic_flow_testing: true
@@ -345,8 +345,8 @@ aegis_hunter_agent:
     http_smuggling_testing: true
     cache_poisoning_testing: true
 
-aegis_exploiter_agent:
-  name: "AEGIS-EXPLOITER"
+nightfang_exploiter_agent:
+  name: "NIGHTFANG-EXPLOITER"
   role: "Personal Exploitation Specialist"
   description: >-
     Exploitation with operator's POC safety rules, benign-only execution,
@@ -363,7 +363,7 @@ aegis_exploiter_agent:
     - scope-management
     - memory-management
     - evidence-collection
-    - operator-prefs            # AEGIS: Enforce operator POC rules
+    - operator-prefs            # NIGHTFANG: Enforce operator POC rules
   tools_required:
     - metasploit
     - sqlmap
@@ -371,20 +371,20 @@ aegis_exploiter_agent:
     - msfvenom
     - john
     - hashcat
-    - custom-payload-generator  # AEGIS: Operator's payload patterns
+    - custom-payload-generator  # NIGHTFANG: Operator's payload patterns
   inputs:
     - approved_findings
     - operator_decisions
     - target_details
-    - poc_safety_rules          # AEGIS: From OPERATOR_PROFILE.md
-    - cleanup_verification      # AEGIS: Mandatory screenshot proof
+    - poc_safety_rules          # NIGHTFANG: From OPERATOR_PROFILE.md
+    - cleanup_verification      # NIGHTFANG: Mandatory screenshot proof
   outputs:
     - exploitation_results
     - access_gained
     - impact_assessment
     - evidence_artifacts
-    - cleanup_verification      # AEGIS: Required output
-    - screenshot_evidence       # AEGIS: Required output
+    - cleanup_verification      # NIGHTFANG: Required output
+    - screenshot_evidence       # NIGHTFANG: Required output
   hitl_required: true
   hitl_checkpoints:
     - "Before EVERY exploitation attempt"
@@ -395,10 +395,10 @@ aegis_exploiter_agent:
   max_runtime_minutes: 240
   priority: 4
   depends_on:
-    - aegis_scanner_webapp_agent
-    - aegis_scanner_api_agent
-    - aegis_scanner_ai_agent
-    - aegis_hunter_agent
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
+    - nightfang_hunter_agent
   calibration:
     poc_commands_only: ["id", "whoami", "hostname", "SELECT version()", "ls -la /tmp"]
     no_data_exfiltration: true
@@ -406,11 +406,11 @@ aegis_exploiter_agent:
     cleanup_screenshot_required: true
 
 # ═══════════════════════════════════════════════════════════
-# AEGIS PERSONAL REPORTER
+# NIGHTFANG PERSONAL REPORTER
 # ═══════════════════════════════════════════════════════════
 
-aegis_reporter_agent:
-  name: "AEGIS-REPORTER"
+nightfang_reporter_agent:
+  name: "NIGHTFANG-REPORTER"
   role: "Personal Report Generator"
   description: >-
     Report generation with operator's format, voice, remediation style,
@@ -430,28 +430,28 @@ aegis_reporter_agent:
     - attack_chains
     - operator_decisions
     - engagement_timeline
-    - personal_report_template    # AEGIS: templates/personal_report_template.md
-    - remediation_style           # AEGIS: Code-level, architectural, strategic
+    - personal_report_template    # NIGHTFANG: templates/personal_report_template.md
+    - remediation_style           # NIGHTFANG: Code-level, architectural, strategic
   outputs:
     - executive_report
     - technical_report
     - remediation_roadmap
     - telegram_summary
-    - jira_tickets                # AEGIS: Auto-create if configured
-    - github_issues               # AEGIS: Auto-create if configured
+    - jira_tickets                # NIGHTFANG: Auto-create if configured
+    - github_issues               # NIGHTFANG: Auto-create if configured
   hitl_required: false
   max_runtime_minutes: 45
   priority: 5
   depends_on:
-    - aegis_scanner_webapp_agent
-    - aegis_scanner_api_agent
-    - aegis_scanner_ai_agent
-    - aegis_scanner_network_agent
-    - aegis_scanner_ssl_agent
-    - aegis_scanner_vuln_agent
-    - aegis_scanner_cloud_agent
-    - aegis_exploiter_agent
-    - aegis_hunter_agent
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
+    - nightfang_scanner_network_agent
+    - nightfang_scanner_ssl_agent
+    - nightfang_scanner_vuln_agent
+    - nightfang_scanner_cloud_agent
+    - nightfang_exploiter_agent
+    - nightfang_hunter_agent
   calibration:
     report_template: "templates/personal_report_template.md"
     finding_template: "templates/personal_finding_template.md"
@@ -461,22 +461,22 @@ aegis_reporter_agent:
     framework_mappings: ["MITRE_ATTACK", "MITRE_ATLAS", "MITRE_D3FEND", "NIST_CSF", "NIST_AI_RMF", "CWE", "OWASP", "CVSS31"]
 
 # ═══════════════════════════════════════════════════════════
-# HERMES FRAMEWORK AGENTS (Inherited - Unmodified)
+# NIGHTFANG FRAMEWORK AGENTS (Inherited - Unmodified)
 # ═══════════════════════════════════════════════════════════
 # These are referenced by inherits: above
 # See config/subagents.yaml for full definitions
 
 # ═══════════════════════════════════════════════════════════
-# AEGIS ORCHESTRATOR
+# NIGHTFANG ORCHESTRATOR
 # ═══════════════════════════════════════════════════════════
 
-aegis_orchestrator:
-  name: "AEGIS"
+nightfang_orchestrator:
+  name: "NIGHTFANG"
   role: "Personal Engagement Orchestrator"
   description: >-
-    Master orchestrator extending HERMES with personal memory,
+    Master orchestrator extending NIGHTFANG with personal memory,
     operator preferences, learned patterns, and calibrated tooling.
-  inherits: "hermes_orchestrator"
+  inherits: "nightfang_orchestrator"
   skills:
     - scope-management
     - memory-management
@@ -490,20 +490,20 @@ aegis_orchestrator:
     - custom-tooling
   agent_spawn_order:
     phase_1_recon:
-      - aegis_recon_passive_agent
+      - nightfang_recon_passive_agent
     phase_2_active_recon:
-      - aegis_recon_active_agent
+      - nightfang_recon_active_agent
     phase_3_scanning:
-      - aegis_scanner_webapp_agent
-      - aegis_scanner_api_agent
-      - aegis_scanner_ai_agent
+      - nightfang_scanner_webapp_agent
+      - nightfang_scanner_api_agent
+      - nightfang_scanner_ai_agent
       - network_scanner_agent
       - ssl_scanner_agent
       - vuln_scanner_agent
       - cloud_scanner_agent
     phase_4_analysis:
-      - aegis_hunter_agent
+      - nightfang_hunter_agent
     phase_5_exploitation:
-      - aegis_exploiter_agent
+      - nightfang_exploiter_agent
     phase_6_reporting:
-      - aegis_reporter_agent
+      - nightfang_reporter_agent

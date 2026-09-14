@@ -141,7 +141,7 @@ class ReporterAgent(BaseAgent):
         
         lines.append("### Testing Methodology")
         lines.append("")
-        lines.append("The assessment followed the OPENCLAW/HERMES methodology:")
+        lines.append("The assessment followed the NIGHTFANG methodology:")
         lines.append("1. **Passive Reconnaissance** (OSINT, DNS, Certificate Transparency)")
         lines.append("2. **Active Reconnaissance** (Port Scanning, Service Enumeration)")
         lines.append("3. **Vulnerability Scanning** (Web, API, Network, SSL/TLS, Cloud)")
@@ -310,7 +310,7 @@ class ReporterAgent(BaseAgent):
         
         sorted_findings = sorted(findings, key=lambda x: (x.get('severity', 0), x.get('confidence', 0)), reverse=True)
         
-        text = f"""📋 HERMES Engagement Report
+        text = f"""📋 NIGHTFANG Engagement Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 Target: {self.config.client}
 📅 Date: {datetime.utcnow().strftime('%Y-%m-%d')}

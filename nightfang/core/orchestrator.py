@@ -1,4 +1,4 @@
-"""HERMES Orchestrator - Main engagement coordinator."""
+"""NIGHTFANG Orchestrator - Main engagement coordinator."""
 import asyncio
 import logging
 import signal
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class HermesOrchestrator:
-    """Master orchestrator for OPENCLAW/HERMES engagements."""
+    """Master orchestrator for NIGHTFANG engagements."""
     
     def __init__(self, config_path: str, engagement_id: Optional[str] = None):
         self.config_path = config_path
@@ -73,7 +73,7 @@ class HermesOrchestrator:
         
         # Send startup notification
         await self.telegram.send_message(
-            f"🦅 HERMES Online — Engagement: {self.engagement_id}\n"
+            f"🦅 NIGHTFANG Online — Engagement: {self.engagement_id}\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🎯 Target: {self.config.client}\n"
             f"📋 Type: {self.config.type}\n"

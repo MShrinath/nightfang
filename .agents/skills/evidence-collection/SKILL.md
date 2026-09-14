@@ -23,7 +23,7 @@ evidence:
   command: "nmap -sV -sC -p 80,443 target.com"
   output: |
     [full command output]
-  finding_id: "HERMES-001"
+  finding_id: "NIGHTFANG-001"
   agent: "recon-active"
 ```
 
@@ -45,7 +45,7 @@ evidence:
     
     root:x:0:0:root:/root:/bin/bash
     ...
-  finding_id: "HERMES-005"
+  finding_id: "NIGHTFANG-005"
 ```
 
 ### 3. Screenshot Evidence
@@ -55,7 +55,7 @@ evidence:
   timestamp: "2024-01-15T11:30:00Z"
   description: "Admin panel accessible without authentication"
   file_path: "evidence/screenshots/admin_panel_unauth.png"
-  finding_id: "HERMES-008"
+  finding_id: "NIGHTFANG-008"
 ```
 
 ### 4. File Evidence
@@ -66,7 +66,7 @@ evidence:
   description: "Extracted configuration file containing credentials"
   file_path: "evidence/files/config.xml"
   hash_sha256: "abc123..."
-  finding_id: "HERMES-012"
+  finding_id: "NIGHTFANG-012"
 ```
 
 ## Evidence Organization

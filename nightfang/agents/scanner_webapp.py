@@ -155,7 +155,7 @@ class WebAppScannerAgent(BaseAgent):
                 sev_score = sev_map.get(severity, 1)
                 
                 finding = Finding(
-                    id=f"HERMES-WEB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
+                    id=f"NIGHTFANG-WEB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
                     title=info.get('name', 'Nuclei Finding'),
                     target=endpoint,
                     type=info.get('type', 'webapp'),
@@ -178,7 +178,7 @@ class WebAppScannerAgent(BaseAgent):
             data = json.loads(output)
             for vuln in data.get('vulnerabilities', []):
                 finding = Finding(
-                    id=f"HERMES-NIKTO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
+                    id=f"NIGHTFANG-NIKTO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
                     title=vuln.get('msg', 'Nikto Finding'),
                     target=endpoint,
                     type='webapp_misconfig',
@@ -201,7 +201,7 @@ class WebAppScannerAgent(BaseAgent):
                 status = result.get('status', 0)
                 if status in [200, 204, 301, 302, 307]:
                     finding = Finding(
-                        id=f"HERMES-FFUF-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
+                        id=f"NIGHTFANG-FFUF-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
                         title=f"Discovered path: {result.get('url', '')}",
                         target=endpoint,
                         type='directory_enumeration',

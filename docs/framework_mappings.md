@@ -1,6 +1,6 @@
-# 🛡️ OPENCLAW / HERMES — Security Framework Cross-Mapping
+# 🛡️ NIGHTFANG — Security Framework Cross-Mapping
 
-This document defines the comprehensive cross-framework mapping for all 20 OPENCLAW skills across **MITRE ATT&CK v19**, **NIST CSF 2.0**, **MITRE D3FEND v1.4**, **MITRE ATLAS**, and **OWASP Standards**.
+This document defines the comprehensive cross-framework mapping for all 20 NIGHTFANG skills across **MITRE ATT&CK v19**, **NIST CSF 2.0**, **MITRE D3FEND v1.4**, **MITRE ATLAS**, and **OWASP Standards**.
 
 ---
 
@@ -35,7 +35,7 @@ This document defines the comprehensive cross-framework mapping for all 20 OPENC
 
 ```
 ┌─────────────────┬───────────────────────────────────────────┬───────────────────────────┐
-│ TACTIC          │ OPENCLAW PHASE & SKILLS                   │ ATT&CK TECHNIQUES COVERED │
+│ TACTIC          │ NIGHTFANG PHASE & SKILLS                   │ ATT&CK TECHNIQUES COVERED │
 ├─────────────────┼───────────────────────────────────────────┼───────────────────────────┤
 │ TA0043 Recon    │ Phase 1 & 2 (recon-passive, recon-active) │ T1595, T1593, T1594, T1596│
 │ TA0001 Initial  │ Phase 3 (webapp-testing, api-testing, ai) │ T1190, T1133, T1078       │
@@ -50,7 +50,7 @@ This document defines the comprehensive cross-framework mapping for all 20 OPENC
 ---
 
 ## MITRE D3FEND Defensive Mapping
-Every finding reported by OPENCLAW via Telegram automatically proposes the corresponding **D3FEND Defensive Countermeasure ID**:
+Every finding reported by NIGHTFANG via Telegram automatically proposes the corresponding **D3FEND Defensive Countermeasure ID**:
 - **Injection Flaws (SQLi/XSS/Command):** `D3-PSA` (Parameter Sanitization Analysis) & `D3-WAF` (Web Application Filtering)
 - **Broken Authentication / BOLA:** `D3-ARA` (Application Role Authorization) & `D3-BA` (Biometric/MFA Authentication)
 - **Weak TLS Configuration:** `D3-CTA` (Certificate Trust Analysis) & `D3-CH` (Cryptographic Hash Hardening)

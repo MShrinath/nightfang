@@ -54,13 +54,13 @@ class EngagementConfig:
     start_date: str = ""
     end_date: str = ""
     operator: str = "@SecurityLead"
-    aegis_version: str = "1.0.0"
+    nightfang_version: str = "1.0.0"
     scope: ScopeConfig = field(default_factory=ScopeConfig)
     credentials: list = field(default_factory=list)
     rules: RulesConfig = field(default_factory=RulesConfig)
     telegram: Optional[TelegramConfig] = None
     agent: AgentConfig = field(default_factory=AgentConfig)
-    aegis: Dict = field(default_factory=dict)
+    nightfang: Dict = field(default_factory=dict)
 
 
 def substitute_env_vars(value: Any) -> Any:
@@ -141,11 +141,11 @@ def load_config(config_path: str) -> EngagementConfig:
         start_date=engagement_data.get('start_date', ''),
         end_date=engagement_data.get('end_date', ''),
         operator=engagement_data.get('operator', '@SecurityLead'),
-        aegis_version=engagement_data.get('aegis_version', '1.0.0'),
+        nightfang_version=engagement_data.get('nightfang_version', '1.0.0'),
         scope=scope,
         credentials=engagement_data.get('credentials', []),
         rules=rules,
         telegram=telegram,
         agent=agent,
-        aegis=engagement_data.get('aegis', {})
+        nightfang=engagement_data.get('nightfang', {})
     )

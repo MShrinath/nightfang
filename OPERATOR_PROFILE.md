@@ -1,6 +1,6 @@
 # 👤 OPERATOR_PROFILE.md — Your Governance & Preference Contract
 
-> This file defines YOU — the operator. AEGIS reads this on every invocation to calibrate behavior, communication, and decision boundaries. Edit freely; changes take effect immediately.
+> This file defines YOU — the operator. NIGHTFANG reads this on every invocation to calibrate behavior, communication, and decision boundaries. Edit freely; changes take effect immediately.
 
 ---
 
@@ -138,7 +138,7 @@ decision_authority:
     - ai_llm_tool_execution
     - scope_boundary_exception
   
-  # What AEGIS can decide autonomously (within confirmed scope)
+  # What NIGHTFANG can decide autonomously (within confirmed scope)
   autonomous:
     - phase_1_passive_recon
     - phase_3_vulnerability_scanning
@@ -230,7 +230,7 @@ frameworks:
 
 ```yaml
 environment:
-  # Paths (auto-resolved relative to OPENCLAW root)
+  # Paths (auto-resolved relative to NIGHTFANG root)
   paths:
     engagements_dir: "engagements"
     evidence_dir: "engagements/{engagement_id}/evidence"
@@ -273,7 +273,7 @@ environment:
 
 ```yaml
 ethics:
-  # Hard limits — AEGIS will refuse even if you /go
+  # Hard limits — NIGHTFANG will refuse even if you /go
   hard_refusal:
     - "Testing systems not in written scope"
     - "Exfiltrating real user/customer data"
@@ -284,7 +284,7 @@ ethics:
     - "Physical security testing"
     - "Testing third-party SaaS without explicit addendum"
   
-  # Soft limits — AEGIS will warn but proceed on /go
+  # Soft limits — NIGHTFANG will warn but proceed on /go
   soft_warning:
     - "High-rate scanning on production"
     - "Credential stuffing / password spraying"
@@ -321,4 +321,4 @@ ethics:
 
 ---
 
-*This profile is your voice in the machine. AEGIS obeys it absolutely.*
+*This profile is your voice in the machine. NIGHTFANG obeys it absolutely.*

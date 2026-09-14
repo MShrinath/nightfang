@@ -102,7 +102,7 @@ class ReconActiveAgent(BaseAgent):
         target_count += len(inputs.get('scope_definition', {}).get('in_scope', {}).get('ips', []))
         
         finding = Finding(
-            id=f"HERMES-ACTIVE-SCAN-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            id=f"NIGHTFANG-ACTIVE-SCAN-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
             title="Active Reconnaissance Authorization",
             target=f"{target_count} targets",
             type="active_recon",

@@ -144,7 +144,7 @@ class TelegramBot:
         if atlas: framework_tags.append(f"ATLAS: {', '.join(atlas)}")
         if d3fend: framework_tags.append(f"D3FEND: {', '.join(d3fend)}")
         
-        return f"""🔍 HERMES Finding #[{fid}]
+        return f"""🔍 NIGHTFANG Finding #[{fid}]
 ━━━━━━━━━━━━━━━━━━━━━━
 📎 Target: {target}
 🎯 Type: {ftype}
@@ -182,7 +182,7 @@ Tested: {targets_tested} | Findings: {findings.get('critical',0)}C {findings.get
 Queue: {queue}
 Next: {next_action}"""
         else:
-            text = f"""📊 HERMES Status Update
+            text = f"""📊 NIGHTFANG Status Update
 ━━━━━━━━━━━━━━━━━━━━━━
 🕐 Phase: {phase}
 ⏱️ Duration: {duration}
@@ -217,7 +217,7 @@ Next: {next_action}"""
         await self.send_message(text)
     
     async def _handle_start(self, message: dict) -> str:
-        return "🦅 HERMES Online — Ready for engagement. Use /help for commands."
+        return "🦅 NIGHTFANG Online — Ready for engagement. Use /help for commands."
     
     async def _handle_go(self, message: dict) -> str:
         parts = message.get('text', '').split()
@@ -273,7 +273,7 @@ Next: {next_action}"""
         
         assets = self.memory.load_assets()
         
-        return f"""📊 HERMES Status
+        return f"""📊 NIGHTFANG Status
 ━━━━━━━━━━━━━━━━━━
 🎯 Assets Discovered: {len(assets)}
 🔍 Findings: {stats['critical']}C {stats['high']}H {stats['medium']}M {stats['low']}L {stats['info']}I
@@ -346,7 +346,7 @@ Next: {next_action}"""
         return '\n'.join(lines)
     
     async def _handle_help(self, message: dict) -> str:
-        return """🤖 HERMES Commands
+        return """🤖 NIGHTFANG Commands
 ━━━━━━━━━━━━━━━━━━
 /start — Initialize engagement
 /go <id> — Approve exploitation for finding

@@ -1,4 +1,4 @@
-# 📜 OPENCLAW / HERMES — Standard Operating Procedures (SOPs)
+# 📜 NIGHTFANG — Standard Operating Procedures (SOPs)
 
 This document specifies the operational runbooks and standard operating procedures that all swarm agents and operators must adhere to during engagements.
 
@@ -39,7 +39,7 @@ This document specifies the operational runbooks and standard operating procedur
 ## SOP-04: Human-in-the-Loop (HITL) Exploitation Gate
 **Objective:** Ensure complete operator governance prior to active exploitation.
 1. **Identification**: Scanner agent flags candidate vulnerability with Severity >= 5.
-2. **Telegram Alert Dispatch**: HERMES sends structured alert with finding ID, target, proposed action, risk level, and `/go` or `/hold` prompt.
+2. **Telegram Alert Dispatch**: NIGHTFANG sends structured alert with finding ID, target, proposed action, risk level, and `/go` or `/hold` prompt.
 3. **Execution Block**: The `EXPLOITER` subagent remains in a paused state until operator replies `/go [ID]`.
 4. **Timeout Handling**: If operator does not respond within 60 minutes, the action is queued, and the swarm continues other non-intrusive scanning tasks.
 
@@ -70,7 +70,7 @@ This document specifies the operational runbooks and standard operating procedur
 **Objective:** Immediate shutdown of all active testing in case of critical incidents.
 1. **Trigger**: Operator sends `/stop` via Telegram or CLI.
 2. **Swarm Action**:
-   - HERMES broadcasts immediate kill signal to all active subagents (`RECON-ACTIVE`, `SCANNER-WEBAPP`, `EXPLOITER`, etc.).
+   - NIGHTFANG broadcasts immediate kill signal to all active subagents (`RECON-ACTIVE`, `SCANNER-WEBAPP`, `EXPLOITER`, etc.).
    - All background subprocesses (`nmap`, `ffuf`, `sqlmap`) are terminated.
    - Current session state is persisted to `MEMORY.md`.
-   - HERMES confirms shutdown to operator on Telegram.
+   - NIGHTFANG confirms shutdown to operator on Telegram.

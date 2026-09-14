@@ -1,22 +1,22 @@
-<!-- AEGIS Personal Finding Template - Operator's Format, Voice & Standards -->
+<!-- NIGHTFANG Personal Finding Template - Operator's Format, Voice & Standards -->
 # Finding #[FINDING_ID]: [Vulnerability Title]
 
 **Target:** `[ENDPOINT_OR_HOST]`
 **Vulnerability Type:** [VULNERABILITY_TYPE]
 **Date Discovered:** [YYYY-MM-DD HH:MM:SS UTC]
-**Discovered By:** AEGIS-[AGENT_NAME]
+**Discovered By:** NIGHTFANG-[AGENT_NAME]
 **Engagement:** [ENGAGEMENT_ID]
 
 ---
 
-## 📊 Dual Scoring Assessment (AEGIS Calibrated)
+## 📊 Dual Scoring Assessment (NIGHTFANG Calibrated)
 
 | Metric | Score | Justification |
 | :--- | :--- | :--- |
-| **Confidence Score** | **[1-10]/10** | [AEGIS Standard: Banner=2, Differential=5, Deterministic=8, Exploited=10] |
-| **Severity Score** | **[1-10]/10** | [AEGIS Standard: RCE/Data=9-10, Auth Bypass/BOLA=7-8, IDOR/XSS/SSRF=5-6, Info=1-4] |
+| **Confidence Score** | **[1-10]/10** | [NIGHTFANG Standard: Banner=2, Differential=5, Deterministic=8, Exploited=10] |
+| **Severity Score** | **[1-10]/10** | [NIGHTFANG Standard: RCE/Data=9-10, Auth Bypass/BOLA=7-8, IDOR/XSS/SSRF=5-6, Info=1-4] |
 | **Status** | `[Suspected \| Confirmed \| Exploited \| False Positive]` | Current lifecycle status |
-| **Chain Priority** | `[P0 \| P1 \| P2 \| —]` | From AEGIS chain priority formula |
+| **Chain Priority** | `[P0 \| P1 \| P2 \| —]` | From NIGHTFANG chain priority formula |
 
 ### 🛡️ Industry Framework Classifications
 - **MITRE ATT&CK v19:** `[e.g., T1190 - Exploit Public-Facing Application]`
@@ -68,7 +68,7 @@ Content-Length: [LEN]
 
 ---
 
-## 👣 Step-by-Step Walkthrough to Reproduce (AEGIS Standard: 100% Reproducible)
+## 👣 Step-by-Step Walkthrough to Reproduce (NIGHTFANG Standard: 100% Reproducible)
 
 ### 1. Prerequisites
 ```bash
@@ -111,7 +111,7 @@ curl -s -X GET "$TARGET/api/v1/users/1/profile" \
 
 ---
 
-## 🔗 Attack Chain Context (AEGIS)
+## 🔗 Attack Chain Context (NIGHTFANG)
 
 ### This Finding Enables:
 - [ ] **CHAIN-BOLA-JWT-ADMIN** — BOLA → Weak JWT → Admin Panel
@@ -126,7 +126,7 @@ curl -s -X GET "$TARGET/api/v1/users/1/profile" \
 
 ---
 
-## 🛡️ Remediation & D3FEND Countermeasures (AEGIS Style: Code → Config → Architecture)
+## 🛡️ Remediation & D3FEND Countermeasures (NIGHTFANG Style: Code → Config → Architecture)
 
 ### ⚡ Immediate Fix (Code/Config)
 ```python
@@ -149,10 +149,10 @@ def get_profile(user_id):
 ---
 
 ## 📎 Evidence Artifacts
-- `evidence/AEGIS-042_request.http` — Raw request
-- `evidence/AEGIS-042_response.http` — Raw response
-- `evidence/AEGIS-042_screenshot.png` — Browser/terminal proof
-- `evidence/AEGIS-042_curl.sh` — Reproduction script
+- `evidence/NIGHTFANG-042_request.http` — Raw request
+- `evidence/NIGHTFANG-042_response.http` — Raw response
+- `evidence/NIGHTFANG-042_screenshot.png` — Browser/terminal proof
+- `evidence/NIGHTFANG-042_curl.sh` — Reproduction script
 
 ---
 
@@ -160,4 +160,4 @@ def get_profile(user_id):
 - [Official CVE / Advisory Link]
 - [OWASP Testing Guide Reference]
 - [MITRE ATT&CK Technique Link]
-- [AEGIS Chain Template: CHAIN-XXX]
+- [NIGHTFANG Chain Template: CHAIN-XXX]
