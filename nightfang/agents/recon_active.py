@@ -1,164 +1,268 @@
-"""Active Reconnaissance Agent."""
+"""Recon Active Agent - Active network discovery and port enumeration."""
 import asyncio
-import json
 import logging
 import re
-import ipaddress
+from typing import Any, Dict, List
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
+from .base import BaseAgent, ToolResult
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
-from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
+from ..core.memory import MemoryManager, Finding, Asset
 from ..core.telegram_bot import TelegramBot
-from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
 
 
 class ReconActiveAgent(BaseAgent):
-    """Active reconnaissance - port scanning, service enumeration, version detection."""
+    """Active reconnaissance agent - port scanning, service enumeration, OS fingerprinting."""
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "RECON-ACTIVE"
-        self.role = "Active Reconnaissance Specialist"
-        self.tools_required = ['nmap', 'masscan', 'rustscan', 'enum4linux', 'snmpwalk', 'nbtscan']
-        self.hitl_required = True
-        self.hitl_checkpoints = ["Before active scanning begins"]
-        self.max_runtime_minutes = 60
+    def __init__(
+        self,
+        config: EngagementConfig,
+        agent_config: AgentConfig,
+        scope_validator: ScopeValidator,
+        memory: MemoryManager,
+        telegram: TelegramBot
+    ):
+        super().__init__(
+            name="RECON-ACTIVE",
+            role="Active Reconnaissance Specialist",
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["recon-active", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=["nmap", "masscan", "rustscan"],
+            hitl_required=True,
+            hitl_checkpoints=["before_port_scan", "before_service_enum"],
+            max_runtime_minutes=90
+        )
     
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute active reconnaissance."""
-        self.log_event("recon", "Starting active reconnaissance", "started")
+        """Execute active reconnaissance against in-scope targets."""
+        logger.info(f"[{self.name}] Starting active reconnaissance")
+        self.log_event("recon_active", "started", "Active reconnaissance initiated")
         
-        # Request HITL approval for active scanning
+        # Request approval for active scanning
         if self.hitl_required:
-            await self._request_scan_approval(inputs)
+            approval = await self._request_scan_approval(inputs.get("targets", []))
+            if approval != "go":
+                return {"status": "cancelled", "reason": "Operator denied approval"}
         
-        passive_results = inputs.get('passive_recon_results', {})
-        targets = passive_results.get('subdomain_list', [])
-        scope = inputs.get('scope_definition', {})
-        ips = scope.get('in_scope', {}).get('ips', [])
-        
-        # Add IPs from scope
-        for ip_spec in ips:
-            targets.append(ip_spec)
-        
-        # Also add assets from memory
-        assets = self.memory.load_assets()
-        for asset in assets:
-            if asset.get('host') and asset['host'] not in targets:
-                targets.append(asset['host'])
-        
+        targets = inputs.get("targets", [])
         results = {
-            'host_inventory': [],
-            'port_service_map': {},
-            'os_fingerprints': {},
-            'nse_script_results': [],
-            'entry_point_list': []
+            "hosts": [],
+            "ports": [],
+            "services": [],
+            "os_fingerprints": [],
+            "assets": []
         }
+        
+        # Phase 1: Quick port discovery with masscan
+        logger.info(f"[{self.name}] Phase 1: Port discovery")
+        open_ports = await self._port_discovery(targets)
+        results["ports"] = open_ports
+        
+        # Phase 2: Service enumeration with nmap
+        logger.info(f"[{self.name}] Phase 2: Service enumeration")
+        services = await self._service_enumeration(open_ports)
+        results["services"] = services
+        
+        # Phase 3: OS fingerprinting
+        logger.info(f"[{self.name}] Phase 3: OS fingerprinting")
+        os_fps = await self._os_fingerprinting(targets)
+        results["os_fingerprints"] = os_fps
+        
+        # Phase 4: Targeted NSE scripts
+        logger.info(f"[{self.name}] Phase 4: NSE enumeration")
+        nse_results = await self._nse_enumeration(open_ports)
+        
+        # Register assets
+        for port_info in open_ports:
+            asset = Asset(
+                identifier=f"{port_info['host']}:{port_info['port']}",
+                type="service",
+                metadata={
+                    "host": port_info["host"],
+                    "port": port_info["port"],
+                    "protocol": port_info["protocol"],
+                    "state": port_info["state"]
+                }
+            )
+            self.add_asset(asset)
+        
+        self.memory.save_phase_result("recon_active", results)
+        self.log_event("recon_active", "completed", f"Scanned {len(targets)} targets, found {len(open_ports)} open ports")
+        
+        return results
+    
+    async def _request_scan_approval(self, targets: List[str]) -> str:
+        """Request operator approval for active scanning."""
+        from ..core.memory import Finding
+        
+        finding = Finding(
+            id=f"RECON-ACTIVE-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            target=", ".join(targets),
+            type="RECON_APPROVAL",
+            confidence=10,
+            severity=1,
+            title=f"Request approval for active port scanning of {len(targets)} targets",
+            description=f"Targets: {', '.join(targets)}\nScan type: T4 aggressive port scan with service enumeration\nEstimated time: 5-15 minutes",
+            proposed_action="nmap -sS -T4 -sV -sC -p- --min-rate 2000",
+            risk="Active port scanning will send packets directly to targets",
+            mitre_attack="T1046",
+            d3fend="D3-NTA"
+        )
+        
+        decision = await self.request_approval(
+            finding,
+            "Full TCP port scan with service version detection",
+            "Network traffic sent to target hosts"
+        )
+        return decision
+    
+    async def _port_discovery(self, targets: List[str]) -> List[Dict[str, Any]]:
+        """Quick port discovery using masscan/rustscan."""
+        open_ports = []
         
         for target in targets:
             if not self.validate_target(target):
                 continue
             
-            logger.info(f"[{self.name}] Active scan on: {target}")
+            # Use masscan for fast port scan
+            result = await self.execute_tool(
+                "masscan",
+                [target, "-p1-65535", "--rate", "5000", "-oJ", "-"],
+                timeout=300
+            )
             
-            # Run port scans
-            scan_results = await self._run_port_scans(target)
+            if result.returncode == 0:
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        try:
+                            data = json.loads(line)
+                            for port_info in data.get("ports", []):
+                                if port_info["status"] == "open":
+                                    open_ports.append({
+                                        "host": data["ip"],
+                                        "port": port_info["port"],
+                                        "protocol": port_info["proto"],
+                                        "state": "open",
+                                        "source": "masscan"
+                                    })
+                        except json.JSONDecodeError:
+                            pass
             
-            if scan_results:
-                results['host_inventory'].append({
-                    'target': target,
-                    'open_ports': scan_results.get('open_ports', []),
-                    'services': scan_results.get('services', {}),
-                    'os': scan_results.get('os', '')
-                })
-                
-                results['port_service_map'][target] = scan_results.get('services', {})
-                if scan_results.get('os'):
-                    results['os_fingerprints'][target] = scan_results['os']
-                
-                # Create/update asset
-                asset = Asset(
-                    host=target,
-                    ip=scan_results.get('ip', ''),
-                    ports=list(scan_results.get('services', {}).keys()),
-                    services=list(scan_results.get('services', {}).values()),
-                    os=scan_results.get('os', ''),
-                    status="scanned"
-                )
-                self.add_asset(asset)
+            # Verify with nmap for accuracy
+            if open_ports:
+                ports_str = ",".join(str(p["port"]) for p in open_ports if p["host"] == target)
+                if ports_str:
+                    verify = await self.execute_tool(
+                        "nmap",
+                        ["-sS", "-T4", "-p", ports_str, target, "-oJ", "-"],
+                        timeout=180
+                    )
+                    if verify.returncode == 0:
+                        # Parse nmap JSON output for verification
+                        pass
         
-        self.log_event("recon", f"Active recon complete. Scanned {len(results['host_inventory'])} hosts", "completed")
+        return open_ports
+    
+    async def _service_enumeration(self, open_ports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Service version detection on open ports."""
+        services = []
+        
+        # Group ports by host
+        by_host = {}
+        for p in open_ports:
+            host = p["host"]
+            if host not in by_host:
+                by_host[host] = []
+            by_host[host].append(p["port"])
+        
+        for host, ports in by_host.items():
+            if not self.validate_target(host):
+                continue
+            
+            ports_str = ",".join(str(p) for p in ports)
+            result = await self.execute_tool(
+                "nmap",
+                ["-sV", "-sC", "--version-intensity", "5", "-p", ports_str, host, "-oJ", "-"],
+                timeout=300
+            )
+            
+            if result.returncode == 0:
+                # Parse nmap JSON output
+                # Simplified - in production use proper nmap XML/JSON parser
+                pass
+        
+        return services
+    
+    async def _os_fingerprinting(self, targets: List[str]) -> List[Dict[str, Any]]:
+        """OS fingerprinting using nmap -O."""
+        os_results = []
+        
+        for target in targets:
+            if not self.validate_target(target):
+                continue
+            
+            result = await self.execute_tool(
+                "nmap",
+                ["-O", "--osscan-guess", target, "-oJ", "-"],
+                timeout=180
+            )
+            
+            if result.returncode == 0:
+                os_results.append({
+                    "host": target,
+                    "output": result.stdout,
+                    "source": "nmap -O"
+                })
+        
+        return os_results
+    
+    async def _nse_enumeration(self, open_ports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Targeted safe NSE script enumeration."""
+        results = []
+        
+        # Safe NSE scripts for enumeration
+        safe_scripts = [
+            "http-enum",
+            "ssl-enum-ciphers", 
+            "smb-os-discovery",
+            "dns-zone-transfer",
+            "ftp-anon",
+            "ssh-hostkey"
+        ]
+        
+        by_host = {}
+        for p in open_ports:
+            host = p["host"]
+            if host not in by_host:
+                by_host[host] = []
+            by_host[host].append(p["port"])
+        
+        for host, ports in by_host.items():
+            if not self.validate_target(host):
+                continue
+            
+            ports_str = ",".join(str(p) for p in ports)
+            scripts_str = ",".join(safe_scripts)
+            
+            result = await self.execute_tool(
+                "nmap",
+                ["--script", scripts_str, "-p", ports_str, host, "-oJ", "-"],
+                timeout=180
+            )
+            
+            if result.returncode == 0:
+                results.append({
+                    "host": host,
+                    "scripts": safe_scripts,
+                    "output": result.stdout
+                })
         
         return results
-    
-    async def _request_scan_approval(self, inputs: Dict):
-        """Request operator approval for active scanning."""
-        target_count = len(inputs.get('passive_recon_results', {}).get('subdomain_list', []))
-        target_count += len(inputs.get('scope_definition', {}).get('in_scope', {}).get('ips', []))
-        
-        finding = Finding(
-            id=f"NIGHTFANG-ACTIVE-SCAN-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-            title="Active Reconnaissance Authorization",
-            target=f"{target_count} targets",
-            type="active_recon",
-            confidence=10,
-            severity=3,
-            status="suspected",
-            evidence=f"Passive recon identified {target_count} targets for active scanning",
-            discovered_by=self.name,
-            proposed_action=f"Port scanning and service enumeration on {target_count} targets",
-            risk="Network traffic generated against targets. May trigger IDS/IPS."
-        )
-        
-        decision = await self.request_approval(finding, finding.proposed_action, finding.risk)
-        if decision != 'go':
-            raise PermissionError("Operator denied active scanning")
-    
-    async def _run_port_scans(self, target: str) -> Optional[Dict]:
-        """Run port scanning tools."""
-        # Try rustscan first (fast), fallback to nmap
-        if await self.check_tool('rustscan'):
-            result = await self.execute_tool('rustscan', ['-a', target, '--', '-sV', '-sC'], timeout=300)
-            if result.returncode == 0:
-                return self._parse_rustscan(result.stdout)
-        
-        # Fallback to nmap
-        nmap_timing = self.calibration.get('nmap_timing', 'T4')
-        nmap_flags = self.calibration.get('nmap_flags', '-sS -sV -sC --version-intensity 5')
-        
-        result = await self.execute_tool('nmap', nmap_flags.split() + [target], timeout=1800)
-        if result.returncode == 0:
-            return self._parse_nmap(result.stdout)
-        
-        return None
-    
-    def _parse_nmap(self, output: str) -> Dict:
-        """Parse nmap output."""
-        result = {'open_ports': [], 'services': {}, 'os': ''}
-        
-        # Simple parsing for open ports and services
-        port_pattern = r'(\d+)/(tcp|udp)\s+open\s+(\S+)\s*(.*)'
-        for match in re.finditer(port_pattern, output):
-            port = int(match.group(1))
-            proto = match.group(2)
-            service = match.group(3)
-            version = match.group(4).strip()
-            result['open_ports'].append(port)
-            result['services'][port] = f"{service} {version}".strip()
-        
-        # OS detection
-        os_match = re.search(r'OS details: (.+)', output)
-        if os_match:
-            result['os'] = os_match.group(1)
-        
-        return result
-    
-    def _parse_rustscan(self, output: str) -> Dict:
-        """Parse rustscan output (delegates to nmap parsing)."""
-        # rustscan with -- passes args to nmap, so output is nmap format
-        return self._parse_nmap(output)

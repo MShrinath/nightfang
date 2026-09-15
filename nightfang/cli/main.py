@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from ..core.orchestrator import HermesOrchestrator
+from ..core.orchestrator import NightfangOrchestrator
 
 
 def setup_logging(verbose: bool = False):
@@ -20,7 +20,7 @@ def setup_logging(verbose: bool = False):
 
 async def run_engagement(config_path: str, phase: str = 'full', engagement_id: Optional[str] = None):
     """Run an engagement."""
-    orchestrator = HermesOrchestrator(config_path, engagement_id)
+    orchestrator = NightfangOrchestrator(config_path, engagement_id)
     await orchestrator.initialize()
     
     try:

@@ -1,225 +1,252 @@
-"""Web Application Scanner Agent."""
+"""Scanner WebApp Agent - Web application penetration testing against OWASP Top 10."""
 import asyncio
-import json
 import logging
-import re
+import json
+from typing import Any, Dict, List
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
+from .base import BaseAgent, ToolResult
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
-from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
+from ..core.memory import MemoryManager, Finding
 from ..core.telegram_bot import TelegramBot
-from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
 
 
-class WebAppScannerAgent(BaseAgent):
-    """Web application security testing - OWASP Top 10."""
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "SCANNER-WEBAPP"
-        self.role = "Web Application Security Tester"
-        self.tools_required = [
-            'nikto', 'gobuster', 'ffuf', 'sqlmap', 'nuclei', 
-            'dalfox', 'commix', 'katana', 'arjun', 'paramspider', 'wpscan', 'jwt_tool'
-        ]
-        self.hitl_required = True
-        self.hitl_checkpoints = [
-            "Before SQLMap exploitation (--os-shell, --dump)",
-            "Before command injection exploitation",
-            "Before any file upload testing with shells"
-        ]
-        self.max_runtime_minutes = 120
-    
+class ScannerWebAppAgent(BaseAgent):
+    """Web application security testing agent - OWASP Top 10 testing."""
+
+    def __init__(
+        self,
+        config: EngagementConfig,
+        agent_config: AgentConfig,
+        scope_validator: ScopeValidator,
+        memory: MemoryManager,
+        telegram: TelegramBot
+    ):
+        super().__init__(
+            name="SCANNER-WEBAPP",
+            role="Web Application Security Tester",
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["webapp-testing", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=["ffuf", "nuclei", "dalfox", "sqlmap", "nikto", "katana", "arjun"],
+            hitl_required=True,
+            hitl_checkpoints=[
+                "before_sqli_exploitation",
+                "before_cmd_injection_exploitation",
+                "before_file_upload_testing"
+            ],
+            max_runtime_minutes=180
+        )
+
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute web application scanning."""
-        self.log_event("scanning", "Starting web application scanning", "started")
-        
-        endpoints = inputs.get('web_endpoints_list', [])
-        credentials = inputs.get('credentials', [])
-        tech_stack = inputs.get('technology_stack', {})
-        custom_wordlists = inputs.get('custom_wordlists', {})
-        custom_nuclei_templates = inputs.get('custom_nuclei_templates', [])
-        
-        # Get endpoints from recon if not provided
-        if not endpoints:
-            assets = self.memory.load_assets()
-            for asset in assets:
-                for port in asset.get('ports', []):
-                    if port in [80, 443, 8080, 8443, 3000, 4000, 5000, 8000, 9000]:
-                        proto = 'https' if port in [443, 8443] else 'http'
-                        endpoints.append(f"{proto}://{asset['host']}:{port}")
-        
+        logger.info(f"[{self.name}] Starting web application security testing")
+        self.log_event("scanner_webapp", "started", "Web application security testing initiated")
+
+        targets = inputs.get("targets", [])
+        urls = inputs.get("urls", [])
+        credentials = inputs.get("credentials", {})
+
         results = {
-            'vulnerability_findings': [],
-            'injection_test_results': [],
-            'access_control_findings': [],
-            'session_management_findings': [],
-            'evidence_artifacts': []
+            "findings": [],
+            "injection_tests": [],
+            "access_control": [],
+            "session_management": [],
+            "client_side": [],
+            "ssrf_tests": []
         }
-        
-        for endpoint in endpoints:
-            if not self.validate_target(endpoint):
+
+        for url in urls:
+            if not self.validate_target(url):
                 continue
-            
-            logger.info(f"[{self.name}] Scanning: {endpoint}")
-            
-            # Run scanning tools
-            tasks = [
-                self._run_nikto(endpoint),
-                self._run_nuclei(endpoint, custom_nuclei_templates),
-                self._run_katana(endpoint),
-                self._run_ffuf(endpoint, custom_wordlists),
-                self._run_arjun(endpoint),
-            ]
-            
-            # Add authenticated tests if credentials provided
-            if credentials:
-                tasks.append(self._run_authenticated_tests(endpoint, credentials))
-            
-            tool_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Process results for findings
-            for i, result in enumerate(tool_results):
-                if isinstance(result, Exception):
-                    continue
-                if isinstance(result, ToolResult) and result.returncode == 0:
-                    await self._process_scan_result(endpoint, result, results)
-        
-        self.log_event("scanning", f"Web app scanning complete. Found {len(results['vulnerability_findings'])} vulnerabilities", "completed")
-        
+
+            logger.info(f"[{self.name}] Testing web application: {url}")
+
+            endpoints = await self._crawl_application(url)
+            directories = await self._enumerate_directories(url)
+            params = await self._discover_parameters(url)
+
+            injection_findings = await self._test_injections(url, params, {})
+            results["injection_tests"].extend(injection_findings)
+
+            nuclei_findings = await self._run_nuclei(url)
+            results["findings"].extend(nuclei_findings)
+
+        self.memory.save_phase_result("scanner_webapp", results)
+        self.log_event("scanner_webapp", "completed", f"Tested {len(urls)} web applications")
+
         return results
-    
-    async def _run_nikto(self, endpoint: str) -> ToolResult:
-        return await self.execute_tool('nikto', ['-h', endpoint, '-Format', 'json'], timeout=300)
-    
-    async def _run_nuclei(self, endpoint: str, custom_templates: List[str]) -> ToolResult:
-        args = ['-u', endpoint, '-json', '-silent']
-        if custom_templates:
-            for t in custom_templates:
-                args.extend(['-t', t])
-        else:
-            args.extend(['-tags', 'cve,misconfig,exposures,tech,fuzz'])
-        return await self.execute_tool('nuclei', args, timeout=900)
-    
-    async def _run_katana(self, endpoint: str) -> ToolResult:
-        return await self.execute_tool('katana', ['-u', endpoint, '-jc', '-kf', 'all', '-ef', 'woff,woff2,ttf,png,jpg,css,js,map', '-silent'], timeout=600)
-    
-    async def _run_ffuf(self, endpoint: str, wordlists: Dict) -> ToolResult:
-        dir_wordlist = wordlists.get('directories', '/usr/share/wordlists/dirb/common.txt')
-        return await self.execute_tool('ffuf', [
-            '-u', f'{endpoint}/FUZZ',
-            '-w', dir_wordlist,
-            '-mc', '200,204,301,302,307,401,403,405,500',
-            '-t', str(self.calibration.get('ffuf_threads', 50)),
-            '-rate', str(self.calibration.get('ffuf_rate', 100)),
-            '-json', '-o', '/tmp/ffuf_out.json'
-        ], timeout=600)
-    
-    async def _run_arjun(self, endpoint: str) -> ToolResult:
-        return await self.execute_tool('arjun', ['-u', endpoint, '-o', '/tmp/arjun_out.json'], timeout=300)
-    
-    async def _run_authenticated_tests(self, endpoint: str, credentials: List[Dict]) -> ToolResult:
-        # Placeholder for authenticated scanning
-        return ToolResult('auth_tests', '', 'Authenticated tests not implemented', '', 0, 0)
-    
-    async def _process_scan_result(self, endpoint: str, result: ToolResult, results: Dict):
-        """Process tool output and extract findings."""
-        tool = result.tool
-        output = result.stdout
-        
-        if tool == 'nuclei':
-            await self._parse_nuclei(endpoint, output, results)
-        elif tool == 'nikto':
-            await self._parse_nikto(endpoint, output, results)
-        elif tool == 'ffuf':
-            await self._parse_ffuf(endpoint, output, results)
-        elif tool == 'katana':
-            await self._parse_katana(endpoint, output, results)
-    
-    async def _parse_nuclei(self, endpoint: str, output: str, results: Dict):
-        """Parse nuclei JSON output."""
-        for line in output.strip().split('\n'):
-            if not line:
-                continue
+
+    async def _crawl_application(self, url: str) -> List[str]:
+        endpoints = []
+        result = await self.execute_tool(
+            "katana",
+            ["-u", url, "-d", "3", "-jc", "-kf", "all", "-ef", "woff,woff2,ttf,png,jpg,css,js,map", "-silent"],
+            timeout=600
+        )
+
+        if result.returncode == 0:
+            for line in result.stdout.strip().split('\n'):
+                if line.strip():
+                    endpoints.append(line.strip())
+
+        return endpoints
+
+    async def _enumerate_directories(self, url: str) -> List[str]:
+        directories = []
+        wordlist = self.config.rules.custom_wordlists.get("directories", "/usr/share/wordlists/raft-medium-directories.txt")
+
+        result = await self.execute_tool(
+            "ffuf",
+            ["-u", f"{url}/FUZZ", "-w", wordlist, "-t", "50", "-rate", "150",
+             "-mc", "200,201,204,301,302,307,401,403,405,500", "-of", "json", "-o", "-"],
+            timeout=600
+        )
+
+        if result.returncode == 0:
             try:
-                data = json.loads(line)
-                info = data.get('info', {})
-                severity = info.get('severity', 'info').lower()
-                
-                sev_map = {'critical': 9, 'high': 7, 'medium': 5, 'low': 3, 'info': 1}
-                sev_score = sev_map.get(severity, 1)
-                
-                finding = Finding(
-                    id=f"NIGHTFANG-WEB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
-                    title=info.get('name', 'Nuclei Finding'),
-                    target=endpoint,
-                    type=info.get('type', 'webapp'),
-                    confidence=7,
-                    severity=sev_score,
-                    status="confirmed",
-                    evidence=json.dumps(data, indent=2),
-                    discovered_by=self.name,
-                    mitre_attack=info.get('tags', []),
-                    cve=info.get('cve', [])
-                )
-                self.add_finding(finding)
-                results['vulnerability_findings'].append(finding.__dict__)
+                data = json.loads(result.stdout)
+                for item in data.get("results", []):
+                    if item.get("status") in [200, 201, 204, 301, 302, 307, 403]:
+                        directories.append({
+                            "url": f"{url}/{item['input']['FUZZ']}",
+                            "status": item["status"],
+                            "length": item.get("length", 0)
+                        })
             except json.JSONDecodeError:
                 pass
-    
-    async def _parse_nikto(self, endpoint: str, output: str, results: Dict):
-        """Parse nikto output."""
-        try:
-            data = json.loads(output)
-            for vuln in data.get('vulnerabilities', []):
+
+        return directories
+
+    async def _discover_parameters(self, url: str) -> List[Dict[str, Any]]:
+        params = []
+        result = await self.execute_tool("arjun", ["-u", url, "-m", "GET,POST", "-oJ", "-"], timeout=300)
+
+        if result.returncode == 0:
+            try:
+                data = json.loads(result.stdout)
+                for param, methods in data.items():
+                    params.append({"name": param, "methods": methods})
+            except json.JSONDecodeError:
+                pass
+
+        return params
+
+    async def _test_injections(self, url: str, params: List[Dict], credentials: Dict) -> List:
+        findings = []
+
+        for param in params:
+            param_name = param["name"]
+            test_url = f"{url}?{param_name}=test"
+
+            if not self.validate_target(test_url):
+                continue
+
+            result = await self.execute_tool(
+                "sqlmap",
+                ["-u", test_url, "--batch", "--technique", "B", "--level", "1", "--risk", "1"],
+                timeout=300
+            )
+
+            if "SQL injection" in result.stdout or "vulnerable" in result.stdout.lower():
                 finding = Finding(
-                    id=f"NIGHTFANG-NIKTO-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
-                    title=vuln.get('msg', 'Nikto Finding'),
-                    target=endpoint,
-                    type='webapp_misconfig',
-                    confidence=6,
-                    severity=3,
-                    status="confirmed",
-                    evidence=json.dumps(vuln),
-                    discovered_by=self.name
+                    id=f"SQLI-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                    target=test_url,
+                    type="SQL_INJECTION",
+                    confidence=8,
+                    severity=8,
+                    title=f"SQL Injection in parameter '{param_name}'",
+                    description=f"Boolean-based SQL injection detected in parameter {param_name}",
+                    evidence={"tool": "sqlmap", "stdout": result.stdout[:2000]},
+                    mitre_attack="T1190",
+                    d3fend="D3-PSA",
+                    proposed_action="Exploit to demonstrate database access",
+                    risk="Database compromise, data exfiltration"
                 )
-                self.add_finding(finding)
-                results['vulnerability_findings'].append(finding.__dict__)
-        except json.JSONDecodeError:
-            pass
-    
-    async def _parse_ffuf(self, endpoint: str, output: str, results: Dict):
-        """Parse ffuf JSON output."""
-        try:
-            data = json.loads(output)
-            for result in data.get('results', []):
-                status = result.get('status', 0)
-                if status in [200, 204, 301, 302, 307]:
-                    finding = Finding(
-                        id=f"NIGHTFANG-FFUF-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{len(results['vulnerability_findings'])}",
-                        title=f"Discovered path: {result.get('url', '')}",
-                        target=endpoint,
-                        type='directory_enumeration',
-                        confidence=8,
-                        severity=2,
-                        status="confirmed",
-                        evidence=f"Status: {status}, Length: {result.get('length', 0)}",
-                        discovered_by=self.name
-                    )
-                    self.add_finding(finding)
-                    results['vulnerability_findings'].append(finding.__dict__)
-        except json.JSONDecodeError:
-            pass
-    
-    async def _parse_katana(self, endpoint: str, output: str, results: Dict):
-        """Parse katana output for discovered endpoints."""
-        urls = output.strip().split('\n')
-        for url in urls:
-            url = url.strip()
-            if url and url not in results.get('entry_point_list', []):
-                results.setdefault('entry_point_list', []).append(url)
+                findings.append(finding)
+                await self.request_approval(finding, "Exploit to enumerate databases", "Database access")
+
+        result = await self.execute_tool(
+            "commix",
+            ["--url", url, "--batch", "--risk=1", "--level=1"],
+            timeout=300
+        )
+
+        if "command injection" in result.stdout.lower():
+            finding = Finding(
+                id=f"CMDI-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                target=url,
+                type="COMMAND_INJECTION",
+                confidence=8,
+                severity=9,
+                title="Command Injection",
+                description="OS command injection detected",
+                evidence={"tool": "commix", "stdout": result.stdout[:2000]},
+                mitre_attack="T1059",
+                d3fend="D3-PSA",
+                proposed_action="Execute benign command (id, whoami)",
+                risk="Remote code execution"
+            )
+            findings.append(finding)
+            await self.request_approval(finding, "Execute benign command (id)", "RCE")
+
+        result = await self.execute_tool("dalfox", ["url", url, "--silence"], timeout=300)
+        if "vulnerable" in result.stdout.lower() or "xss" in result.stdout.lower():
+            finding = Finding(
+                id=f"XSS-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                target=url,
+                type="XSS",
+                confidence=7,
+                severity=6,
+                title="Cross-Site Scripting (XSS)",
+                description="Reflected or stored XSS detected",
+                evidence={"tool": "dalfox", "stdout": result.stdout[:2000]},
+                mitre_attack="T1059.007",
+                d3fend="D3-PSA",
+                proposed_action="Confirm with manual PoC",
+                risk="Session hijacking, credential theft"
+            )
+            findings.append(finding)
+
+        return findings
+
+    async def _run_nuclei(self, url: str) -> List:
+        findings = []
+
+        tags = "cve,misconfig,exposure,tech,fuzz"
+        result = await self.execute_tool(
+            "nuclei",
+            ["-u", url, "-tags", "cve,misconfig,exposure,tech,fuzz", "-c", "25", "-rl", "150", "-json", "-silent"],
+            timeout=900
+        )
+
+        if result.returncode == 0:
+            for line in result.stdout.strip().split('\n'):
+                if line.strip():
+                    try:
+                        data = json.loads(line)
+                        sev_map = {"critical": 10, "high": 8, "medium": 6, "low": 4, "info": 2}
+                        sev = data.get("info", {}).get("severity", "info").lower()
+                        finding = Finding(
+                            id=f"NUCLEI-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                            target=url,
+                            type=data.get("info", {}).get("name", "Nuclei Finding"),
+                            confidence=7,
+                            severity=sev_map.get(sev, 5),
+                            title=data.get("info", {}).get("name", "Nuclei Finding"),
+                            description=data.get("info", {}).get("description", ""),
+                            evidence={"template": data.get("template", ""), "matched": data.get("matched-at", "")},
+                            mitre_attack=data.get("info", {}).get("classification", {}).get("cve", [""])[0] if data.get("info", {}).get("classification", {}).get("cve") else "T1190",
+                            d3fend="D3-PSA"
+                        )
+                        findings.append(finding)
+                    except json.JSONDecodeError:
+                        pass
+
+        return findings
