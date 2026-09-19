@@ -7,10 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..core.config import load_config, EngagementConfig, TelegramConfig
+from ..core.config import load_config, EngagementConfig, TelegramConfig, RulesConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager
-from ..core.telegram_bot import TelegramBot
+from ..core.mock_telegram_bot import MockTelegramBot
 
 from nightfang.agents.recon_passive import ReconPassiveAgent
 from nightfang.agents.recon_active import ReconActiveAgent
@@ -49,7 +49,12 @@ class NightfangOrchestrator:
         # Initialize core components
         self.scope = ScopeValidator(self.config.scope)
         self.memory = MemoryManager(self.engagement_dir)
-        self.telegram = TelegramBot(self.config.telegram or TelegramConfig(bot_token="", chat_id=""), self.memory, self.engagement_dir)
+        self.telegram = MockTelegramBot(
+            self.config.telegram or TelegramConfig(bot_token="", chat_id=""),
+            self.config.rules,
+            self.memory,
+            self.engagement_dir
+        )
 
         # Save initial scope
         self.memory.save_scope(self.scope.get_scope_summary())
@@ -104,142 +109,142 @@ class NightfangOrchestrator:
 
         agent_map = {
             'recon_passive_agent': lambda: ReconPassiveAgent(
-                name="RECON-PASSIVE",
-                role="Passive Reconnaissance Specialist",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "RECON-PASSIVE",
+                "Passive Reconnaissance Specialist",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'recon_active_agent': lambda: ReconActiveAgent(
-                name="RECON-ACTIVE",
-                role="Active Reconnaissance Specialist",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "RECON-ACTIVE",
+                "Active Reconnaissance Specialist",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'webapp_scanner_agent': lambda: ScannerWebAppAgent(
-                name="SCANNER-WEBAPP",
-                role="Web Application Security Tester",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-WEBAPP",
+                "Web Application Security Tester",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'api_scanner_agent': lambda: ScannerAPIAgent(
-                name="SCANNER-API",
-                role="API Security Tester",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-API",
+                "API Security Tester",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'network_scanner_agent': lambda: ScannerNetworkAgent(
-                name="SCANNER-NETWORK",
-                role="Network Security Tester",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-NETWORK",
+                "Network Security Tester",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'cloud_scanner_agent': lambda: CloudTestingAgent(
-                name="SCANNER-CLOUD",
-                role="Cloud Security Tester",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-CLOUD",
+                "Cloud Security Tester",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'ssl_scanner_agent': lambda: SSLTLSTestingAgent(
-                name="SCANNER-SSL",
-                role="SSL/TLS Security Tester",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-SSL",
+                "SSL/TLS Security Tester",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'ai_scanner_agent': lambda: ScannerAIAgent(
-                name="SCANNER-AI",
-                role="AI/LLM Security Specialist",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "SCANNER-AI",
+                "AI/LLM Security Specialist",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'vuln_scanner_agent': lambda: VulnerabilityScannerAgent(
-                name="VULN-SCANNER",
-                role="Vulnerability Scanner",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "VULN-SCANNER",
+                "Vulnerability Scanner",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'payload_crafter_agent': lambda: PayloadCrafterAgent(
-                name="PAYLOAD-CRAFTER",
-                role="Payload Crafting Specialist",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "PAYLOAD-CRAFTER",
+                "Payload Crafting Specialist",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'swarm_orchestrator_agent': lambda: SwarmOrchestratorAgent(
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'attack_planner_agent': lambda: AttackPlannerAgent(
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'recon_advisor_agent': lambda: ReconAdvisorAgent(
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'hunter_agent': lambda: HunterAgent(
-                name="HUNTER",
-                role="Threat Hunter & Chain Builder",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "HUNTER",
+                "Threat Hunter & Chain Builder",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'exploiter_agent': lambda: ExploiterAgent(
-                name="EXPLOITER",
-                role="Exploitation Specialist",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "EXPLOITER",
+                "Exploitation Specialist",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
             'reporter_agent': lambda: ReporterAgent(
-                name="REPORTER",
-                role="Report Generator",
-                config=self.config,
-                agent_config=self.config.agent,
-                scope_validator=self.scope,
-                memory=self.memory,
-                telegram=self.telegram
+                "REPORTER",
+                "Report Generator",
+                self.config,
+                self.config.agent,
+                self.scope,
+                self.memory,
+                self.telegram
             ),
         }
 
