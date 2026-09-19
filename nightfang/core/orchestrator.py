@@ -25,6 +25,9 @@ from nightfang.agents.payload_crafter import PayloadCrafterAgent
 from nightfang.agents.hunter import HunterAgent
 from nightfang.agents.exploiter import ExploiterAgent
 from nightfang.agents.reporter import ReporterAgent
+from nightfang.agents.swarm_orchestrator import SwarmOrchestratorAgent
+from nightfang.agents.attack_planner import AttackPlannerAgent
+from nightfang.agents.recon_advisor import ReconAdvisorAgent
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +193,27 @@ class NightfangOrchestrator:
                 memory=self.memory,
                 telegram=self.telegram
             ),
+            'swarm_orchestrator_agent': lambda: SwarmOrchestratorAgent(
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
+            'attack_planner_agent': lambda: AttackPlannerAgent(
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
+            'recon_advisor_agent': lambda: ReconAdvisorAgent(
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
             'hunter_agent': lambda: HunterAgent(
                 name="HUNTER",
                 role="Threat Hunter & Chain Builder",
@@ -275,7 +299,11 @@ class NightfangOrchestrator:
         try:
             # Phase 1: Passive Reconnaissance
             if self.running:
-                await self.run_phase("phase_1_recon", ["recon_passive_agent"])
+                await self.run_phase("phase_1_recon", ["recon_passive_agent", "recon_advisor_agent"])
+
+            # Phase 1.5: Recon Analysis
+            if self.running:
+                await self.run_phase("phase_1_5_recon_analysis", ["recon_advisor_agent"])
 
             # Phase 2: Active Reconnaissance (requires HITL)
             if self.running:
@@ -299,13 +327,21 @@ class NightfangOrchestrator:
                     "payload_crafter_agent"
                 ])
 
-            # Phase 4: Threat Hunting & Attack Chains
+            # Phase 4: Attack Planning & Threat Hunting
             if self.running:
-                await self.run_phase("phase_4_hunting", ["hunter_agent"])
+                await self.run_phase("phase_4_attack_planning", ["attack_planner_agent"])
+
+            # Phase 4.5: Threat Hunting & Attack Chains
+            if self.running:
+                await self.run_phase("phase_4_5_hunting", ["hunter_agent"])
 
             # Phase 5: Exploitation (HITL required per finding)
             if self.running:
                 await self.run_phase("phase_5_exploitation", ["exploiter_agent"])
+
+            # Phase 5.5: Swarm Coordination for post-exploitation
+            if self.running:
+                await self.run_phase("phase_5_5_swarm_coordination", ["swarm_orchestrator_agent"])
 
             # Phase 6: Reporting
             if self.running:
@@ -335,7 +371,8 @@ class NightfangOrchestrator:
     async def run_single_phase(self, phase: str):
         """Run a single phase by name."""
         phase_map = {
-            'recon': ["recon_passive_agent"],
+            'recon': ["recon_passive_agent", "recon_advisor_agent"],
+            'recon_analysis': ["recon_advisor_agent"],
             'active_recon': ["recon_active_agent"],
             'webapp': ["webapp_scanner_agent"],
             'api': ["api_scanner_agent"],
@@ -345,8 +382,10 @@ class NightfangOrchestrator:
             'ai': ["ai_scanner_agent"],
             'vuln': ["vuln_scanner_agent"],
             'payload': ["payload_crafter_agent"],
+            'attack_plan': ["attack_planner_agent"],
             'hunt': ["hunter_agent"],
             'exploit': ["exploiter_agent"],
+            'swarm': ["swarm_orchestrator_agent"],
             'report': ["reporter_agent"]
         }
 
