@@ -41,6 +41,15 @@ Examples:
   nightfang start --config config/personal_engagement.yaml
   nightfang start --config config/engagement_template.yaml --phase recon
   nightfang start --config config/personal_engagement.yaml --phase webapp
+  nightfang start --config config/personal_engagement.yaml --phase api
+  nightfang start --config config/personal_engagement.yaml --phase network
+  nightfang start --config config/personal_engagement.yaml --phase cloud
+  nightfang start --config config/personal_engagement.yaml --phase ssl
+  nightfang start --config config/personal_engagement.yaml --phase ai
+  nightfang start --config config/personal_engagement.yaml --phase vuln
+  nightfang start --config config/personal_engagement.yaml --phase payload
+  nightfang start --config config/personal_engagement.yaml --phase hunt
+  nightfang start --config config/personal_engagement.yaml --phase exploit
   nightfang start --config config/personal_engagement.yaml --phase report
         """
     )
@@ -50,7 +59,7 @@ Examples:
     parser.add_argument('--config', '-c', required=True, 
                        help='Path to engagement configuration YAML')
     parser.add_argument('--phase', '-p', 
-                       choices=['full', 'recon', 'active_recon', 'webapp', 'report'],
+                       choices=['full', 'recon', 'active_recon', 'webapp', 'api', 'network', 'cloud', 'ssl', 'ai', 'vuln', 'payload', 'hunt', 'exploit', 'report'],
                        default='full', help='Phase to run (default: full)')
     parser.add_argument('--engagement-id', '-e', 
                        help='Engagement ID for resume')
