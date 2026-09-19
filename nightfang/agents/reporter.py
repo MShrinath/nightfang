@@ -44,10 +44,10 @@ class ReporterAgent(BaseAgent):
         logger.info(f"[{self.name}] Starting report generation")
         self.log_event("reporter", "started", "Report generation initiated")
 
-        findings = self.memory.get_all_findings()
-        chains = self.memory.get_all_attack_chains()
-        evidence = self.memory.get_all_evidence()
-        timeline = self.memory.get_timeline()
+        findings = self.memory.load_findings()
+        chains = self.memory.load_chains()
+        # evidence = self.memory.get_all_evidence()  # Not implemented
+        timeline = self.memory.load_timeline()
 
         # Generate all deliverables
         report = await self._generate_main_report(findings, chains)

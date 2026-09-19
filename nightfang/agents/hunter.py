@@ -45,7 +45,7 @@ class HunterAgent(BaseAgent):
         self.log_event("hunter", "started", "Threat hunting and chain building initiated")
 
         # Load all findings from previous phases
-        all_findings = self.memory.get_all_findings()
+        all_findings = self.memory.load_findings()
 
         results = {
             "attack_chains": [],
