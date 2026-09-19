@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -19,24 +19,40 @@ logger = logging.getLogger(__name__)
 class CloudTestingAgent(BaseAgent):
     """Cloud infrastructure security testing - AWS, Azure, GCP misconfigurations."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "SCANNER-CLOUD"
-        self.role = "Cloud Security Tester"
-        self.tools_required = [
-            'aws', 'az', 'gcloud', 'prowler', 'scoutsuite', 'cloudsploit',
-            'pacu', 'enumerate-iam', 's3scanner', 'awscli', 'jq'
-        ]
-        self.hitl_required = True
-        self.hitl_checkpoints = [
-            "Before ANY cloud exploitation attempt",
-            "Before modifying IAM policies or roles",
-            "Before accessing storage buckets with write permissions",
-            "Before invoking serverless functions",
-            "Before accessing cloud metadata via SSRF",
-            "Before running Prowler/ScoutSuite with write access"
-        ]
-        self.max_runtime_minutes = 90
+    def __init__(
+        self,
+        name: str = "SCANNER-CLOUD",
+        role: str = "Cloud Security Tester",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
+    ):
+        super().__init__(
+            name,
+            role,
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["cloud-testing", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=[
+                'aws', 'az', 'gcloud', 'prowler', 'scoutsuite', 'cloudsploit',
+                'pacu', 'enumerate-iam', 's3scanner', 'awscli', 'jq'
+            ],
+            hitl_required=True,
+            hitl_checkpoints=[
+                "Before ANY cloud exploitation attempt",
+                "Before modifying IAM policies or roles",
+                "Before accessing storage buckets with write permissions",
+                "Before invoking serverless functions",
+                "Before accessing cloud metadata via SSRF",
+                "Before running Prowler/ScoutSuite with write access"
+            ],
+            max_runtime_minutes=90
+        )
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Execute cloud security testing."""

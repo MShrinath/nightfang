@@ -10,7 +10,7 @@ from .base import BaseAgent
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, AttackChain
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +20,17 @@ class HunterAgent(BaseAgent):
 
     def __init__(
         self,
-        config: EngagementConfig,
-        agent_config: AgentConfig,
-        scope_validator: ScopeValidator,
-        memory: MemoryManager,
-        telegram: TelegramBot
+        name: str = "HUNTER",
+        role: str = "Threat Hunter & Chain Builder",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
     ):
         super().__init__(
-            name="HUNTER",
-            role="Threat Hunter & Chain Builder",
+            name,
+            role,
             config=config,
             agent_config=agent_config,
             scope_validator=scope_validator,

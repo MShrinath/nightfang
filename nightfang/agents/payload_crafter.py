@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -19,20 +19,36 @@ logger = logging.getLogger(__name__)
 class PayloadCrafterAgent(BaseAgent):
     """Custom payload crafting and WAF bypass for confirmed vulnerabilities."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "PAYLOAD-CRAFTER"
-        self.role = "Payload Crafting Specialist"
-        self.tools_required = [
-            'msfvenom', 'python3', 'bash', 'openssl', 'xxd'
-        ]
-        self.hitl_required = True
-        self.hitl_checkpoints = [
-            "Before generating reverse shell payloads",
-            "Before encoding/obfuscating payloads for WAF bypass",
-            "Before delivering any payload to target"
-        ]
-        self.max_runtime_minutes = 60
+    def __init__(
+        self,
+        name: str = "PAYLOAD-CRAFTER",
+        role: str = "Payload Crafting Specialist",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
+    ):
+        super().__init__(
+            name,
+            role,
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["payload-crafting", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=[
+                'msfvenom', 'python3', 'bash', 'openssl', 'xxd'
+            ],
+            hitl_required=True,
+            hitl_checkpoints=[
+                "Before generating reverse shell payloads",
+                "Before encoding/obfuscating payloads for WAF bypass",
+                "Before delivering any payload to target"
+            ],
+            max_runtime_minutes=60
+        )
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Generate custom payloads for confirmed findings."""

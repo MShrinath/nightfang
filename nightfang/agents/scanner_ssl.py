@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -21,15 +21,31 @@ logger = logging.getLogger(__name__)
 class SSLTLSTestingAgent(BaseAgent):
     """SSL/TLS security assessment - cert validity, cipher suites, vulnerabilities."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "SCANNER-SSL"
-        self.role = "SSL/TLS Security Tester"
-        self.tools_required = [
-            'testssl.sh', 'sslscan', 'sslyze', 'nmap', 'openssl'
-        ]
-        self.hitl_required = False
-        self.max_runtime_minutes = 30
+    def __init__(
+        self,
+        name: str = "SCANNER-SSL",
+        role: str = "SSL/TLS Security Tester",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
+    ):
+        super().__init__(
+            name,
+            role,
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["ssl-tls-testing", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=[
+                'testssl.sh', 'sslscan', 'sslyze', 'nmap', 'openssl'
+            ],
+            hitl_required=False,
+            max_runtime_minutes=30
+        )
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Execute SSL/TLS testing."""

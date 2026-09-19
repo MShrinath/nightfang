@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 from .base import BaseAgent, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -19,15 +19,31 @@ logger = logging.getLogger(__name__)
 class VulnerabilityScannerAgent(BaseAgent):
     """Automated vulnerability scanning with CVE correlation."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "VULN-SCANNER"
-        self.role = "Vulnerability Scanner"
-        self.tools_required = [
-            'nuclei', 'nikto', 'searchsploit', 'nmap', 'vulners', 'vulscan'
-        ]
-        self.hitl_required = False
-        self.max_runtime_minutes = 180
+    def __init__(
+        self,
+        name: str = "VULN-SCANNER",
+        role: str = "Vulnerability Scanner",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
+    ):
+        super().__init__(
+            name,
+            role,
+            config=config,
+            agent_config=agent_config,
+            scope_validator=scope_validator,
+            memory=memory,
+            telegram=telegram,
+            skills=["vulnerability-scanning", "scope-management", "memory-management", "evidence-collection"],
+            tools_required=[
+                'nuclei', 'nikto', 'searchsploit', 'nmap', 'vulners', 'vulscan'
+            ],
+            hitl_required=False,
+            max_runtime_minutes=180
+        )
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Execute automated vulnerability scanning."""

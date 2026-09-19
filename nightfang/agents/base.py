@@ -13,7 +13,7 @@ from enum import Enum
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class BaseAgent(ABC):
         agent_config: AgentConfig,
         scope_validator: ScopeValidator,
         memory: MemoryManager,
-        telegram: TelegramBot,
+        telegram: BaseTelegramBot,
         skills: List[str] = None,
         tools_required: List[str] = None,
         hitl_required: bool = False,

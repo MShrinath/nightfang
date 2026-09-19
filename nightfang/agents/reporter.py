@@ -10,7 +10,7 @@ from .base import BaseAgent
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, AttackChain
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +20,17 @@ class ReporterAgent(BaseAgent):
 
     def __init__(
         self,
-        config: EngagementConfig,
-        agent_config: AgentConfig,
-        scope_validator: ScopeValidator,
-        memory: MemoryManager,
-        telegram: TelegramBot
+        name: str = "REPORTER",
+        role: str = "Report Generator",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
     ):
         super().__init__(
-            name="REPORTER",
-            role="Report Generator",
+            name,
+            role,
             config=config,
             agent_config=agent_config,
             scope_validator=scope_validator,
@@ -49,11 +51,20 @@ class ReporterAgent(BaseAgent):
         # evidence = self.memory.get_all_evidence()  # Not implemented
         timeline = self.memory.load_timeline()
 
+        # Convert dict findings to Finding objects if needed
+        from ..core.memory import Finding
+        finding_objs = []
+        for f in findings:
+            if isinstance(f, dict):
+                finding_objs.append(Finding(**f))
+            else:
+                finding_objs.append(f)
+
         # Generate all deliverables
-        report = await self._generate_main_report(findings, chains)
-        executive = await self._generate_executive_summary(findings)
-        technical = await self._generate_technical_appendix(findings)
-        remediation = await self._generate_remediation_roadmap(findings)
+        report = await self._generate_main_report(finding_objs, chains)
+        executive = await self._generate_executive_summary(finding_objs)
+        technical = await self._generate_technical_appendix(finding_objs)
+        remediation = await self._generate_remediation_roadmap(finding_objs)
 
         # Save reports
         report_paths = await self._save_reports({
@@ -68,10 +79,10 @@ class ReporterAgent(BaseAgent):
 
         results = {
             "report_paths": report_paths,
-            "findings_count": len(findings),
-            "critical_count": len([f for f in findings if f.severity >= 9]),
-            "high_count": len([f for f in findings if 7 <= f.severity <= 8]),
-            "exploited_count": len([f for f in findings if f.confidence == 10])
+            "findings_count": len(finding_objs),
+            "critical_count": len([f for f in finding_objs if f.severity >= 9]),
+            "high_count": len([f for f in finding_objs if 7 <= f.severity <= 8]),
+            "exploited_count": len([f for f in finding_objs if f.confidence == 10])
         }
 
         self.memory.save_phase_result("reporter", results)
@@ -84,18 +95,18 @@ class ReporterAgent(BaseAgent):
 
         report = f"""# 🦅 Penetration Testing Assessment Report
 
-**Engagement:** {self.config.engagement.name}
-**Target Organization:** {self.config.engagement.client}
-**Assessment Window:** {self.config.engagement.start_date} – {self.config.engagement.end_date}
+**Engagement:** {self.config.name}
+**Target Organization:** {self.config.client}
+**Assessment Window:** {self.config.start_date} – {self.config.end_date}
 **Orchestrator:** NIGHTFANG Swarm Agent
-**Operator:** {self.config.engagement.operator}
+**Operator:** {self.config.operator}
 
 ---
 
 ## 1. Executive Summary
 
 ### 1.1 Engagement Purpose
-{self.config.engagement.name} conducted against {self.config.engagement.client}.
+{self.config.name} conducted against {self.config.client}.
 
 ### 1.2 Overall Security Posture
 Primary risk areas include: {self._get_top_risk_areas(findings)}.
@@ -230,11 +241,11 @@ NIGHTFANG 6-Phase Swarm Methodology:
 
 #### Reproduction
 ```bash
-{f.evidence.get('reproduction', 'See evidence')}
+{f.evidence.get('reproduction', 'See evidence') if isinstance(f.evidence, dict) else f.evidence or 'See evidence'}
 ```
 
 #### Remediation
-{f.quick_fix or 'See finding details'}
+{f.remediation or 'See finding details'}
 
 ---
 """)
@@ -247,15 +258,15 @@ NIGHTFANG 6-Phase Swarm Methodology:
 
         lines = ["### 🔴 Immediate Actions (Within 24-48 Hours)"]
         for f in critical:
-            lines.append(f"- [ ] **[{f.id}] {f.quick_fix or f.title}** — Owner: Backend Team — SLA: 48h")
+            lines.append(f"- [ ] **[{f.id}] {f.remediation or f.title}** — Owner: Backend Team — SLA: 48h")
 
         lines.append("\n### 🟠 Short-Term Fixes (Within 1-2 Weeks)")
         for f in high:
-            lines.append(f"- [ ] **[{f.id}] {f.quick_fix or f.title}** — Owner: Platform Team — SLA: 1 week")
+            lines.append(f"- [ ] **[{f.id}] {f.remediation or f.title}** — Owner: Platform Team — SLA: 1 week")
 
         lines.append("\n### 🟡 Medium-Term (Within 30 Days)")
         for f in medium:
-            lines.append(f"- [ ] **[{f.id}] {f.strategic_fix or f.title}** — Owner: Architecture — SLA: 30 days")
+            lines.append(f"- [ ] **[{f.id}] {f.remediation or f.title}** — Owner: Architecture — SLA: 30 days")
 
         lines.append("\n### 🟢 Strategic (Within 90 Days)")
         lines.append("- [ ] Centralized authorization service (ABAC) — Owner: Architecture — SLA: 90 days")
@@ -265,9 +276,9 @@ NIGHTFANG 6-Phase Swarm Methodology:
 
     async def _generate_executive_summary(self, findings: List) -> str:
         stats = self._calculate_stats(findings)
-        return f"""# Executive Summary - {self.config.engagement.name}
+        return f"""# Executive Summary - {self.config.name}
 
-**Target:** {self.config.engagement.client}  
+**Target:** {self.config.client}  
 **Date:** {datetime.utcnow().strftime('%Y-%m-%d')}  
 **Classification:** CONFIDENTIAL
 
@@ -308,7 +319,7 @@ Immediate remediation of {len([f for f in findings if f.severity >= 9])} critica
 
     async def _save_reports(self, reports: Dict[str, str]) -> Dict[str, str]:
         paths = {}
-        engagement_dir = Path("engagements") / self.config.engagement.name.replace(" ", "_")
+        engagement_dir = Path("engagements") / self.config.name.replace(" ", "_")
 
         for name, content in reports.items():
             file_path = engagement_dir / f"{name}_report.md"
@@ -319,17 +330,25 @@ Immediate remediation of {len([f for f in findings if f.severity >= 9])} critica
         return paths
 
     async def _send_telegram_summary(self, findings: List):
-        stats = self._calculate_stats(findings)
+        # Convert dict findings to Finding objects if needed
+        from ..core.memory import Finding
+        finding_objs = []
+        for f in findings:
+            if isinstance(f, dict):
+                finding_objs.append(Finding(**f))
+            else:
+                finding_objs.append(f)
+        stats = self._calculate_stats(finding_objs)
         message = f"""📋 NIGHTFANG Engagement Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 Target: {self.config.engagement.client}
+🎯 Target: {self.config.client}
 
 📊 Final Results:
 🔴 Critical: {stats['critical']} | 🟠 High: {stats['high']}
 🟡 Medium: {stats['medium']} | 🟢 Low: {stats['low']}
 ℹ️ Info: {stats['info']}
 
-💥 Exploited: {len([f for f in findings if f.confidence == 10])}
+💥 Exploited: {len([f for f in finding_objs if f.confidence == 10])}
 
 📄 Full report generated.
 Reply: /report to receive markdown.

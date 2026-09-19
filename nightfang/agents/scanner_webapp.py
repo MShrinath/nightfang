@@ -10,7 +10,7 @@ from .base import BaseAgent, ToolResult
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +20,17 @@ class ScannerWebAppAgent(BaseAgent):
 
     def __init__(
         self,
-        config: EngagementConfig,
-        agent_config: AgentConfig,
-        scope_validator: ScopeValidator,
-        memory: MemoryManager,
-        telegram: TelegramBot
+        name: str = "SCANNER-WEBAPP",
+        role: str = "Web Application Security Tester",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
     ):
         super().__init__(
-            name="SCANNER-WEBAPP",
-            role="Web Application Security Tester",
+            name,
+            role,
             config=config,
             agent_config=agent_config,
             scope_validator=scope_validator,

@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset, TimelineEvent
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 from .base import BaseAgent, ToolResult, AgentTier
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class ReconAdvisorAgent(BaseAgent):
         agent_config: AgentConfig,
         scope_validator: ScopeValidator,
         memory: MemoryManager,
-        telegram: TelegramBot
+        telegram: BaseTelegramBot
     ):
         super().__init__(
             name="RECON-ADVISOR",

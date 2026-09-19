@@ -1,5 +1,6 @@
 """Recon Active Agent - Active network discovery and port enumeration."""
 import asyncio
+import json
 import logging
 import re
 from typing import Any, Dict, List
@@ -10,7 +11,7 @@ from .base import BaseAgent, ToolResult
 from ..core.config import EngagementConfig, AgentConfig
 from ..core.scope import ScopeValidator
 from ..core.memory import MemoryManager, Finding, Asset
-from ..core.telegram_bot import TelegramBot
+from ..core.telegram_base import BaseTelegramBot
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +21,17 @@ class ReconActiveAgent(BaseAgent):
     
     def __init__(
         self,
-        config: EngagementConfig,
-        agent_config: AgentConfig,
-        scope_validator: ScopeValidator,
-        memory: MemoryManager,
-        telegram: TelegramBot
+        name: str = "RECON-ACTIVE",
+        role: str = "Active Reconnaissance Specialist",
+        config: EngagementConfig = None,
+        agent_config: AgentConfig = None,
+        scope_validator: ScopeValidator = None,
+        memory: MemoryManager = None,
+        telegram: BaseTelegramBot = None
     ):
         super().__init__(
-            name="RECON-ACTIVE",
-            role="Active Reconnaissance Specialist",
+            name,
+            role,
             config=config,
             agent_config=agent_config,
             scope_validator=scope_validator,
@@ -40,7 +43,7 @@ class ReconActiveAgent(BaseAgent):
             hitl_checkpoints=["before_port_scan", "before_service_enum"],
             max_runtime_minutes=90
         )
-    
+
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Execute active reconnaissance against in-scope targets."""
         logger.info(f"[{self.name}] Starting active reconnaissance")
@@ -83,14 +86,11 @@ class ReconActiveAgent(BaseAgent):
         # Register assets
         for port_info in open_ports:
             asset = Asset(
-                identifier=f"{port_info['host']}:{port_info['port']}",
-                type="service",
-                metadata={
-                    "host": port_info["host"],
-                    "port": port_info["port"],
-                    "protocol": port_info["protocol"],
-                    "state": port_info["state"]
-                }
+                host=port_info["host"],
+                ip=port_info["host"],
+                ports=[port_info["port"]],
+                services=[port_info.get("service", "unknown")],
+                notes=f"Protocol: {port_info.get('protocol', 'tcp')}, State: {port_info.get('state', 'open')}, Source: {port_info.get('source', 'masscan')}"
             )
             self.add_asset(asset)
         
@@ -98,7 +98,7 @@ class ReconActiveAgent(BaseAgent):
         self.log_event("recon_active", "completed", f"Scanned {len(targets)} targets, found {len(open_ports)} open ports")
         
         return results
-    
+
     async def _request_scan_approval(self, targets: List[str]) -> str:
         """Request operator approval for active scanning."""
         from ..core.memory import Finding
@@ -123,7 +123,7 @@ class ReconActiveAgent(BaseAgent):
             "Network traffic sent to target hosts"
         )
         return decision
-    
+
     async def _port_discovery(self, targets: List[str]) -> List[Dict[str, Any]]:
         """Quick port discovery using masscan/rustscan."""
         open_ports = []
@@ -170,7 +170,7 @@ class ReconActiveAgent(BaseAgent):
                         pass
         
         return open_ports
-    
+
     async def _service_enumeration(self, open_ports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Service version detection on open ports."""
         services = []
@@ -200,7 +200,7 @@ class ReconActiveAgent(BaseAgent):
                 pass
         
         return services
-    
+
     async def _os_fingerprinting(self, targets: List[str]) -> List[Dict[str, Any]]:
         """OS fingerprinting using nmap -O."""
         os_results = []
@@ -223,7 +223,7 @@ class ReconActiveAgent(BaseAgent):
                 })
         
         return os_results
-    
+
     async def _nse_enumeration(self, open_ports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Targeted safe NSE script enumeration."""
         results = []
