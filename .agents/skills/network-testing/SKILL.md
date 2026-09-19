@@ -87,3 +87,12 @@ proxychains nmap -sT -Pn TARGET
 - Before credential brute-forcing
 - Before lateral movement
 - Before privilege escalation
+
+## NIGHTFANG Agent Integration
+The **SCANNER-NETWORK** agent automates this skill's procedures within the NIGHTFANG swarm:
+- Runs as Phase 3 parallel scanner alongside webapp, API, SSL, cloud, and AI scanners
+- Uses `crackmapexec`, `nmap`, `enum4linux`, `hydra`, `impacket` tools
+- Outputs findings with MITRE ATT&CK mappings (T1021.002, T1069.002, T1558.003, T1558.004)
+- Requires HITL via Telegram `/go` before brute-forcing or exploitation
+- Results feed into HUNTER agent for attack chain correlation
+- Configure via `technique_config.network_testing` in engagement YAML

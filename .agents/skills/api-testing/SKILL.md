@@ -93,3 +93,14 @@ Specialized testing for API endpoints and services.
 - Endpoint inventory with methods and auth requirements
 - Per-endpoint vulnerability findings with Confidence/Severity scores
 - Proof-of-concept requests (curl commands) for reproduction
+
+## NIGHTFANG Agent Integration
+The **SCANNER-API** agent automates this skill's procedures within the NIGHTFANG swarm:
+- Runs as Phase 3 parallel scanner alongside webapp, network, SSL, cloud, and AI scanners
+- Uses `curl`, `kiterunner`, `arjun`, `graphql-cop`, `jwt_tool`, `nuclei` for comprehensive API testing
+- Tests OWASP API Top 10: BOLA, Broken Auth, Mass Assignment, Rate Limiting, BFLA, SSRF, Misconfiguration, Inventory, Unsafe Consumption
+- GraphQL introspection testing with full schema query
+- JWT algorithm confusion and weak secret analysis
+- Requires HITL via Telegram `/go` before BOLA exploitation or mass assignment testing
+- Outputs findings with MITRE ATT&CK mappings (T1190, T1078, T1552)
+- Configure via `technique_config.api_testing` in engagement YAML

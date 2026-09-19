@@ -99,3 +99,13 @@ http://metadata.google.internal/computeMetadata/v1/
 | `S3Scanner` | S3 bucket scanner |
 
 ## ⚠️ HITL: All cloud exploitation requires operator approval
+
+## NIGHTFANG Agent Integration
+The **SCANNER-CLOUD** agent automates this skill's procedures within the NIGHTFANG swarm:
+- Runs as Phase 3 parallel scanner alongside webapp, API, network, SSL, and AI scanners
+- Uses `awscli`, `az`, `gcloud`, `prowler`, `scoutsuite`, `pacu`, `s3scanner` tools
+- Tests AWS (S3, IAM, EC2, Lambda, RDS), Azure (Storage, AD), GCP (Buckets, Metadata)
+- SSRF-based cloud metadata access testing without credentials
+- Outputs findings with MITRE ATT&CK mappings (T1530, T1078.004, T1580, T1552.005)
+- Requires HITL via Telegram `/go` before any cloud exploitation
+- Configure via `technique_config.cloud_testing` in engagement YAML (regions, subscriptions, projects)

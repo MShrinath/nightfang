@@ -105,3 +105,14 @@ Comprehensive web application security assessment following OWASP methodology.
 
 ## ⚠️ HITL Checkpoint
 Before running any exploitation commands (sqlmap with --os-shell, commix exploitation, etc.), **STOP and request operator permission via Telegram**.
+
+## NIGHTFANG Agent Integration
+The **SCANNER-WEBAPP** agent automates this skill's procedures within the NIGHTFANG swarm:
+- Runs as Phase 3 parallel scanner alongside API, network, SSL, cloud, and AI scanners
+- Uses `nikto`, `gobuster`, `ffuf`, `sqlmap`, `nuclei`, `dalfox`, `commix`, `katana`, `arjun`, `paramspider`, `jwt_tool`, `wpscan`
+- Tests OWASP Top 10 A01-A10 with focus on injection, broken access control, authentication failures
+- Directory enumeration with custom wordlists, parameter discovery with Arjun
+- JWT analysis for algorithm confusion and weak secrets
+- Requires HITL via Telegram `/go` before SQLMap --dump/--os-shell, command injection exploitation, file upload shells
+- Outputs findings with MITRE ATT&CK mappings (T1190, T1059.007, T1505, T1068)
+- Configure via `technique_config.web_app_testing` in engagement YAML (ffuf threads, nuclei tags, katana depth)

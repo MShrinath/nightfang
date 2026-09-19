@@ -96,3 +96,14 @@ Manual, creative vulnerability hunting beyond automated tools.
 - Novel findings not caught by automated scanning
 
 ## ⚠️ HITL: All exploitation of discovered chains requires operator approval
+
+## NIGHTFANG Agent Integration
+The **HUNTER** agent automates this skill's procedures within the NIGHTFANG swarm:
+- Runs as Phase 4 after all scanning phases complete
+- Consumes all findings from previous phases (recon, webapp, API, network, SSL, cloud, AI)
+- Builds attack chains using templates: BOLA→JWT→Admin, Subdomain→SSRF→Metadata, GraphQL→Field→BOLA
+- Generates Mermaid diagrams for each chain with color-coded roles
+- Prioritizes exploitation targets (P0-P3) based on chain score and complexity
+- Outputs attack chains with MITRE ATT&CK paths and D3FEND countermeasures
+- Requires HITL via Telegram `/go` before any chain exploitation attempt
+- Configure via `technique_config.hunting` in engagement YAML
