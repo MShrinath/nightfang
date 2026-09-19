@@ -18,6 +18,10 @@ from nightfang.agents.scanner_webapp import ScannerWebAppAgent
 from nightfang.agents.scanner_api import ScannerAPIAgent
 from nightfang.agents.scanner_network import ScannerNetworkAgent
 from nightfang.agents.scanner_ai import ScannerAIAgent
+from nightfang.agents.scanner_cloud import CloudTestingAgent
+from nightfang.agents.scanner_ssl import SSLTLSTestingAgent
+from nightfang.agents.vuln_scanner import VulnerabilityScannerAgent
+from nightfang.agents.payload_crafter import PayloadCrafterAgent
 from nightfang.agents.hunter import HunterAgent
 from nightfang.agents.exploiter import ExploiterAgent
 from nightfang.agents.reporter import ReporterAgent
@@ -141,9 +145,45 @@ class NightfangOrchestrator:
                 memory=self.memory,
                 telegram=self.telegram
             ),
+            'cloud_scanner_agent': lambda: CloudTestingAgent(
+                name="SCANNER-CLOUD",
+                role="Cloud Security Tester",
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
+            'ssl_scanner_agent': lambda: SSLTLSTestingAgent(
+                name="SCANNER-SSL",
+                role="SSL/TLS Security Tester",
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
             'ai_scanner_agent': lambda: ScannerAIAgent(
                 name="SCANNER-AI",
                 role="AI/LLM Security Specialist",
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
+            'vuln_scanner_agent': lambda: VulnerabilityScannerAgent(
+                name="VULN-SCANNER",
+                role="Vulnerability Scanner",
+                config=self.config,
+                agent_config=self.config.agent,
+                scope_validator=self.scope,
+                memory=self.memory,
+                telegram=self.telegram
+            ),
+            'payload_crafter_agent': lambda: PayloadCrafterAgent(
+                name="PAYLOAD-CRAFTER",
+                role="Payload Crafting Specialist",
                 config=self.config,
                 agent_config=self.config.agent,
                 scope_validator=self.scope,
@@ -247,7 +287,16 @@ class NightfangOrchestrator:
                     "webapp_scanner_agent",
                     "api_scanner_agent",
                     "network_scanner_agent",
-                    "ai_scanner_agent"
+                    "cloud_scanner_agent",
+                    "ssl_scanner_agent",
+                    "ai_scanner_agent",
+                    "vuln_scanner_agent"
+                ])
+
+            # Phase 3.5: Payload Crafting (after vuln scanning)
+            if self.running:
+                await self.run_phase("phase_3_5_payload_crafting", [
+                    "payload_crafter_agent"
                 ])
 
             # Phase 4: Threat Hunting & Attack Chains
@@ -291,7 +340,11 @@ class NightfangOrchestrator:
             'webapp': ["webapp_scanner_agent"],
             'api': ["api_scanner_agent"],
             'network': ["network_scanner_agent"],
+            'cloud': ["cloud_scanner_agent"],
+            'ssl': ["ssl_scanner_agent"],
             'ai': ["ai_scanner_agent"],
+            'vuln': ["vuln_scanner_agent"],
+            'payload': ["payload_crafter_agent"],
             'hunt': ["hunter_agent"],
             'exploit': ["exploiter_agent"],
             'report': ["reporter_agent"]
