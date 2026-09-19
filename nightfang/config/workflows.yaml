@@ -1,0 +1,384 @@
+# NIGHTFANG Workflow Orchestration
+# Defines the engagement lifecycle, phase transitions, and agent coordination
+
+# ═══════════════════════════════════════════════════════════
+# ENGAGEMENT LIFECYCLE
+# ═══════════════════════════════════════════════════════════
+
+lifecycle:
+  phases:
+    # ─────────────────────────────────────────────────────
+    # PHASE 0: INTAKE & GOVERNANCE
+    # ─────────────────────────────────────────────────────
+    - name: "INTAKE"
+      id: "phase_0"
+      description: "Receive, validate, and establish engagement scope & governance"
+      automated: true
+      steps:
+        - action: "parse_scope"
+          skill: "scope-management"
+          description: "Parse operator-provided scope definition"
+        - action: "validate_scope"
+          skill: "scope-management"
+          description: "Validate scope for conflicts and ambiguities"
+        - action: "confirm_scope"
+          skill: "telegram-hitl"
+          description: "Present parsed scope to operator for confirmation"
+          hitl: true
+          hitl_message: |
+            📋 NIGHTFANG Engagement Initialization
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Scope Summary:
+            {scope_summary}
+            
+            📊 Targets: {target_count}
+            🔧 Techniques: {allowed_techniques}
+            ⏰ Testing Window: {testing_window}
+            
+            Please confirm scope is correct.
+            Reply: /go to begin or /hold to modify
+        - action: "initialize_memory"
+          skill: "memory-management"
+          description: "Initialize engagement memory stores"
+        - action: "create_evidence_dirs"
+          skill: "evidence-collection"
+          description: "Create evidence directory structure"
+      exit_criteria:
+        - "Scope confirmed by operator"
+        - "Memory stores initialized"
+        - "Evidence directories created"
+      next_phase: "phase_1"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 1: PASSIVE RECONNAISSANCE
+    # ─────────────────────────────────────────────────────
+    - name: "PASSIVE_RECON"
+      id: "phase_1"
+      description: "Non-intrusive intelligence gathering (MITRE ATT&CK TA0043)"
+      automated: true
+      agents:
+        - recon_passive_agent
+      parallel: false
+      steps:
+        - action: "whois_lookup"
+          description: "Domain registration data"
+        - action: "dns_enumeration"
+          description: "DNS record queries (A, AAAA, MX, NS, TXT, SOA, CNAME)"
+        - action: "subdomain_discovery"
+          description: "Passive subdomain enumeration via subfinder & amass"
+        - action: "cert_transparency"
+          description: "Certificate transparency log search (crt.sh)"
+        - action: "technology_fingerprint"
+          description: "Technology stack identification"
+        - action: "waf_detection"
+          description: "WAF presence detection"
+        - action: "osint_correlation"
+          description: "Cross-reference all passive findings"
+      on_complete:
+        - action: "update_memory"
+          description: "Store discovered assets in memory"
+        - action: "send_update"
+          skill: "telegram-hitl"
+          message: |
+            📊 NIGHTFANG Phase 1 Complete: Passive Recon
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🌐 Subdomains found: {subdomain_count}
+            🔧 Technologies: {tech_list}
+            🛡️ WAF detected: {waf_status}
+            📝 DNS records: {dns_count}
+            
+            Ready to proceed to active scanning.
+            Reply: /go to continue
+      exit_criteria:
+        - "All passive techniques executed"
+        - "Results correlated and stored"
+        - "Operator notified"
+      next_phase: "phase_2"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 2: ACTIVE RECONNAISSANCE (HITL GATE)
+    # ─────────────────────────────────────────────────────
+    - name: "ACTIVE_RECON"
+      id: "phase_2"
+      description: "Direct scanning of authorized targets (MITRE ATT&CK T1046)"
+      automated: false
+      agents:
+        - recon_active_agent
+      hitl_gate:
+        message: |
+          ⚠️ NIGHTFANG Permission Request
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          🔧 Action: Active port scanning & service enumeration
+          🎯 Targets: {target_count} hosts
+          📊 Scan type: {scan_type}
+          ⏱️ Estimated time: {est_time}
+          
+          This will send traffic directly to the targets.
+          Reply: /go or /hold
+      steps:
+        - action: "host_discovery"
+          description: "Identify live hosts"
+        - action: "port_scan"
+          description: "Full TCP + top UDP port scan"
+        - action: "service_detection"
+          description: "Version detection on open ports"
+        - action: "os_fingerprint"
+          description: "OS identification"
+        - action: "nse_scripts"
+          description: "Targeted safe NSE script scanning"
+      on_complete:
+        - action: "merge_with_passive"
+          description: "Merge active results with passive recon"
+        - action: "build_attack_surface"
+          description: "Create comprehensive attack surface map"
+        - action: "send_update"
+          skill: "telegram-hitl"
+      exit_criteria:
+        - "All in-scope hosts scanned"
+        - "Attack surface map generated"
+      next_phase: "phase_3"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 3: PARALLEL VULNERABILITY SCANNING
+    # ─────────────────────────────────────────────────────
+    - name: "SCANNING"
+      id: "phase_3"
+      description: "Comprehensive multi-domain vulnerability assessment"
+      automated: true
+      agents:
+        - webapp_scanner_agent
+        - api_scanner_agent
+        - ai_scanner_agent
+        - network_scanner_agent
+        - ssl_scanner_agent
+        - vuln_scanner_agent
+        - cloud_scanner_agent
+      parallel: true
+      coordination:
+        - "Each agent operates on its relevant targets concurrently"
+        - "Findings are merged into central memory in real-time"
+        - "Duplicate findings are deduplicated by memory-management"
+        - "Critical findings (severity >= 8) trigger immediate Telegram alert"
+        - "Every finding is mapped to MITRE ATT&CK / ATLAS and D3FEND"
+      on_finding:
+        severity_threshold: 7
+        action: "send_finding"
+        skill: "telegram-hitl"
+      on_complete:
+        - action: "correlate_findings"
+          description: "Cross-reference findings from all scanners"
+        - action: "build_attack_chains"
+          skill: "attack-chain-analysis"
+        - action: "generate_preliminary_report"
+          skill: "reporting"
+        - action: "send_summary"
+          skill: "telegram-hitl"
+          message: |
+            📋 NIGHTFANG Phase 3 Complete: Scanning
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🔴 Critical: {critical_count}
+            🟠 High: {high_count}
+            🟡 Medium: {medium_count}
+            🟢 Low: {low_count}
+            ℹ️  Info: {info_count}
+            
+            🔗 Attack chains identified: {chain_count}
+            
+            📄 Preliminary report ready.
+            
+            Awaiting approval for exploitation phase.
+            Reply: /go to proceed with exploitation
+            Reply: /report for detailed findings
+      exit_criteria:
+        - "All scanners completed"
+        - "Findings correlated"
+        - "Preliminary report generated"
+      next_phase: "phase_4"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 4: THREAT HUNTING & ATTACK CHAINS
+    # ─────────────────────────────────────────────────────
+    - name: "HUNTING"
+      id: "phase_4"
+      description: "Advanced manual vulnerability hunting & kill-chain building"
+      automated: true
+      agents:
+        - hunter_agent
+      steps:
+        - action: "logic_flaw_hunting"
+          description: "Business logic vulnerability discovery"
+        - action: "chain_building"
+          description: "Build multi-step attack chains"
+        - action: "creative_testing"
+          description: "HTTP smuggling, cache poisoning, race conditions"
+        - action: "auth_deep_dive"
+          description: "JWT, OAuth, session deep analysis"
+      on_complete:
+        - action: "merge_chains"
+          description: "Add hunting findings to attack chains"
+        - action: "update_report"
+          description: "Update preliminary report with hunting results"
+      exit_criteria:
+        - "All hunting techniques attempted"
+        - "Attack chains updated"
+      next_phase: "phase_5"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 5: EXPLOITATION (STRICT HITL REQUIRED)
+    # ─────────────────────────────────────────────────────
+    - name: "EXPLOITATION"
+      id: "phase_5"
+      description: "Exploit confirmed vulnerabilities with operator approval"
+      automated: false
+      agents:
+        - exploit_agent
+      hitl_gate:
+        required: true
+        per_finding: true
+        message: |
+          ⚠️ NIGHTFANG Exploitation Request
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          🎯 Target: {target}
+          🔧 Vulnerability: {vuln_title}
+          📊 Confidence: {confidence}/10
+          🔴 Severity: {severity}/10
+          💥 Proposed exploit: {exploit_description}
+          ⚡ Expected impact: {expected_impact}
+          
+          Reply: /go {finding_id} or /hold {finding_id}
+      steps:
+        - action: "payload_preparation"
+          description: "Craft exploitation payload"
+        - action: "exploitation_attempt"
+          description: "Execute approved exploit"
+        - action: "impact_assessment"
+          description: "Assess depth of access gained"
+        - action: "privilege_escalation"
+          description: "Attempt privesc if initial access gained"
+          hitl: true
+        - action: "evidence_capture"
+          description: "Document exploitation evidence"
+      on_success:
+        - action: "update_finding_status"
+          description: "Mark finding as 'Exploited', update confidence to 10"
+        - action: "send_result"
+          skill: "telegram-hitl"
+          message: |
+            ✅ Exploitation Successful
+            ━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Finding: #{finding_id} - {title}
+            📊 Confidence: 10/10 (Exploited)
+            🔴 Severity: {severity}/10
+            💥 Access gained: {access_level}
+            
+            Evidence captured. Cleaning up artifacts.
+      on_failure:
+        - action: "log_attempt"
+          description: "Record failed exploitation attempt"
+        - action: "adjust_confidence"
+          description: "May lower confidence score"
+      cleanup:
+        - action: "remove_artifacts"
+          description: "Clean up any test files, accounts, or payloads"
+        - action: "verify_cleanup"
+          description: "Confirm target returns to clean baseline"
+      exit_criteria:
+        - "All approved findings attempted"
+        - "All artifacts cleaned up"
+      next_phase: "phase_6"
+
+    # ─────────────────────────────────────────────────────
+    # PHASE 6: REPORTING & REMEDIATION DELIVERABLES
+    # ─────────────────────────────────────────────────────
+    - name: "REPORTING"
+      id: "phase_6"
+      description: "Generate comprehensive engagement report mapped to frameworks"
+      automated: true
+      agents:
+        - reporter_agent
+      steps:
+        - action: "compile_findings"
+          description: "Gather all findings from all phases"
+        - action: "generate_executive_summary"
+          description: "High-level overview for management"
+        - action: "write_detailed_findings"
+          description: "Full technical details with reproduction steps"
+        - action: "create_remediation_roadmap"
+          skill: "remediation-advisor"
+          description: "Prioritized fix recommendations and SLAs"
+        - action: "visualize_attack_chains"
+          skill: "attack-chain-analysis"
+          description: "Mermaid diagrams for attack paths"
+        - action: "compile_evidence"
+          skill: "evidence-collection"
+          description: "Organize all evidence artifacts"
+        - action: "generate_report"
+          description: "Produce final markdown report"
+        - action: "send_telegram_summary"
+          skill: "telegram-hitl"
+          message: |
+            📋 NIGHTFANG Engagement Complete
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🎯 Scope: {scope_summary}
+            ⏱️ Duration: {duration}
+            
+            📊 Final Results:
+            🔴 Critical: {critical} | 🟠 High: {high}
+            🟡 Medium: {medium} | 🟢 Low: {low}
+            ℹ️  Info: {info}
+            
+            🔗 Attack chains: {chains}
+            💥 Exploited: {exploited_count}
+            
+            📄 Full report attached.
+            
+            Thank you for using NIGHTFANG. 🦅
+      exit_criteria:
+        - "Report generated"
+        - "Operator notified"
+        - "All evidence organized"
+
+# ═══════════════════════════════════════════════════════════
+# ERROR HANDLING & RECOVERY
+# ═══════════════════════════════════════════════════════════
+
+error_handling:
+  agent_failure:
+    action: "retry"
+    max_retries: 3
+    backoff: "exponential"
+    on_max_retries:
+      - "Log failure"
+      - "Notify operator via Telegram"
+      - "Continue with remaining agents"
+  
+  scope_violation:
+    action: "block_and_alert"
+    steps:
+      - "Block the action immediately"
+      - "Log the violation with details"
+      - "Alert operator via Telegram"
+      - "Continue testing within scope"
+  
+  timeout:
+    action: "graceful_stop"
+    steps:
+      - "Save current state to memory"
+      - "Log partial results"
+      - "Notify operator"
+      - "Allow resume from checkpoint"
+
+# ═══════════════════════════════════════════════════════════
+# PARALLEL EXECUTION RULES
+# ═══════════════════════════════════════════════════════════
+
+parallelism:
+  max_concurrent_agents: 7
+  resource_limits:
+    max_requests_per_second: 100
+    max_bandwidth_mbps: 50
+  deconfliction:
+    - "Agents must not scan the same port simultaneously"
+    - "Rate limits are shared across all agents"
+    - "Memory writes use optimistic locking"
+    - "Finding IDs are globally unique (NIGHTFANG-NNN)"

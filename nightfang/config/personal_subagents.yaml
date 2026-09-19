@@ -1,0 +1,509 @@
+# NIGHTFANG Personal Subagent Definitions
+# Extends NIGHTFANG config/subagents.yaml with operator-calibrated agents
+# These agents inherit from NIGHTFANG framework agents but add personal calibration
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG PERSONAL RECON SWARM
+# ═══════════════════════════════════════════════════════════
+
+nightfang_recon_passive_agent:
+  name: "NIGHTFANG-RECON-PASSIVE"
+  role: "Personal Passive Reconnaissance Specialist"
+  description: >-
+    Extended passive recon with operator's learned evasion profiles,
+    custom OSINT sources, and calibrated tool selection.
+  inherits: "recon_passive_agent"
+  frameworks:
+    mitre_attack: [T1593, T1594, T1596]
+    nist_csf: [ID.AM-01, ID.RA-01]
+    d3fend: [D3-DNST, D3-WHIA]
+  skills:
+    - recon-passive
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - personal-context          # NIGHTFANG: Load learned signatures
+    - operator-prefs            # NIGHTFANG: Apply operator preferences
+  tools_required:
+    - whois
+    - dig
+    - nslookup
+    - subfinder
+    - amass
+    - theHarvester
+    - shodan
+    - whatweb
+    - wafw00f
+    - dnsrecon
+    - github-subdomains        # NIGHTFANG: Custom tool
+    - crtsh-api                # NIGHTFANG: Custom tool
+  inputs:
+    - scope_definition
+    - target_domains
+    - target_organization_name
+    - learned_waf_signatures    # NIGHTFANG: From PERSONAL_MEMORY.md
+    - learned_rate_limits       # NIGHTFANG: From PERSONAL_MEMORY.md
+  outputs:
+    - subdomain_list
+    - dns_records
+    - technology_stack
+    - whois_data
+    - certificate_inventory
+    - attack_surface_map
+    - waf_evasion_profile       # NIGHTFANG: Personal output
+    - rate_limit_profile        # NIGHTFANG: Personal output
+  hitl_required: false
+  max_runtime_minutes: 45       # NIGHTFANG: Extended for custom sources
+  priority: 1
+  calibration:
+    subfinder_sources: "all"
+    amass_passive_enum: true
+    github_dorks_enabled: true
+    crtsh_depth: 3
+
+nightfang_recon_active_agent:
+  name: "NIGHTFANG-RECON-ACTIVE"
+  role: "Personal Active Reconnaissance Specialist"
+  description: >-
+    Calibrated port scanning with operator's preferred timing,
+    evasion techniques, and learned rate-limit profiles.
+  inherits: "recon_active_agent"
+  frameworks:
+    mitre_attack: [T1046, T1595, T1018]
+    nist_csf: [ID.AM-02, DE.CM-01]
+    d3fend: [D3-NTA, D3-SDA]
+  skills:
+    - recon-active
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - personal-context
+    - custom-tooling
+  tools_required:
+    - nmap
+    - masscan
+    - rustscan
+    - enum4linux
+    - snmpwalk
+    - nbtscan
+    - zmap                      # NIGHTFANG: For large subnets
+  inputs:
+    - scope_definition
+    - passive_recon_results
+    - scan_aggressiveness_preference
+    - learned_evasion_profiles  # NIGHTFANG: From PERSONAL_MEMORY.md
+  outputs:
+    - host_inventory
+    - port_service_map
+    - os_fingerprints
+    - nse_script_results
+    - entry_point_list
+    - evasion_effectiveness     # NIGHTFANG: Personal output
+  hitl_required: true
+  hitl_message: "NIGHTFANG Active Scan Ready: {target_count} hosts. Timing: T4. Evasion: {evasion_profile}. Est: {est_time}. /go to proceed?"
+  max_runtime_minutes: 90       # NIGHTFANG: Extended for thorough enumeration
+  priority: 2
+  depends_on:
+    - nightfang_recon_passive_agent
+  calibration:
+    nmap_timing: "T4"
+    nmap_flags: "-sS -sV -sC --version-intensity 5 --min-rate 2000 --max-retries 1"
+    masscan_rate: 5000
+    udp_scanning: true
+    evasion_mode: "adaptive"    # Uses learned WAF profiles
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG PERSONAL SCANNER SWARM
+# ═══════════════════════════════════════════════════════════
+
+nightfang_scanner_webapp_agent:
+  name: "NIGHTFANG-SCANNER-WEBAPP"
+  role: "Personal Web Application Security Tester"
+  description: >-
+    OWASP Top 10 testing with operator's custom wordlists,
+    calibrated fuzzing, and business logic focus.
+  inherits: "webapp_scanner_agent"
+  frameworks:
+    mitre_attack: [T1190, T1059.007, T1505]
+    nist_csf: [PR.DS-01, DE.CM-01]
+    d3fend: [D3-PSA, D3-WAF]
+  skills:
+    - webapp-testing
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - personal-context
+    - custom-tooling
+  tools_required:
+    - nikto
+    - gobuster
+    - ffuf
+    - sqlmap
+    - nuclei
+    - dalfox
+    - commix
+    - katana
+    - arjun
+    - paramspider
+    - wpscan
+    - jwt_tool
+    - graphql-cop              # NIGHTFANG: GraphQL testing
+    - custom-fuzzer            # NIGHTFANG: Operator's custom fuzzer
+  inputs:
+    - scope_definition
+    - web_endpoints_list
+    - credentials
+    - technology_stack
+    - custom_wordlists          # NIGHTFANG: From engagement config
+    - custom_nuclei_templates   # NIGHTFANG: From engagement config
+  outputs:
+    - vulnerability_findings
+    - injection_test_results
+    - access_control_findings
+    - session_management_findings
+    - business_logic_findings   # NIGHTFANG: Emphasis on logic flaws
+    - evidence_artifacts
+    - custom_template_hits      # NIGHTFANG: Personal output
+  hitl_required: true
+  hitl_checkpoints:
+    - "Before SQLMap exploitation (--os-shell, --dump)"
+    - "Before command injection exploitation"
+    - "Before any file upload testing with shells"
+    - "Before business logic abuse with financial impact"
+  max_runtime_minutes: 180      # NIGHTFANG: Extended for thorough testing
+  priority: 3
+  depends_on:
+    - nightfang_recon_active_agent
+  calibration:
+    ffuf_threads: 50
+    ffuf_rate: 150
+    katana_depth: 3
+    nuclei_concurrency: 25
+    sqlmap_risk: 2
+    sqlmap_level: 3
+    custom_fuzzing_enabled: true
+
+nightfang_scanner_api_agent:
+  name: "NIGHTFANG-SCANNER-API"
+  role: "Personal API Security Tester"
+  description: >-
+    REST, GraphQL, gRPC, SOAP testing with operator's
+    GraphQL introspection patterns, JWT analysis, and BOLA focus.
+  inherits: "api_scanner_agent"
+  frameworks:
+    mitre_attack: [T1190, T1078, T1552]
+    nist_csf: [PR.AC-01, PR.DS-02]
+    d3fend: [D3-ARA, D3-PSA]
+  skills:
+    - api-testing
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - personal-context
+    - custom-tooling
+  tools_required:
+    - curl
+    - httpie
+    - ffuf
+    - arjun
+    - kiterunner
+    - graphql-cop
+    - jwt_tool
+    - mitmproxy
+    - nuclei
+    - postman-cli              # NIGHTFANG: Collection-based testing
+  inputs:
+    - scope_definition
+    - api_endpoints
+    - api_documentation
+    - auth_tokens
+    - graphql_schema            # NIGHTFANG: From introspection
+    - custom_graphql_fields     # NIGHTFANG: From field suggestions
+  outputs:
+    - endpoint_inventory
+    - bola_findings
+    - auth_findings
+    - rate_limit_findings
+    - injection_findings
+    - graphql_findings          # NIGHTFANG: GraphQL-specific
+    - jwt_analysis              # NIGHTFANG: Algorithm confusion, weak secrets
+    - poc_curl_commands
+  hitl_required: true
+  hitl_checkpoints:
+    - "Before any data modification attempts"
+    - "Before brute-force/enumeration attacks"
+    - "Before GraphQL mutation abuse"
+    - "Before JWT algorithm confusion exploits"
+  max_runtime_minutes: 120
+  priority: 3
+  depends_on:
+    - nightfang_recon_active_agent
+  calibration:
+    kiterunner_wordlist: "~/wordlists/kiterunner-routes.txt"
+    jwt_algorithm_tests: ["HS256", "RS256", "ES256", "none", "kid"]
+    graphql_field_suggestion_depth: 5
+
+nightfang_scanner_ai_agent:
+  name: "NIGHTFANG-SCANNER-AI"
+  role: "Personal LLM & AI Security Specialist"
+  description: >-
+    AI/LLM testing with operator's prompt injection corpus,
+    system prompt extraction techniques, and MCP audit patterns.
+  inherits: "ai_scanner_agent"
+  frameworks:
+    mitre_atlas: [AML.T0051, AML.T0054, AML.T0043, AML.T0040, AML.T0048]
+    mitre_attack: [T1190, T1059]
+    nist_ai_rmf: [MAP-1.5, MEASURE-2.6, MANAGE-2.4]
+    d3fend: [D3-PSA, D3-MCI]
+  skills:
+    - llm-ai-security
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - personal-context
+    - custom-tooling
+  tools_required:
+    - curl
+    - requests
+    - python
+    - playwright                # NIGHTFANG: For browser-based AI interfaces
+  inputs:
+    - scope_definition
+    - ai_endpoints
+    - tool_schemas
+    - prompt_injection_corpus   # NIGHTFANG: From ~/prompts/injection-corpus.txt
+    - system_prompt_templates   # NIGHTFANG: Known patterns
+    - mcp_server_definitions    # NIGHTFANG: From config/mcp_servers.yaml
+  outputs:
+    - prompt_injection_findings
+    - system_prompt_extraction_findings
+    - insecure_output_findings
+    - mcp_tool_tampering_findings
+    - rag_poisoning_findings    # NIGHTFANG: RAG-specific
+    - agent_hijacking_findings  # NIGHTFANG: Agentic workflow abuse
+    - evidence_artifacts
+  hitl_required: true
+  hitl_checkpoints:
+    - "Before testing state-changing tool executions via LLM"
+    - "Before RAG poisoning with persistent data"
+    - "Before MCP tool execution with side effects"
+  max_runtime_minutes: 90
+  priority: 3
+  depends_on:
+    - nightfang_recon_active_agent
+  calibration:
+    injection_corpus_size: "full"
+    multi_turn_testing: true
+    context_window_probing: true
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG PERSONAL HUNTER & EXPLOITER
+# ═══════════════════════════════════════════════════════════
+
+nightfang_hunter_agent:
+  name: "NIGHTFANG-HUNTER"
+  role: "Personal Threat Hunter & Chain Builder"
+  description: >-
+    Advanced hunting with operator's attack chain templates,
+    logic flaw patterns, and creative testing methodology.
+  inherits: "hunter_agent"
+  frameworks:
+    mitre_attack: [T1203, T1059, T1562]
+    nist_csf: [DE.AE-01, RS.AN-03]
+    d3fend: [D3-THA, D3-MCI]
+  skills:
+    - hunting
+    - attack-chain-analysis
+    - memory-management
+    - evidence-collection
+    - personal-context
+    - custom-tooling
+  inputs:
+    - all_findings
+    - asset_inventory
+    - technology_stack
+    - attack_chain_templates    # NIGHTFANG: From PERSONAL_MEMORY.md
+    - logic_flaw_patterns       # NIGHTFANG: Operator's known patterns
+  outputs:
+    - attack_chains
+    - logic_flaw_findings
+    - compound_risk_assessment
+    - novel_findings
+    - chain_visualizations      # NIGHTFANG: Mermaid diagrams
+    - prioritized_exploit_list  # NIGHTFANG: Ranked by chain priority
+  hitl_required: true
+  max_runtime_minutes: 180      # NIGHTFANG: Extended for deep hunting
+  priority: 4
+  depends_on:
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
+  calibration:
+    chain_priority_formula: "MaxSeverity*0.6 + MinConfidence*0.4 - StepCount*0.2"
+    logic_flow_testing: true
+    race_condition_testing: true
+    http_smuggling_testing: true
+    cache_poisoning_testing: true
+
+nightfang_exploiter_agent:
+  name: "NIGHTFANG-EXPLOITER"
+  role: "Personal Exploitation Specialist"
+  description: >-
+    Exploitation with operator's POC safety rules, benign-only execution,
+    and mandatory cleanup verification.
+  inherits: "exploit_agent"
+  frameworks:
+    mitre_attack: [T1059, T1203, T1068]
+    nist_csf: [PR.PT-02, RS.AN-03]
+    d3fend: [D3-EAA, D3-PEA]
+  skills:
+    - payload-crafting
+    - hunting
+    - privilege-escalation
+    - scope-management
+    - memory-management
+    - evidence-collection
+    - operator-prefs            # NIGHTFANG: Enforce operator POC rules
+  tools_required:
+    - metasploit
+    - sqlmap
+    - commix
+    - msfvenom
+    - john
+    - hashcat
+    - custom-payload-generator  # NIGHTFANG: Operator's payload patterns
+  inputs:
+    - approved_findings
+    - operator_decisions
+    - target_details
+    - poc_safety_rules          # NIGHTFANG: From OPERATOR_PROFILE.md
+    - cleanup_verification      # NIGHTFANG: Mandatory screenshot proof
+  outputs:
+    - exploitation_results
+    - access_gained
+    - impact_assessment
+    - evidence_artifacts
+    - cleanup_verification      # NIGHTFANG: Required output
+    - screenshot_evidence       # NIGHTFANG: Required output
+  hitl_required: true
+  hitl_checkpoints:
+    - "Before EVERY exploitation attempt"
+    - "Before privilege escalation"
+    - "Before lateral movement"
+    - "Before data access demonstration"
+    - "Before cleanup verification"
+  max_runtime_minutes: 240
+  priority: 4
+  depends_on:
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
+    - nightfang_hunter_agent
+  calibration:
+    poc_commands_only: ["id", "whoami", "hostname", "SELECT version()", "ls -la /tmp"]
+    no_data_exfiltration: true
+    no_persistence: true
+    cleanup_screenshot_required: true
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG PERSONAL REPORTER
+# ═══════════════════════════════════════════════════════════
+
+nightfang_reporter_agent:
+  name: "NIGHTFANG-REPORTER"
+  role: "Personal Report Generator"
+  description: >-
+    Report generation with operator's format, voice, remediation style,
+    and executive-ready deliverables.
+  inherits: "reporter_agent"
+  skills:
+    - reporting
+    - remediation-advisor
+    - attack-chain-analysis
+    - telegram-hitl
+    - evidence-collection
+    - personal-context
+    - operator-prefs
+  inputs:
+    - all_findings
+    - evidence_artifacts
+    - attack_chains
+    - operator_decisions
+    - engagement_timeline
+    - personal_report_template    # NIGHTFANG: templates/personal_report_template.md
+    - remediation_style           # NIGHTFANG: Code-level, architectural, strategic
+  outputs:
+    - executive_report
+    - technical_report
+    - remediation_roadmap
+    - telegram_summary
+    - jira_tickets                # NIGHTFANG: Auto-create if configured
+    - github_issues               # NIGHTFANG: Auto-create if configured
+  hitl_required: false
+  max_runtime_minutes: 45
+  priority: 5
+  depends_on:
+    - nightfang_scanner_webapp_agent
+    - nightfang_scanner_api_agent
+    - nightfang_scanner_ai_agent
+    - nightfang_scanner_network_agent
+    - nightfang_scanner_ssl_agent
+    - nightfang_scanner_vuln_agent
+    - nightfang_scanner_cloud_agent
+    - nightfang_exploiter_agent
+    - nightfang_hunter_agent
+  calibration:
+    report_template: "templates/personal_report_template.md"
+    finding_template: "templates/personal_finding_template.md"
+    executive_voice: "direct_actionable"
+    technical_depth: "full_reproduction"
+    remediation_format: "code_config_architecture"
+    framework_mappings: ["MITRE_ATTACK", "MITRE_ATLAS", "MITRE_D3FEND", "NIST_CSF", "NIST_AI_RMF", "CWE", "OWASP", "CVSS31"]
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG FRAMEWORK AGENTS (Inherited - Unmodified)
+# ═══════════════════════════════════════════════════════════
+# These are referenced by inherits: above
+# See config/subagents.yaml for full definitions
+
+# ═══════════════════════════════════════════════════════════
+# NIGHTFANG ORCHESTRATOR
+# ═══════════════════════════════════════════════════════════
+
+nightfang_orchestrator:
+  name: "NIGHTFANG"
+  role: "Personal Engagement Orchestrator"
+  description: >-
+    Master orchestrator extending NIGHTFANG with personal memory,
+    operator preferences, learned patterns, and calibrated tooling.
+  inherits: "nightfang_orchestrator"
+  skills:
+    - scope-management
+    - memory-management
+    - telegram-hitl
+    - token-optimizer
+    - attack-chain-analysis
+    - evidence-collection
+    - reporting
+    - personal-context
+    - operator-prefs
+    - custom-tooling
+  agent_spawn_order:
+    phase_1_recon:
+      - nightfang_recon_passive_agent
+    phase_2_active_recon:
+      - nightfang_recon_active_agent
+    phase_3_scanning:
+      - nightfang_scanner_webapp_agent
+      - nightfang_scanner_api_agent
+      - nightfang_scanner_ai_agent
+      - network_scanner_agent
+      - ssl_scanner_agent
+      - vuln_scanner_agent
+      - cloud_scanner_agent
+    phase_4_analysis:
+      - nightfang_hunter_agent
+    phase_5_exploitation:
+      - nightfang_exploiter_agent
+    phase_6_reporting:
+      - nightfang_reporter_agent
