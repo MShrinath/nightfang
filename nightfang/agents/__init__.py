@@ -1,5 +1,5 @@
 """NIGHTFANG Agents Package"""
-from .base import BaseAgent, ToolResult
+from .base import BaseAgent, ToolResult, AgentTier, ScopeDeclaration
 from .recon_passive import ReconPassiveAgent
 from .recon_active import ReconActiveAgent
 from .scanner_webapp import ScannerWebAppAgent
@@ -13,10 +13,15 @@ from .payload_crafter import PayloadCrafterAgent
 from .hunter import HunterAgent
 from .exploiter import ExploiterAgent
 from .reporter import ReporterAgent
+from .swarm_orchestrator import SwarmOrchestratorAgent
+from .attack_planner import AttackPlannerAgent
+from .recon_advisor import ReconAdvisorAgent
 
 __all__ = [
     'BaseAgent',
     'ToolResult',
+    'AgentTier',
+    'ScopeDeclaration',
     'ReconPassiveAgent',
     'ReconActiveAgent',
     'ScannerWebAppAgent',
@@ -29,5 +34,8 @@ __all__ = [
     'PayloadCrafterAgent',
     'HunterAgent',
     'ExploiterAgent',
-    'ReporterAgent'
+    'ReporterAgent',
+    'SwarmOrchestratorAgent',
+    'AttackPlannerAgent',
+    'ReconAdvisorAgent'
 ]
