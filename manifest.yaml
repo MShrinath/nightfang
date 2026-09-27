@@ -1,0 +1,129 @@
+name: nightfang
+version: "0.2.0"
+type: security-capability-pack
+description: "Autonomous penetration testing and offensive security capability pack for host agent runtimes."
+
+runtime:
+  name: hermes
+  min_version: "0.1.0"
+  entrypoint:
+    agent: AGENTS.md
+  capabilities:
+    agents: true
+    skills: true
+    workflows: true
+    schemas: true
+
+capabilities:
+  - id: attack-surface-mapping
+    description: "Passive intelligence gathering and active network/service discovery"
+    target_types: [domain, cidr, ip_range, hostname, asset_inventory]
+    workflow: workflows/standard-pentest.md
+    agent: agents/recon.md
+    skills:
+      - skills/recon
+
+  - id: web-application-security
+    description: "OWASP Top 10, injection flaws, access control, and SPA assessment"
+    target_types: [web_app, url, http, https, spa, cms]
+    workflow: workflows/web-assessment.md
+    agent: agents/scanner.md
+    skills:
+      - skills/web
+      - skills/hunting
+
+  - id: api-security
+    description: "REST, GraphQL, and gRPC endpoints, BOLA/BFLA, mass assignment, and JWT"
+    target_types: [rest_api, graphql, grpc, openapi, swagger, json_api]
+    workflow: workflows/api-assessment.md
+    agent: agents/scanner.md
+    skills:
+      - skills/api
+      - skills/hunting
+
+  - id: network-infrastructure-security
+    description: "Network services, open ports, SMB/SNMP, known CVEs, and SSL/TLS ciphers"
+    target_types: [network_host, subnet, port_service, tls_endpoint]
+    workflow: workflows/standard-pentest.md
+    agent: agents/scanner.md
+    skills:
+      - skills/network
+
+  - id: cloud-security
+    description: "AWS/Azure/GCP audits, S3 buckets, IMDSv1/v2 SSRF extraction, and IAM"
+    target_types: [aws, azure, gcp, s3_bucket, imds, cloud_tenant]
+    workflow: workflows/standard-pentest.md
+    agent: agents/scanner.md
+    skills:
+      - skills/cloud
+
+  - id: ai-llm-security
+    description: "Adversarial prompt injection, agentic tool abuse, and MCP server audits"
+    target_types: [llm, agent, mcp_server, prompt_interface, rag]
+    workflow: workflows/ai-security-assessment.md
+    agent: agents/ai-security.md
+    skills:
+      - skills/ai-security
+
+  - id: exploit-validation
+    description: "Controlled non-destructive PoC verification under strict HITL approval"
+    target_types: [candidate_finding, unverified_exploit]
+    workflow: workflows/standard-pentest.md
+    agent: agents/validation.md
+    skills:
+      - skills/attack-chain
+      - skills/remediation
+
+  - id: security-reporting
+    description: "Finding aggregation, attack chain visualization, and D3FEND remediation roadmap"
+    target_types: [engagement_findings, audit_deliverable]
+    workflow: workflows/standard-pentest.md
+    agent: agents/reporter.md
+    skills:
+      - skills/reporting
+      - skills/remediation
+
+agents:
+  - agents/recon.md
+  - agents/scanner.md
+  - agents/ai-security.md
+  - agents/validation.md
+  - agents/reporter.md
+
+skills:
+  - skills/recon
+  - skills/web
+  - skills/api
+  - skills/network
+  - skills/cloud
+  - skills/ai-security
+  - skills/hunting
+  - skills/attack-chain
+  - skills/remediation
+  - skills/reporting
+
+workflows:
+  - workflows/standard-pentest.md
+  - workflows/web-assessment.md
+  - workflows/api-assessment.md
+  - workflows/ai-security-assessment.md
+
+schemas:
+  - schemas/finding.md
+
+references:
+  - references/sops.md
+  - references/heuristics.md
+  - references/tools.md
+  - references/framework_mappings.md
+
+integration:
+  - integration/hermes.md
+  - integration/routing.md
+  - integration/capability-router.md
+  - integration/execution-policy-gateway.md
+  - integration/lifecycle.md
+
+templates:
+  - templates/full_report_template.md
+  - templates/finding_template.md
