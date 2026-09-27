@@ -1,62 +1,124 @@
 # NIGHTFANG Security Framework Cross-Mapping
 
-Defines the cross-framework mapping for NIGHTFANG skills and finding types across **MITRE ATT&CK v19**, **NIST CSF 2.0**, **MITRE D3FEND v1.4**, **MITRE ATLAS**, and **OWASP Standards**.
+Defines the authoritative cross-framework mapping for all NIGHTFANG skills, findings, and remediation controls across:
+- **MITRE ATT&CK v19** (Enterprise, Cloud, Mobile, and ICS matrices)
+- **MITRE D3FEND v1.4** (Defensive countermeasures & RedBlueSkills paired controls)
+- **MITRE ATLAS** (Adversarial Threat Landscape for AI Systems)
+- **OWASP Standards** (Top 10 2021, API Security Top 10 2023, LLM Top 10 2025, MASVS v2.0, CI/CD Top 10)
+- **NIST CSF 2.0 & SP 800-53 Rev 5**
+- **CIS Critical Security Controls v8**
+- **IEC 62443** (Industrial Communication Networks & Security)
+- **CISA KEV & EPSS** (Known Exploited Vulnerabilities and Exploit Prediction Scoring)
 
 ---
 
-## 1. Master Skill-to-Framework Matrix
+## 1. Master Domain-to-Framework Matrix
 
-| Skill / Domain | MITRE ATT&CK v19 | NIST CSF 2.0 | MITRE D3FEND | MITRE ATLAS | OWASP / CWE |
+| Skill / Domain | ATT&CK Matrix & Techniques | NIST CSF 2.0 | CIS Controls v8 | MITRE D3FEND | OWASP / CWE |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`recon`** | T1593, T1594, T1596, T1046, T1595 | ID.AM-01, DE.CM-01 | D3-DNST, D3-WHIA, D3-NTA | — | CWE-200 |
-| **`web`** | T1190, T1059.007, T1505 | PR.DS-01, DE.CM-01 | D3-PSA, D3-WAF, D3-UVI | — | OWASP A01–A10 |
-| **`api`** | T1190, T1078, T1552 | PR.AC-01, PR.DS-02 | D3-ARA, D3-PSA | — | OWASP API1–API10 |
-| **`ai-security`** | T1190, T1059 | PR.DS-01, DE.CM-01 | D3-PSA, D3-MCI | AML.T0051, AML.T0054 | OWASP LLM01–LLM10 |
-| **`network`** | T1021, T1110, T1558, T1040 | PR.AC-05, PR.PT-01 | D3-NA, D3-BA, D3-CTA | — | CWE-287, CWE-306 |
-| **`cloud`** | T1580, T1530, T1078.004 | PR.AC-06, PR.DS-01 | D3-CSM, D3-IAM | — | CSA Top Threats |
-| **`hunting`** | T1203, T1059, T1562 | DE.AE-01, RS.AN-03 | D3-THA, D3-MCI | — | Business Logic Flaws |
-| **`attack-chain`**| TA0001 → TA0040 (Kill Chain) | ID.RA-03, RS.AN-01 | D3-TCA, D3-RCA | — | Unified Kill Chain |
-| **`remediation`** | — | RS.MI-01, RC.RP-01 | D3-HSA, D3-PMA | — | Fix Roadmaps / SLAs |
-| **`reporting`** | — | RS.CO-03, RC.CO-01 | — | — | Executive Deliverables |
+| **`recon`** | Enterprise: T1593, T1594, T1596, T1046, T1595 | ID.AM-01, DE.CM-01 | Control 1, Control 2 | D3-DNST, D3-WHIA, D3-NTA | CWE-200, CWE-209 |
+| **`web`** | Enterprise: T1190, T1059.007, T1505, T1552 | PR.DS-01, PR.PS-01 | Control 16 (AppSec) | D3-PSA, D3-WAF, D3-UVI | OWASP Top 10 (A01–A10) |
+| **`api`** | Enterprise: T1190, T1078, T1552, T1584 | PR.AC-01, PR.DS-02 | Control 6, Control 16 | D3-ARA, D3-PSA, D3-WAF | OWASP API Top 10 (API1–API10) |
+| **`network`** | Enterprise: T1021, T1110, T1558, T1040, T1200 | PR.AC-05, PR.PT-01 | Control 4, Control 12 | D3-NA, D3-BA, D3-CTA, D3-NTA | CWE-287, CWE-306, CWE-319 |
+| **`cloud`** | Cloud: T1580, T1530, T1078.004, T1526, T1562 | PR.AC-06, PR.DS-01 | Control 3, Control 5 | D3-CSM, D3-IAM, D3-CWPP | CSA Top Threats, CWE-732 |
+| **`container`** | Cloud/Container: T1611, T1612, T1613, T1610 | PR.PT-01, PR.PS-05 | Control 16 | D3-CIE, D3-CHM, D3-PSA | CIS Docker/K8s Benchmarks |
+| **`cicd`** | Enterprise: T1195.002, T1587.001, T1552.004 | PR.PS-06, ID.SC-04 | Control 16, Control 18 | D3-PA, D3-SCA, D3-BCV | OWASP CI/CD Top 10 |
+| **`ai-security`** | ATLAS: AML.T0051, AML.T0054, AML.T0053, AML.T0040 | PR.DS-01, DE.CM-01 | Control 16 | D3-PSA, D3-MCI, D3-EAA | OWASP LLM Top 10 (LLM01–LLM10) |
+| **`active-directory`**| Enterprise: T1558, T1003, T1484, T1078, T1069 | PR.AC-01, PR.AC-04 | Control 5, Control 6 | D3-ARA, D3-KDC, D3-CAA | CWE-284, CWE-269 |
+| **`wireless`** | Enterprise: T1040, T1200; Mobile: T1407, T1412 | PR.AC-05, PR.PT-02 | Control 12 | D3-WSE, D3-CTA | 802.11i/WPA3 Standards |
+| **`mobile`** | Mobile: T1404, T1407, T1417, T1426, T1437 | PR.AC-03, PR.DS-01 | Control 13 | D3-APP, D3-OBF, D3-RDT | OWASP MASVS v2.0 (L1/L2/R) |
+| **`iot`** | ICS/Mobile: T0846, T0855, T1200, T1429 | PR.PT-01, ID.AM-01 | Control 1, Control 12 | D3-FWE, D3-HSA, D3-DCS | IEC 62443-4-2 |
+| **`ot-ics`** | ICS Matrix: T0800 → T0888 (Purdue 0-3) | PR.AT-01, DE.AE-02 | Control 1, Control 13 | D3-ICS, D3-NTA, D3-PRP | IEC 62443-3-3, NIST SP 800-82 |
+| **`hunting`** | Enterprise: T1203, T1059, T1562, T1565 | DE.AE-01, RS.AN-03 | Control 8, Control 13 | D3-THA, D3-MCI, D3-EDA | Business Logic Flaws |
+| **`attack-chain`**| Full Kill Chain (TA0001 → TA0040) | ID.RA-03, RS.AN-01 | Control 17 | D3-TCA, D3-RCA | Unified Kill Chain Model |
+| **`forensics`** | Enterprise: T1070, T1562, T1005, T1113 | RS.AN-01, RC.RP-01 | Control 8, Control 17 | D3-MDA, D3-FHA, D3-TMA | NIST SP 800-86 |
+| **`grc`** | Enterprise (Governance & Assurance) | GOV.OC-01, GV.PO-01 | Control 1, Control 2 | D3-GAC, D3-PAC | ISO 27001, SOC 2, HIPAA |
+| **`cti`** | Enterprise: TA0043, TA0042 (Pre-Compromise) | ID.RA-02, DE.AE-01 | Control 8 | D3-IOC, D3-TIP | STIX 2.1, MISP Taxonomy |
+| **`purple-team`** | Emulation of Enterprise & Cloud Tactics | DE.DP-01, RS.CO-01 | Control 17 | D3-DTE, D3-TVE | Atomic Red Team, CALDERA |
+| **`supply-chain`**| Enterprise: T1195 (Supply Chain Compromise) | ID.SC-01 → ID.SC-04 | Control 16, Control 18 | D3-SCA, D3-SLSA, D3-SIG | SLSA Levels 1-4, SBOM (SPDX/CycloneDX) |
+| **`remediation`** | Defensive Engineering & Patching | RS.MI-01, RC.RP-01 | Control 7, Control 16 | D3-HSA, D3-PMA, D3-SDR | Fix Roadmaps & Tri-Tier SLAs |
+| **`reporting`** | Risk Scoring & Executive Deliverables | RS.CO-03, RC.CO-01 | Control 17, Control 18 | D3-RSM, D3-COM | CVSS 3.1/4.0, EPSS, CISA KEV |
 
 ---
 
-## 2. MITRE ATT&CK Tactic Alignment
+## 2. Expanded MITRE D3FEND Countermeasure Directory
 
-```
-┌───────────────────┬───────────────────────────────────────────┬───────────────────────────┐
-│ TACTIC            │ NIGHTFANG PHASE & SKILLS                  │ ATT&CK TECHNIQUES COVERED │
-├───────────────────┼───────────────────────────────────────────┼───────────────────────────┤
-│ TA0043 Recon      │ Phase 2 (recon)                           │ T1595, T1593, T1594, T1596│
-│ TA0001 Initial    │ Phase 3 (web, api, ai-security)           │ T1190, T1133, T1078       │
-│ TA0002 Execution  │ Phase 3 & 4 (web, hunting)                │ T1059, T1203, T1053       │
-│ TA0004 PrivEsc    │ Phase 7 & 8 (validation)                  │ T1548, T1068, T1134       │
-│ TA0006 Creds      │ Phase 3 & 4 (network, hunting)            │ T1110, T1558, T1003       │
-│ TA0007 Discovery  │ Phase 2 & 3 (recon, cloud)                │ T1046, T1018, T1580, T1530│
-│ TA0008 Lateral    │ Phase 7 & 8 (validation)                  │ T1021, T1570, T1550       │
-└───────────────────┴───────────────────────────────────────────┴───────────────────────────┘
-```
+All finding recommendations generated by NIGHTFANG must map directly to MITRE D3FEND defensive countermeasures:
+
+### 2.1 Application & Input Validation
+- **`D3-UVI`** (User Input Validation): Enforce strict allowlist validation for all parameters, filenames, and headers.
+- **`D3-PSA`** (Parameter Sanitization Analysis): Contextual encoding and type casting before passing data to interpreter sinks.
+- **`D3-WAF`** (Web Application Filtering): Signature and behavioral filtering at the perimeter ingress layer.
+- **`D3-ARA`** (Application Role Authorization): Server-side object-level (BOLA) and function-level (BFLA) access controls.
+- **`D3-SFI`** (Session Fixation Invalidation): Renew session tokens on privilege change and enforce SameSite/Secure/HttpOnly flags.
+
+### 2.2 Cloud & Infrastructure Hardening
+- **`D3-IAM`** (Identity and Access Governance): Enforce least-privilege RBAC, short-lived STS tokens, and automated key rotation.
+- **`D3-CSM`** (Cloud Security Posture Management): Continuous configuration drift auditing and public storage bucket block.
+- **`D3-CWPP`** (Container Workload Protection): Read-only root filesystems, drop Linux capabilities (`CAP_SYS_ADMIN`), seccomp/AppArmor profiles.
+- **`D3-CIE`** (Container Image Evaluation): Pre-deployment static vulnerability scanning and cosign/Notary image signing.
+
+### 2.3 Network & Active Directory Defense
+- **`D3-NA`** (Network Access Control): Micro-segmentation, Zero Trust Network Architecture (ZTNA), and ingress rate limiting.
+- **`D3-KDC`** (Kerberos Domain Controller Hardening): Enforce AES-256 for Kerberos, disable RC4, enable PAC validation, configure Protected Users group.
+- **`D3-CAA`** (Certificate Authority Auditing): Restrict ADCS templates (`ESC1-ESC15`), disable `CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT`.
+- **`D3-NTA`** (Network Traffic Analysis): Baseline flow monitoring for anomalous lateral movement (WMI, WinRM, SMB RPC).
+
+### 2.4 AI & Emerging Technology Defense
+- **`D3-MCI`** (Model Context Isolation): Separate user prompt input from system instructions and RAG grounding data using cryptographic delimiters.
+- **`D3-EAA`** (Execution Access Authorization): Strict parameter schemas and human approval gates on AI agent tool execution.
+- **`D3-SLSA`** (Software Supply Chain Security): End-to-end provenance verification, pinned digest dependencies, and reproducible builds.
 
 ---
 
-## 3. MITRE D3FEND Defensive Mapping
+## 3. Industrial Control Systems (IEC 62443 / ATT&CK for ICS)
 
-Every finding recorded by NIGHTFANG must include corresponding **D3FEND Defensive Countermeasure IDs**:
-- **Injection Flaws (SQLi / XSS / Command / Template)**:
-  - `D3-UVI` (User Input Validation)
-  - `D3-PSA` (Parameter Sanitization Analysis)
-  - `D3-WAF` (Web Application Filtering)
-- **Broken Authentication / BOLA / IDOR**:
-  - `D3-ARA` (Application Role Authorization)
-  - `D3-BA` (Biometric / Multi-Factor Authentication)
-  - `D3-SFI` (Session Fixation Invalidation)
-- **Weak TLS Configuration & Cryptographic Flaws**:
-  - `D3-CTA` (Certificate Trust Analysis)
-  - `D3-CH` (Cryptographic Hash Hardening)
-- **Unauthenticated / Exposed Network Services**:
-  - `D3-NA` (Network Access Control)
-  - `D3-SDA` (Service Disable / Access Restriction)
-- **LLM Prompt Injection & Agent Tool Exploitation**:
-  - `D3-MCI` (Model Context Isolation)
-  - `D3-PSA` (Input Boundary Validation)
-  - `D3-EAA` (Execution Access Authorization)
+When assessing operational technology (OT) or ICS environments, mappings follow the **Purdue Model**:
+
+| Purdue Level | Asset Type | Protocol Standards | ATT&CK for ICS Techniques | IEC 62443 Section |
+| :--- | :--- | :--- | :--- | :--- |
+| **Level 0 (Process)** | Sensors, actuators, physical devices | 4-20mA, HART, Fieldbus | T0800, T0836 (Modify Parameter) | 62443-4-2 |
+| **Level 1 (Basic Control)**| PLCs, RTUs, IEDs | Modbus TCP, DNP3, S7comm | T0814 (Denial of Control), T0843 | 62443-3-3, 62443-4-2 |
+| **Level 2 (Area Control)** | HMIs, Engineering Workstations | OPC-UA, EtherNet/IP, proprietary | T0846, T0855 (Unauthorized Command) | 62443-3-3 |
+| **Level 3 (Operations)** | Historians, OT Domain Controllers | RDP, SMB, industrial databases | T0886 (Remote Services), T0812 | 62443-2-4, 62443-3-2 |
+
+---
+
+## 4. Mobile Security (OWASP MASVS / MASTG)
+
+Mobile findings are mapped to **OWASP MASVS v2.0**:
+- **MASVS-STORAGE**: Insecure local data storage, SharedPreferences, Keychain, SQLite encryption.
+- **MASVS-CRYPTO**: Weak cryptographic algorithms, hardcoded keys, custom PRNGs.
+- **MASVS-AUTH**: Biometric bypass, missing certificate pinning, weak token management.
+- **MASVS-NETWORK**: Cleartext HTTP traffic, insecure TLS configurations, proxy interception.
+- **MASVS-PLATFORM**: Exported activities/services, IPC tampering, deep link injection.
+- **MASVS-CODE**: Obfuscation weakness, debuggable APK, dynamic binary instrumentation (Frida) resilience.
+
+---
+
+## 5. Vulnerability Prioritization Crosswalk (CVSS v4.0, EPSS, CISA KEV)
+
+NIGHTFANG findings are enriched using modern multi-dimensional risk scoring:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    VULNERABILITY TRIAGE DECISION TREE                       │
+│                                                                             │
+│                     Is CVE on CISA KEV catalog?                             │
+│                              /         \                                    │
+│                            YES          NO                                  │
+│                             │            │                                  │
+│                             ▼            ▼                                  │
+│                      [URGENT: P0]   Is EPSS > 0.36 OR CVSS v4.0 >= 8.0?     │
+│                      Fix SLA: 24h           /          \                    │
+│                                           YES           NO                  │
+│                                            │             │                  │
+│                                            ▼             ▼                  │
+│                                      [HIGH: P1]     Standard Triage         │
+│                                      Fix SLA: 7d    (P2/P3 SLA per matrix)  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **CISA KEV**: Confirmed active exploitation in the wild. Forces finding priority escalation.
+- **EPSS (Exploit Prediction Scoring System)**: Probability (0.0–1.0) that a vulnerability will be exploited in the next 30 days. Scores $\ge 0.36$ place finding in top 1% risk tier.
+- **CVSS v4.0**: Macro-vectors covering Exploit Maturity (Attacker), Environmental controls, and Safety impact (especially relevant for OT/ICS and Healthcare).

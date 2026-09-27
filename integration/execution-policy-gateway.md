@@ -18,7 +18,7 @@ Skill / Agent Tool Invocation Request
 ┌──────────────────────────────────────────────┐
 │       EXECUTION POLICY GATEWAY PIPELINE      │
 │                                              │
-│  [Stage 1] Scope & Boundary Enforcement     │  ← SOP-01 (CIDR, DNS, Cloud Tenant)
+│  [Stage 1] Scope & OPSEC Enforcement        │  ← SOP-01 (CIDR, DNS, Cloud Tenant, Noise Profile)
 │                     │                        │
 │  [Stage 2] Emergency Stop & Deconfliction   │  ← SOP-07, Heuristics §4 (Locking, Concurrency)
 │                     │                        │
@@ -66,6 +66,9 @@ tool_request:
     ip: string                # Resolved IPv4/IPv6 address (if resolved)
     port: integer             # Destination port (e.g., 443)
     scheme: string            # "http" | "https" | "tcp" | "udp"
+  opsec:
+    noise: string             # "QUIET" | "MODERATE" | "LOUD" (MANDATORY)
+    rationale: string         # Justification for noise level and avoidance controls
   command_template: string    # Proposed CLI string or HTTP request specification
   action_type: string         # "PASSIVE_READ" | "ACTIVE_PROBE" | "EXPLOIT_POC"
   technique: string           # Technique identifier (e.g., "error-based-sqli-test", "banner-grab")
@@ -84,7 +87,7 @@ The Gateway evaluates the `tool_request` strictly sequentially. If any stage fai
 
 ### Stage 1: Scope & Target Boundary Enforcement (SOP-01)
 
-**Objective**: Guarantee zero out-of-scope network traffic.
+**Objective**: Guarantee zero out-of-scope network traffic and enforce engagement OPSEC profiles.
 
 1. **Target Parsing**: Extract destination IP, domain, and hostname from `target`.
 2. **In-Scope Boundary Validation**:
@@ -97,12 +100,33 @@ The Gateway evaluates the `tool_request` strictly sequentially. If any stage fai
      - Inspect request headers and destination path.
      - Prohibit probing shared management endpoints or tenant-adjacent resources.
      - Prohibit raw IP scans against shared edge clusters.
-4. **Failure Outcome**:
-   - If out-of-scope:
+4. **OPSEC Declaration & Noise Profile Validation**:
+   - The Gateway inspects `tool_request.opsec`:
+     - If `tool_request.opsec` is omitted or `tool_request.opsec.noise` is not one of `QUIET`, `MODERATE`, `LOUD` $\to$ **DENY IMMEDIATELY**:
+       ```
+       GATEWAY_DISPOSITION: REJECTED
+       CODE: MISSING_OPSEC_DECLARATION
+       REASON: Every tool invocation request must declare an OPSEC noise classification (QUIET, MODERATE, LOUD) and rationale.
+       ```
+     - Check against engagement OPSEC ceiling (`engagement.config.max_opsec_noise`):
+       - If `engagement.config.max_opsec_noise == "QUIET"` and `tool_request.opsec.noise` is `MODERATE` or `LOUD`:
+         ```
+         GATEWAY_DISPOSITION: REJECTED
+         CODE: OPSEC_PROFILE_EXCEEDED
+         REASON: Requested action noise profile [LOUD] exceeds engagement configured threshold [QUIET].
+         ```
+       - If `engagement.config.max_opsec_noise == "MODERATE"` and `tool_request.opsec.noise` is `LOUD`:
+         ```
+         GATEWAY_DISPOSITION: REJECTED
+         CODE: OPSEC_PROFILE_EXCEEDED
+         REASON: Requested action noise profile [LOUD] exceeds engagement configured threshold [MODERATE].
+         ```
+5. **Failure Outcome**:
+   - If out-of-scope or OPSEC violation:
      ```
      GATEWAY_DISPOSITION: REJECTED
-     CODE: SCOPE_VIOLATION
-     REASON: Target <target> is outside engagement authorized scope.
+     CODE: SCOPE_VIOLATION | OPSEC_PROFILE_EXCEEDED
+     REASON: Target or execution parameters violate engagement boundaries.
      ```
    - Log incident immediately to `engagement.audit_log` per SOP-01. Network execution is blocked.
 
@@ -155,24 +179,31 @@ The Gateway evaluates the `tool_request` strictly sequentially. If any stage fai
 
 ### Stage 4: Action Classification & HITL Gate Evaluation (SOP-04, Heuristics §1b)
 
-**Objective**: Absolute human governance before active probing or exploit execution.
+**Objective**: Absolute human governance before active probing or exploit execution, calibrated with OPSEC noise classification.
 
 ```
-Is action_type == PASSIVE_READ?
+Is action_type == PASSIVE_READ and opsec.noise == QUIET?
       │
       ├── YES ──► Pass Stage 4 autonomously (No operator prompt required)
       │
       └── NO (ACTIVE_PROBE or EXPLOIT_POC)
             │
             ▼
-      Does a valid Approval Token exist in engagement.hitl_tokens[]?
+      Is action_type == ACTIVE_PROBE, opsec.noise == MODERATE, and strict_hitl != true?
             │
-            ├── YES (all 5 dimensions match & unexpired) ──► Pass Stage 4 (Approved)
+            ├── YES ──► Pass Stage 4 under strict Stage 3 Rate Limits
             │
-            └── NO (Missing, mismatched, or expired token)
+            └── NO (LOUD active probe, EXPLOIT_POC, or strict_hitl == true)
                   │
                   ▼
-            SUSPEND EXECUTION ──► Emit HITL_REQUEST to Hermes
+            Does a valid 5-D Approval Token exist in engagement.hitl_tokens[]?
+                  │
+                  ├── YES (all 5 dimensions match & unexpired) ──► Pass Stage 4 (Approved)
+                  │
+                  └── NO (Missing, mismatched, or expired token)
+                        │
+                        ▼
+                  SUSPEND EXECUTION ──► Emit HITL_REQUEST to Hermes
 ```
 
 #### 5-Dimensional Token Verification
@@ -187,7 +218,7 @@ If an approval token exists, the Gateway verifies all five dimensions simultaneo
 | **5. Expiration** | `token.expires_at > current_timestamp` | Expired token; reject reuse |
 
 #### HITL Request Emission
-If no valid token exists, the Gateway pauses the calling agent and emits a structured request:
+If no valid token exists for a LOUD action or exploit PoC, the Gateway pauses the calling agent and emits a structured request:
 
 ```yaml
 HITL_REQUEST:
@@ -195,6 +226,7 @@ HITL_REQUEST:
   finding_id: tool_request.finding_id
   target: tool_request.target.raw_target
   proposed_action: tool_request.technique
+  opsec_noise: tool_request.opsec.noise       # "QUIET" | "MODERATE" | "LOUD"
   tool_name: tool_request.tool_name
   command_preview: tool_request.command_template
   severity_score: tool_request.severity_hint  # Urgency context only; does not alter gate

@@ -1,6 +1,6 @@
 # NIGHTFANG ↔ Hermes Integration Contract
 
-Version: `0.1.0`  
+Version: `2.0.0`  
 This document describes what Hermes must provide to load and operate NIGHTFANG as a capability pack, and what NIGHTFANG contracts to provide in return.
 
 ---
@@ -128,6 +128,7 @@ Hermes must never execute external tools, network scans, or arbitrary commands r
 | NIGHTFANG Pack Version | Min Hermes Version | Notes |
 | :--- | :--- | :--- |
 | `0.1.x` | `0.1.0` | Initial integration contract |
+| `2.0.x` | `0.2.0` | Multi-domain expansion, Execution Policy Gateway enforcement, schema |
 
 If Hermes does not meet `min_version`, it must refuse to load the pack and surface an error to the operator.
 
@@ -145,15 +146,20 @@ If Hermes does not meet `min_version`, it must refuse to load the pack and surfa
 
 ## 5. Integration Verification Checklist
 
-Before declaring NIGHTFANG operational on a Hermes instance, verify:
+Before declaring NIGHTFANG operational on a Hermes instance, dynamically verify:
 
 - [ ] `manifest.yaml` parsed successfully
 - [ ] `runtime.min_version` check passed
 - [ ] `AGENTS.md` loaded as entrypoint
-- [ ] All 8 capabilities registered in routing index
+- [ ] All `manifest.capabilities[]` entries registered successfully in the Capability Router
+- [ ] Registered capability count dynamically matches manifest capability count
+- [ ] No duplicate capability IDs exist in routing index
+- [ ] Every registered capability resolves to an existing workflow file
+- [ ] Every registered capability resolves to an existing agent file
+- [ ] Every referenced skill directory exists and contains a valid `SKILL.md`
 - [ ] Execution Policy Gateway intercepting all tool invocations and network requests
 - [ ] `send_operator_message()` wired to active channel
 - [ ] `receive_operator_command()` polling active
-- [ ] Engagement memory scoped and initialized
+- [ ] Engagement memory scoped and initialized (`engagement.scope`, `engagement.findings[]`, `engagement.config`)
 - [ ] HITL queue initialized and operator-facing
 - [ ] End-to-end smoke test: send a test finding through the full pipeline and verify operator receives alert

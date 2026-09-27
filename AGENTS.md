@@ -82,13 +82,33 @@ Nightfang strictly enforces the separation of concerns across the pack:
 - **Tool Boundary**: Tools are external executables or APIs (nmap, sqlmap, curl, ffuf, etc.) invoked by skills. The Tool layer is where actual network traffic is generated. All tool invocations pass through the Execution Policy Gateway ([`integration/execution-policy-gateway.md`](integration/execution-policy-gateway.md)) before running.
 - **Authorization Gate is not a one-time check**: scope is re-verified at every capability boundary — before the Capability Router selects a workflow, before agent delegation, and before any tool invocation.
 
+### Agent Exposure Taxonomy: Direct vs. Delegated Agents
+NIGHTFANG deploys **27 specialized agents** organized into two operational tiers:
+1. **Direct Entrypoint Agents (22 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. Because the `scanner` agent handles 3 distinct network/web/API capabilities, 22 direct agents service all 24 registered capabilities.
+2. **Delegated Specialist Agents (5 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
+   - **`detection-engineer`**: Invoked by purple-team workflows and `reporter` to author vendor-neutral Sigma rules, Sentinel KQL, and Splunk SPL queries.
+   - **`threat-modeler`**: Invoked during Phase 1 architecture review to decompose trust boundaries and data flows (STRIDE/PASTA) before active probing.
+   - **`code-auditor`**: Invoked during SAST, source code reviews, and supply chain audits for sink-to-source taint tracking.
+   - **`risk-scorer`**: Invoked during finding triage to compute formulaic CVSS v3.1/v4.0 vectors, query EPSS feeds, and assign remediation SLAs.
+   - **`fix-verifier`**: Invoked during post-remediation validation and regression testing to confirm patch efficacy and canary cleanup.
+
+### OPSEC Noise Classification
+Every tool invocation proposed by any agent must declare its OPSEC noise profile:
+- **`QUIET`**: Passive analysis, technology fingerprinting, DNS/WHOIS queries, public crawling, robots.txt inspection.
+- **`MODERATE`**: Targeted directory fuzzing within safe rate limits, parameter discovery, credential testing below lockout thresholds.
+- **`LOUD`**: Active vulnerability probing, injection testing, full wordlist brute-forcing, exploit PoC validation.
+
+### Swarm Execution Modes
+- **Advisory Mode**: Analyzing user-pasted logs, discussing architecture, reviewing source code, or threat modeling. No active network scope required.
+- **Execution Mode**: Hands-on network interaction and tool invocation. Strict scope declaration, rate limits, and Execution Policy Gateway enforcement required.
+
 ---
 
-## 5. Finding Contract & Dual Ranking
+## 5. Finding Contract & Adversarial Quality Gates
 
 Every vulnerability discovered or validated by any agent must strictly adhere to [`schemas/finding.md`](schemas/finding.md).
 
-Every finding adheres to the **Dual Ranking System**:
+### Dual Ranking System
 - **Confidence Score (1–10)**: Certainty that the vulnerability is real and exploitable:
   - `1–3`: Theoretical (inferred from version banner or passive OSINT)
   - `4–6`: Likely (behavioral indicator, error anomaly, reflection observed)
@@ -97,7 +117,22 @@ Every finding adheres to the **Dual Ranking System**:
 - **Severity Score (1–10)**: Potential impact severity:
   - `1–2`: Informational | `3–4`: Low | `5–6`: Medium | `7–8`: High | `9–10`: Critical
 
-All findings must be cross-mapped to **CVSS v3.1**, **MITRE ATT&CK** or **MITRE ATLAS**, and **MITRE D3FEND** defensive countermeasures per [`references/framework_mappings.md`](references/framework_mappings.md).
+### The 7-Question Adversarial Validation Gate
+Before a candidate finding is escalated to Confirmed or Demonstrated status, the validation agent must evaluate:
+1. **In scope?** Confirm the target host and endpoint are within authorized engagement boundaries. Out-of-scope $\implies$ **KILL**.
+2. **Grounded?** Every claim must be backed by raw, unedited evidence artifacts (`[EVD-XXX]` with SHA-256 hash). No artifact $\implies$ **KILL**.
+3. **Reachable?** Did the test input reach the vulnerable sink, rather than an intermediate WAF or generic error handler?
+4. **Controllable?** Does the input actually influence program control flow, memory state, or backend logic?
+5. **Impactful?** Does the behavior demonstrate real security impact meeting the class threshold?
+6. **Default vs Custom?** Is the weakness present in default deployments or reliant on non-standard configurations?
+7. **Severity Honest?** Is the severity score and CVSS vector grounded in demonstrated reality rather than speculative worst-case scenarios?
+
+### Red ↔ Blue Pairing Principle
+Every finding presented in final deliverables must include corresponding defensive countermeasures:
+- **MITRE D3FEND Countermeasures**: Explicitly mapped defensive technique IDs (`D3-UVI`, `D3-PSA`, `D3-WAF`, `D3-ARA`, etc.).
+- **Detection Engineering**: Machine-readable detection logic (Sigma rule, Microsoft Sentinel KQL, or Splunk SPL query) attached to the finding record.
+
+All findings must be cross-mapped to **CVSS v3.1 / v4.0**, **MITRE ATT&CK** or **MITRE ATLAS**, and **MITRE D3FEND** per [`references/framework_mappings.md`](references/framework_mappings.md).
 
 ---
 
@@ -125,10 +160,16 @@ flowchart TD
 - **Web Applications, URLs, SPAs** $\to$ `workflows/web-assessment.md` $\to$ **`scanner`** (`skills/web`, `skills/hunting`)
 - **REST, GraphQL, gRPC APIs** $\to$ `workflows/api-assessment.md` $\to$ **`scanner`** (`skills/api`, `skills/hunting`)
 - **Network Ports & Services** $\to$ `workflows/standard-pentest.md` $\to$ **`scanner`** (`skills/network`)
-- **Cloud Infrastructure & IAM** $\to$ `workflows/standard-pentest.md` $\to$ **`scanner`** (`skills/cloud`)
+- **Active Directory Domains** $\to$ `workflows/ad-assessment.md` $\to$ **`ad-attacker`** (`skills/active-directory`, `skills/privilege-escalation`)
+- **Multi-Cloud & Kubernetes** $\to$ `workflows/cloud-assessment.md` $\to$ **`cloud-security`**, **`container-breakout`** (`skills/cloud`, `skills/container`)
+- **CI/CD Pipelines & Supply Chain** $\to$ `workflows/cicd-assessment.md` $\to$ **`cicd-redteam`**, **`supply-chain-auditor`** (`skills/cicd`, `skills/supply-chain`)
+- **Mobile Applications (iOS/Android)** $\to$ `workflows/mobile-assessment.md` $\to$ **`mobile-pentester`** (`skills/mobile`, `skills/api`)
+- **Wireless & Bluetooth RF** $\to$ `workflows/wireless-assessment.md` $\to$ **`wireless-pentester`** (`skills/wireless`, `skills/iot`)
+- **IoT & Industrial Control (OT/ICS)** $\to$ `workflows/iot-ics-assessment.md` $\to$ **`scada-attacker`**, **`iot-pentester`** (`skills/ot-ics`, `skills/iot`)
+- **Purple Team Emulation** $\to$ `workflows/purple-team.md` $\to$ **`purple-team-operator`**, **`detection-engineer`** (`skills/purple-team`, `skills/remediation`)
 - **LLM, Agents, MCP Servers** $\to$ `workflows/ai-security-assessment.md` $\to$ **`ai-security`** (`skills/ai-security`)
 - **Exploit Validation (HITL)** $\to$ `workflows/standard-pentest.md` $\to$ **`validation`** (`skills/attack-chain`, `skills/remediation`)
-- **Reporting & Roadmaps** $\to$ `workflows/standard-pentest.md` $\to$ **`reporter`** (`skills/reporting`, `skills/remediation`)
+- **Reporting & Compliance** $\to$ `workflows/standard-pentest.md` $\to$ **`reporter`**, **`compliance-mapper`** (`skills/reporting`, `skills/grc`)
 
 ---
 

@@ -52,9 +52,14 @@ Incoming operator request (target + scope + task description)
     └────────────────────────────┘
 ```
 
-If a request matches **more than one** capability entry, apply the specificity rule:
-- More specific `target_types` wins over more general (e.g., `url` beats `domain`)
-- If still ambiguous, present both `id` values to the operator and ask them to confirm
+If a request matches **more than one** capability entry (e.g., `tls_endpoint` matching both `network-infrastructure-security` and `cryptographic-security`), the Capability Router applies a deterministic 5-step hierarchy:
+1. **Explicit Directive**: Operator `--capability=<id>` overrides all matching logic.
+2. **Token Specificity**: More specific `target_types` wins over general (e.g., `rest_api` beats `url`).
+3. **Contextual Intent Lexicon**: Request text is scanned for domain keywords (e.g., "cipher", "certificate", "jwt" $\to$ `cryptographic-security`; "ports", "service", "firewall" $\to$ `network-infrastructure-security`).
+4. **Workflow Specialization**: Domain-specific workflows win over generic ones (`api-assessment` beats `standard-pentest`).
+5. **Ambiguity Emission (`ROUTING_AMBIGUOUS`)**: If target is bare and intent is unstated, halt and request operator clarification with candidate capability IDs.
+
+See [`integration/capability-router.md §Step 3`](capability-router.md#step-3--match-against-capabilities) for the complete executable algorithm.
 
 ---
 
@@ -68,10 +73,26 @@ The entries below are derived directly from `manifest.yaml capabilities[]`. The 
 | `web-application-security` | `web_app`, `url`, `http`, `https`, `spa`, `cms` | `web-assessment` | `scanner` | `skills/web`, `skills/hunting` |
 | `api-security` | `rest_api`, `graphql`, `grpc`, `openapi`, `swagger`, `json_api` | `api-assessment` | `scanner` | `skills/api`, `skills/hunting` |
 | `network-infrastructure-security` | `network_host`, `subnet`, `port_service`, `tls_endpoint` | `standard-pentest` | `scanner` | `skills/network` |
-| `cloud-security` | `aws`, `azure`, `gcp`, `s3_bucket`, `imds`, `cloud_tenant` | `standard-pentest` | `scanner` | `skills/cloud` |
+| `cloud-security` | `aws`, `azure`, `gcp`, `s3_bucket`, `imds`, `cloud_tenant` | `cloud-assessment` | `cloud-security` | `skills/cloud`, `skills/container` |
+| `container-kubernetes-security` | `docker_host`, `k8s_cluster`, `container_registry`, `helm_chart`, `k8s_manifest` | `cloud-assessment` | `container-breakout` | `skills/container`, `skills/privilege-escalation` |
+| `cicd-pipeline-security` | `github_actions`, `gitlab_ci`, `jenkins`, `azure_devops`, `circleci` | `cicd-assessment` | `cicd-redteam` | `skills/cicd`, `skills/supply-chain` |
+| `active-directory-security` | `ad_domain`, `ad_forest`, `domain_controller`, `ldap`, `kerberos`, `adcs` | `ad-assessment` | `ad-attacker` | `skills/active-directory`, `skills/privilege-escalation` |
+| `wireless-security` | `wifi_ap`, `wifi_client`, `ble_device`, `zigbee_mesh`, `z_wave`, `lorawan` | `wireless-assessment` | `wireless-pentester` | `skills/wireless`, `skills/iot` |
+| `mobile-security` | `android_app`, `ios_app`, `apk`, `ipa`, `mobile_backend` | `mobile-assessment` | `mobile-pentester` | `skills/mobile`, `skills/api`, `skills/crypto` |
+| `iot-embedded-security` | `iot_device`, `firmware`, `hardware_interface`, `mqtt_broker`, `coap_endpoint` | `iot-ics-assessment` | `iot-pentester` | `skills/iot`, `skills/wireless` |
+| `ot-ics-security` | `plc`, `rtu`, `historian`, `hmi`, `scada_server`, `industrial_network`, `safety_system` | `iot-ics-assessment` | `scada-attacker` | `skills/ot-ics`, `skills/network` |
+| `cryptographic-security` | `tls_endpoint`, `certificate`, `jwt_token`, `crypto_implementation`, `pqc_migration` | `standard-pentest` | `crypto-analyzer` | `skills/crypto`, `skills/api` |
+| `privilege-escalation` | `linux_host`, `windows_host`, `container`, `endpoint_shell` | `standard-pentest` | `privesc-advisor` | `skills/privilege-escalation` |
+| `post-exploitation` | `compromised_host`, `internal_subnet`, `pivot_point` | `standard-pentest` | `lateral-movement` | `skills/post-exploitation`, `skills/network` |
+| `forensics-incident-response` | `memory_dump`, `disk_image`, `log_archive`, `malware_sample`, `pcap` | `standard-pentest` | `forensics-analyst` | `skills/forensics` |
+| `supply-chain-security` | `git_repo`, `package_lockfile`, `sbom`, `container_image`, `ci_cd_pipeline` | `supply-chain-assessment` | `supply-chain-auditor` | `skills/supply-chain`, `skills/cicd` |
+| `grc-compliance` | `organization`, `control_set`, `audit_scope`, `policy_repo` | `standard-pentest` | `compliance-mapper` | `skills/grc`, `skills/reporting` |
+| `threat-intelligence` | `threat_report`, `ioc_feed`, `malware_sample`, `actor_profile`, `campaign` | `standard-pentest` | `cti-analyst` | `skills/cti`, `skills/reporting` |
+| `purple-team-adversary-emulation` | `detection_rules`, `sim_environment`, `attck_technique`, `atomic_test` | `purple-team` | `purple-team-operator` | `skills/purple-team`, `skills/remediation`, `skills/cti` |
 | `ai-llm-security` | `llm`, `agent`, `mcp_server`, `prompt_interface`, `rag` | `ai-security-assessment` | `ai-security` | `skills/ai-security` |
 | `exploit-validation` | `candidate_finding`, `unverified_exploit` | `standard-pentest` | `validation` | `skills/attack-chain`, `skills/remediation` |
 | `security-reporting` | `engagement_findings`, `audit_deliverable` | `standard-pentest` | `reporter` | `skills/reporting`, `skills/remediation` |
+| `utility-operations` | `engagement_request`, `scope_document`, `target_inventory` | `standard-pentest` | `engagement-planner` | `skills/utility`, `skills/recon` |
 
 ---
 

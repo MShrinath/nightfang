@@ -18,6 +18,6 @@
    - Authentication, CSRF, and session fixation verification.
    - Access control & IDOR parameter swapping across credentialed user tiers.
 4. **Logic Flaw Hunting**: Concurrency testing on state-changing endpoints, parameter pollution, and cache poisoning.
-5. **Operator Approval Gate (HITL)**: Request approval via operator interface for any candidate finding with Severity ≥ 5.
-6. **PoC Validation (`validation`)**: Execute benign verification payloads; capture raw evidence and SHA-256 hashes.
+5. **Operator Approval Gate (HITL)**: Request operator approval before attempting any active or invasive validation action per SOP-04.
+6. **PoC Validation (`validation`)**: Execute benign verification payloads under approved token; capture raw evidence and SHA-256 hashes.
 7. **Cleanup & Final Reporting (`reporter`)**: Purge test canaries and compile the final web application security assessment report.

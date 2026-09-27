@@ -1,7 +1,7 @@
 name: nightfang
-version: "0.2.0"
+version: "2.0.0"
 type: security-capability-pack
-description: "Autonomous penetration testing and offensive security capability pack for host agent runtimes."
+description: "Comprehensive autonomous security assessment, penetration testing, and purple-teaming capability pack for host agent runtimes."
 
 runtime:
   name: hermes
@@ -52,10 +52,146 @@ capabilities:
   - id: cloud-security
     description: "AWS/Azure/GCP audits, S3 buckets, IMDSv1/v2 SSRF extraction, and IAM"
     target_types: [aws, azure, gcp, s3_bucket, imds, cloud_tenant]
-    workflow: workflows/standard-pentest.md
-    agent: agents/scanner.md
+    workflow: workflows/cloud-assessment.md
+    agent: agents/cloud-security.md
     skills:
       - skills/cloud
+      - skills/container
+
+  - id: container-kubernetes-security
+    description: "Container breakout vectors, Kubernetes RBAC, and admission control"
+    target_types: [docker_host, k8s_cluster, container_registry, helm_chart, k8s_manifest]
+    workflow: workflows/cloud-assessment.md
+    agent: agents/container-breakout.md
+    skills:
+      - skills/container
+      - skills/privilege-escalation
+
+  - id: cicd-pipeline-security
+    description: "CI/CD workflow poisoning, runner isolation, OIDC abuse, and secrets hygiene"
+    target_types: [github_actions, gitlab_ci, jenkins, azure_devops, circleci]
+    workflow: workflows/cicd-assessment.md
+    agent: agents/cicd-redteam.md
+    skills:
+      - skills/cicd
+      - skills/supply-chain
+
+  - id: active-directory-security
+    description: "Active Directory domain assessment — Kerberos, ACLs, ADCS, and delegation"
+    target_types: [ad_domain, ad_forest, domain_controller, ldap, kerberos, adcs]
+    workflow: workflows/ad-assessment.md
+    agent: agents/ad-attacker.md
+    skills:
+      - skills/active-directory
+      - skills/privilege-escalation
+
+  - id: wireless-security
+    description: "WiFi 802.11, WPA2/WPA3, Enterprise 802.1X, BLE GATT, and RF recon"
+    target_types: [wifi_ap, wifi_client, ble_device, zigbee_mesh, z_wave, lorawan]
+    workflow: workflows/wireless-assessment.md
+    agent: agents/wireless-pentester.md
+    skills:
+      - skills/wireless
+      - skills/iot
+
+  - id: mobile-security
+    description: "Android (APK) and iOS (IPA) application security per OWASP MASVS v2.0"
+    target_types: [android_app, ios_app, apk, ipa, mobile_backend]
+    workflow: workflows/mobile-assessment.md
+    agent: agents/mobile-pentester.md
+    skills:
+      - skills/mobile
+      - skills/api
+      - skills/crypto
+
+  - id: iot-embedded-security
+    description: "Embedded firmware, hardware interfaces (UART/JTAG/SPI), and MQTT/CoAP"
+    target_types: [iot_device, firmware, hardware_interface, mqtt_broker, coap_endpoint]
+    workflow: workflows/iot-ics-assessment.md
+    agent: agents/iot-pentester.md
+    skills:
+      - skills/iot
+      - skills/wireless
+
+  - id: ot-ics-security
+    description: "Purdue model, industrial protocols (Modbus, S7comm, DNP3), and IEC 62443"
+    target_types: [plc, rtu, historian, hmi, scada_server, industrial_network, safety_system]
+    workflow: workflows/iot-ics-assessment.md
+    agent: agents/scada-attacker.md
+    skills:
+      - skills/ot-ics
+      - skills/network
+
+  - id: cryptographic-security
+    description: "TLS cipher auditing, JWT implementation flaws, padding oracles, and PQC"
+    target_types: [tls_endpoint, certificate, jwt_token, crypto_implementation, pqc_migration]
+    workflow: workflows/standard-pentest.md
+    agent: agents/crypto-analyzer.md
+    skills:
+      - skills/crypto
+      - skills/api
+
+  - id: privilege-escalation
+    description: "Linux and Windows local privilege escalation (SUID, sudo, tokens, services)"
+    target_types: [linux_host, windows_host, container, endpoint_shell]
+    workflow: workflows/standard-pentest.md
+    agent: agents/privesc-advisor.md
+    skills:
+      - skills/privilege-escalation
+
+  - id: post-exploitation
+    description: "Lateral movement, network pivoting, egress/DLP testing, and persistence"
+    target_types: [compromised_host, internal_subnet, pivot_point]
+    workflow: workflows/standard-pentest.md
+    agent: agents/lateral-movement.md
+    skills:
+      - skills/post-exploitation
+      - skills/network
+
+  - id: forensics-incident-response
+    description: "Memory forensics (Volatility), timeline reconstruction, disk artifacts, and YARA"
+    target_types: [memory_dump, disk_image, log_archive, malware_sample, pcap]
+    workflow: workflows/standard-pentest.md
+    agent: agents/forensics-analyst.md
+    skills:
+      - skills/forensics
+
+  - id: supply-chain-security
+    description: "SBOM analysis (SPDX/CycloneDX), dependency confusion, and SLSA provenance"
+    target_types: [git_repo, package_lockfile, sbom, container_image, ci_cd_pipeline]
+    workflow: workflows/supply-chain-assessment.md
+    agent: agents/supply-chain-auditor.md
+    skills:
+      - skills/supply-chain
+      - skills/cicd
+
+  - id: grc-compliance
+    description: "Regulatory crosswalks (NIST CSF 2.0, ISO 27001, SOC 2, CIS v8, PCI-DSS v4.0)"
+    target_types: [organization, control_set, audit_scope, policy_repo]
+    workflow: workflows/standard-pentest.md
+    agent: agents/compliance-mapper.md
+    skills:
+      - skills/grc
+      - skills/reporting
+
+  - id: threat-intelligence
+    description: "Intelligence cycle, IOC normalization, STIX 2.1, Diamond Model, and TLP 2.0"
+    target_types: [threat_report, ioc_feed, malware_sample, actor_profile, campaign]
+    workflow: workflows/standard-pentest.md
+    agent: agents/cti-analyst.md
+    skills:
+      - skills/cti
+      - skills/reporting
+
+  - id: purple-team-adversary-emulation
+    description: "Atomic emulation, detect-tune-validate loop, MTTD measurement, and Sigma rules"
+    target_types: [detection_rules, sim_environment, attck_technique, atomic_test]
+    workflow: workflows/purple-team.md
+    agent: agents/purple-team-operator.md
+    skills:
+      - skills/purple-team
+      - skills/remediation
+      - skills/cti
 
   - id: ai-llm-security
     description: "Adversarial prompt injection, agentic tool abuse, and MCP server audits"
@@ -83,12 +219,137 @@ capabilities:
       - skills/reporting
       - skills/remediation
 
+  - id: utility-operations
+    description: "Rapid triage checklists, engagement memory, and finding QA validation"
+    target_types: [engagement_request, scope_document, target_inventory]
+    workflow: workflows/standard-pentest.md
+    agent: agents/engagement-planner.md
+    skills:
+      - skills/utility
+      - skills/recon
+
 agents:
   - agents/recon.md
   - agents/scanner.md
   - agents/ai-security.md
   - agents/validation.md
   - agents/reporter.md
+  - agents/ad-attacker.md
+  - agents/cloud-security.md
+  - agents/container-breakout.md
+  - agents/cicd-redteam.md
+  - agents/mobile-pentester.md
+  - agents/wireless-pentester.md
+  - agents/iot-pentester.md
+  - agents/scada-attacker.md
+  - agents/crypto-analyzer.md
+  - agents/forensics-analyst.md
+  - agents/supply-chain-auditor.md
+  - agents/compliance-mapper.md
+  - agents/cti-analyst.md
+  - agents/purple-team-operator.md
+  - agents/detection-engineer.md
+  - agents/threat-modeler.md
+  - agents/privesc-advisor.md
+  - agents/lateral-movement.md
+  - agents/code-auditor.md
+  - agents/risk-scorer.md
+  - agents/fix-verifier.md
+  - agents/engagement-planner.md
+
+agent_taxonomy:
+  direct:
+    description: "Reachable directly through manifest capabilities[] routing table (22 agents covering 24 capabilities)"
+    agents:
+      - id: recon
+        path: agents/recon.md
+        capabilities: [attack-surface-mapping]
+      - id: scanner
+        path: agents/scanner.md
+        capabilities: [web-application-security, api-security, network-infrastructure-security]
+      - id: cloud-security
+        path: agents/cloud-security.md
+        capabilities: [cloud-security]
+      - id: container-breakout
+        path: agents/container-breakout.md
+        capabilities: [container-kubernetes-security]
+      - id: cicd-redteam
+        path: agents/cicd-redteam.md
+        capabilities: [cicd-pipeline-security]
+      - id: ad-attacker
+        path: agents/ad-attacker.md
+        capabilities: [active-directory-security]
+      - id: wireless-pentester
+        path: agents/wireless-pentester.md
+        capabilities: [wireless-security]
+      - id: mobile-pentester
+        path: agents/mobile-pentester.md
+        capabilities: [mobile-security]
+      - id: iot-pentester
+        path: agents/iot-pentester.md
+        capabilities: [iot-embedded-security]
+      - id: scada-attacker
+        path: agents/scada-attacker.md
+        capabilities: [ot-ics-security]
+      - id: crypto-analyzer
+        path: agents/crypto-analyzer.md
+        capabilities: [cryptographic-security]
+      - id: privesc-advisor
+        path: agents/privesc-advisor.md
+        capabilities: [privilege-escalation]
+      - id: lateral-movement
+        path: agents/lateral-movement.md
+        capabilities: [post-exploitation]
+      - id: forensics-analyst
+        path: agents/forensics-analyst.md
+        capabilities: [forensics-incident-response]
+      - id: supply-chain-auditor
+        path: agents/supply-chain-auditor.md
+        capabilities: [supply-chain-security]
+      - id: compliance-mapper
+        path: agents/compliance-mapper.md
+        capabilities: [grc-compliance]
+      - id: cti-analyst
+        path: agents/cti-analyst.md
+        capabilities: [threat-intelligence]
+      - id: purple-team-operator
+        path: agents/purple-team-operator.md
+        capabilities: [purple-team-adversary-emulation]
+      - id: ai-security
+        path: agents/ai-security.md
+        capabilities: [ai-llm-security]
+      - id: validation
+        path: agents/validation.md
+        capabilities: [exploit-validation]
+      - id: reporter
+        path: agents/reporter.md
+        capabilities: [security-reporting]
+      - id: engagement-planner
+        path: agents/engagement-planner.md
+        capabilities: [utility-operations]
+  delegated:
+    description: "Invoked downstream by workflows, primary agents, or purple-team loops (5 specialist agents)"
+    agents:
+      - id: detection-engineer
+        path: agents/detection-engineer.md
+        invoked_by: [workflows/purple-team.md, agents/reporter.md, agents/purple-team-operator.md]
+        purpose: "Translates offensive findings into defensive Sigma, Sentinel KQL, and Splunk SPL queries"
+      - id: threat-modeler
+        path: agents/threat-modeler.md
+        invoked_by: [workflows/standard-pentest.md, workflows/web-assessment.md, workflows/cloud-assessment.md]
+        purpose: "Pre-attack architectural trust boundary and data flow decomposition (STRIDE/PASTA)"
+      - id: code-auditor
+        path: agents/code-auditor.md
+        invoked_by: [workflows/supply-chain-assessment.md, workflows/cicd-assessment.md, workflows/web-assessment.md]
+        purpose: "Static source code analysis (SAST) and sink-to-source taint tracking"
+      - id: risk-scorer
+        path: agents/risk-scorer.md
+        invoked_by: [workflows/standard-pentest.md, agents/reporter.md]
+        purpose: "Quantitative risk calibration (CVSS v3.1/v4.0, EPSS, CISA KEV, Priority SLAs)"
+      - id: fix-verifier
+        path: agents/fix-verifier.md
+        invoked_by: [workflows/standard-pentest.md, workflows/web-assessment.md]
+        purpose: "Post-remediation patch validation and regression testing"
 
 skills:
   - skills/recon
@@ -101,12 +362,37 @@ skills:
   - skills/attack-chain
   - skills/remediation
   - skills/reporting
+  - skills/active-directory
+  - skills/container
+  - skills/cicd
+  - skills/mobile
+  - skills/wireless
+  - skills/iot
+  - skills/ot-ics
+  - skills/crypto
+  - skills/forensics
+  - skills/supply-chain
+  - skills/grc
+  - skills/cti
+  - skills/purple-team
+  - skills/privilege-escalation
+  - skills/post-exploitation
+  - skills/utility
 
 workflows:
   - workflows/standard-pentest.md
   - workflows/web-assessment.md
   - workflows/api-assessment.md
   - workflows/ai-security-assessment.md
+  - workflows/ad-assessment.md
+  - workflows/cloud-assessment.md
+  - workflows/mobile-assessment.md
+  - workflows/wireless-assessment.md
+  - workflows/cicd-assessment.md
+  - workflows/purple-team.md
+  - workflows/iot-ics-assessment.md
+  - workflows/supply-chain-assessment.md
+  - workflows/bug-bounty.md
 
 schemas:
   - schemas/finding.md

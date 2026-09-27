@@ -75,15 +75,43 @@ If no rule matches → `UNCLASSIFIED`. Treat as ROUTING_FAILURE (step 6).
 
 For each classified target, scan `manifest.yaml capabilities[]` in order and collect all entries where `target_type ∈ entry.target_types[]`.
 
-**Specificity tiebreaker** (when multiple entries match):
+**Deterministic Disambiguation & Tiebreaker Hierarchy**:
 
-| Condition | Winner |
-| :--- | :--- |
-| One entry has a more specific token match | That entry wins (e.g., `rest_api` beats `url`) |
-| Entries differ by workflow specificity | More specific workflow wins (e.g., `api-assessment` beats `standard-pentest`) |
-| Still tied after both rules | Present tied `id` values to operator; await explicit selection |
+When a target token matches multiple capabilities (e.g., `tls_endpoint` claimed by both `network-infrastructure-security` and `cryptographic-security`), apply the following deterministic rules in priority order:
 
-**Multi-target requests**: If a request contains targets that classify into different capabilities (e.g., a domain + an API URL), dispatch **both** capabilities and run them as parallel tracks under the same engagement ID.
+1. **Rule 1 — Operator Directive / Hint**:
+   - If an explicit `--capability=<id>` or directive was supplied in the request, immediately select that capability.
+
+2. **Rule 2 — Token Specificity**:
+   - More specific target token wins over general (e.g., `rest_api` beats `url`; `docker_host` beats `network_host`).
+
+3. **Rule 3 — Contextual Intent Lexicon**:
+   - When a token is dual-owned by multiple capabilities, scan the operator request text for domain intent keywords:
+     - **Cryptographic Intent** (`cipher`, `cert`, `certificate`, `tls`, `ssl`, `padding oracle`, `heartbleed`, `robot`, `jwt`, `pqc`, `crypto`) $\to$ Dispatches `cryptographic-security` (`crypto-analyzer`).
+     - **Network Infrastructure Intent** (`port`, `service`, `banner`, `subnet`, `network scan`, `nmap`, `open ports`, `firewall`, `host audit`) $\to$ Dispatches `network-infrastructure-security` (`scanner`).
+     - **Web Application Intent** (`sqli`, `xss`, `csrf`, `idor`, `session`, `cookie`, `form`, `webapp`, `crawler`) $\to$ Dispatches `web-application-security` (`scanner`).
+
+4. **Rule 4 — Workflow Specialization**:
+   - If candidates differ by workflow specificity, the more specialized assessment workflow wins over a generic standard pentest (e.g., `api-assessment.md` beats `standard-pentest.md`).
+
+5. **Rule 5 — Ambiguity Emission (`ROUTING_AMBIGUOUS`)**:
+   - If the target is bare (e.g., `https://target.internal:8443` or `10.10.10.5:443`) and no intent keywords exist to break the tie, the router **must not guess arbitrarily**.
+   - Emit `ROUTING_AMBIGUOUS` with candidate capabilities and halt execution until the operator selects:
+     ```yaml
+     ROUTING_AMBIGUOUS:
+       target: "https://target.internal:8443"
+       token: "tls_endpoint"
+       candidates:
+         - id: "cryptographic-security"
+           agent: "crypto-analyzer"
+           scope: "SSL/TLS ciphers, certificate validation, cryptographic vulnerabilities, and protocol hygiene"
+         - id: "network-infrastructure-security"
+           agent: "scanner"
+           scope: "Port exposure, network service enumeration, and infrastructure CVE discovery"
+       prompt: "Target https://target.internal:8443 is eligible for both cryptographic and network assessments. Specify --capability cryptographic-security or --capability network-infrastructure-security to proceed."
+     ```
+
+**Multi-target requests**: If a request contains targets that classify into distinct non-conflicting capabilities (e.g., a domain + an API URL), dispatch **both** capabilities and run them as parallel tracks under the same engagement ID.
 
 ---
 
