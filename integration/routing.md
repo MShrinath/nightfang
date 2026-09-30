@@ -93,6 +93,10 @@ The entries below are derived directly from `manifest.yaml capabilities[]`. The 
 | `exploit-validation` | `candidate_finding`, `unverified_exploit` | `standard-pentest` | `validation` | `skills/attack-chain`, `skills/remediation` |
 | `security-reporting` | `engagement_findings`, `audit_deliverable` | `standard-pentest` | `reporter` | `skills/reporting`, `skills/remediation` |
 | `utility-operations` | `engagement_request`, `scope_document`, `target_inventory` | `standard-pentest` | `engagement-planner` | `skills/utility`, `skills/recon` |
+| `defense-evasion-assessment` | `endpoint_host`, `edr_policy`, `workstation_image`, `process_telemetry`, `lolbas_candidate` | `purple-team` | `evasion-specialist` | `skills/defense-evasion`, `skills/privilege-escalation` |
+| `command-and-control-resilience` | `c2_infrastructure`, `egress_boundary`, `network_perimeter`, `covert_channel`, `proxy_gateway` | `purple-team` | `c2-operator` | `skills/c2-operations`, `skills/post-exploitation` |
+| `initial-access-assessment` | `vpn_gateway`, `remote_access`, `perimeter_portal`, `payload_delivery`, `motw_container` | `standard-pentest` | `recon` | `skills/initial-access`, `skills/recon` |
+| `credential-access-security` | `lsass_memory`, `credential_vault`, `sam_database`, `dpapi_store`, `session_token` | `standard-pentest` | `privesc-advisor` | `skills/credential-access`, `skills/privilege-escalation` |
 
 ---
 

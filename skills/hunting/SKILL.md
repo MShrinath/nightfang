@@ -44,6 +44,23 @@ Manual, creative vulnerability hunting that goes beyond automated scanner templa
   - Manipulate `redirect_uri` to external domains.
   - Test for missing or unvalidated `state` parameters allowing CSRF on OAuth connections.
 
+### 5. Behavioral Threat Hunting & Evasion Artifacts
+- Cross-link with [`skills/defense-evasion`](../defense-evasion/SKILL.md):
+  - **Process Lineage Anomalies**: Hunt for unusual parent-child process trees (e.g., `winword.exe`, `excel.exe`, or `w3wp.exe` spawning `cmd.exe` or `powershell.exe`).
+  - **Memory Inspection**: Hunt for processes containing unbacked executable memory regions (`PAGE_EXECUTE_READWRITE`) using tools like `Moneta` and `PE-sieve`.
+  - **Living off the Land Abuse**: Detect command line invocations of LOLBAS binaries executing non-standard arguments (`mshta http://`, `certutil -urlcache`).
+
+### 6. Network Beaconing & C2 Heuristic Hunting
+- Cross-link with [`skills/c2-operations`](../c2-operations/SKILL.md):
+  - **Traffic Periodicity Analysis**: Hunt NetFlow and proxy logs for repetitive HTTP/HTTPS outbound requests exhibiting regular time intervals (beaconing) with low delta variance.
+  - **TLS JA3/JA4 Fingerprinting**: Identify anomalous TLS Client Hello fingerprints not associated with standard enterprise operating systems or browsers.
+  - **DNS Entropy & Query Volume**: Identify high-entropy subdomain lookups indicating DNS tunneling or covert egress channels.
+
+### 7. Credential Access Telemetry Hunting
+- Cross-link with [`skills/credential-access`](../credential-access/SKILL.md):
+  - **LSASS Access Monitoring**: Query Sysmon Event ID 10 for processes requesting `PROCESS_VM_READ` on `lsass.exe` outside authorized antimalware and system binaries.
+  - **SAM & DPAPI Access**: Monitor Windows Security Event ID 4656/4663 for unauthorized handle requests targeting `%SystemRoot%\System32\config\SAM` or user DPAPI master key folders.
+
 ## Output
-- Detailed logic flaw reproduction walkthroughs.
+- Detailed logic flaw reproduction walkthroughs and behavioral hunt hypotheses.
 - Findings formatted per [`schemas/finding.md`](../../schemas/finding.md).

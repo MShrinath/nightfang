@@ -5,7 +5,7 @@ description: "Comprehensive autonomous security assessment, penetration testing,
 
 runtime:
   name: hermes
-  min_version: "0.1.0"
+  min_version: "0.2.0"
   entrypoint:
     agent: AGENTS.md
   capabilities:
@@ -228,6 +228,43 @@ capabilities:
       - skills/utility
       - skills/recon
 
+  - id: defense-evasion-assessment
+    description: "Endpoint security evasion, AMSI/ETW telemetry auditing, process injection, and LOLBAS"
+    target_types: [endpoint_host, edr_policy, workstation_image, process_telemetry, lolbas_candidate]
+    workflow: workflows/purple-team.md
+    agent: agents/evasion-specialist.md
+    skills:
+      - skills/defense-evasion
+      - skills/privilege-escalation
+
+  - id: command-and-control-resilience
+    description: "C2 infrastructure, redirector architecture, malleable traffic profiles, and covert egress"
+    target_types: [c2_infrastructure, egress_boundary, network_perimeter, covert_channel, proxy_gateway]
+    workflow: workflows/purple-team.md
+    agent: agents/c2-operator.md
+    skills:
+      - skills/c2-operations
+      - skills/post-exploitation
+
+  - id: initial-access-assessment
+    description: "Perimeter gateways (VPN/SSO), container delivery (ISO/MOTW), and DLL sideloading"
+    target_types: [vpn_gateway, remote_access, perimeter_portal, payload_delivery, motw_container]
+    workflow: workflows/standard-pentest.md
+    agent: agents/recon.md
+    skills:
+      - skills/initial-access
+      - skills/recon
+
+  - id: credential-access-security
+    description: "Host LSASS memory dumping resistance, SAM/DPAPI vaults, and token/PRT session theft"
+    target_types: [lsass_memory, credential_vault, sam_database, dpapi_store, session_token]
+    workflow: workflows/standard-pentest.md
+    agent: agents/privesc-advisor.md
+    skills:
+      - skills/credential-access
+      - skills/privilege-escalation
+
+
 agents:
   - agents/recon.md
   - agents/scanner.md
@@ -256,14 +293,16 @@ agents:
   - agents/risk-scorer.md
   - agents/fix-verifier.md
   - agents/engagement-planner.md
+  - agents/evasion-specialist.md
+  - agents/c2-operator.md
 
 agent_taxonomy:
   direct:
-    description: "Reachable directly through manifest capabilities[] routing table (22 agents covering 24 capabilities)"
+    description: "Reachable directly through manifest capabilities[] routing table (24 agents covering 28 capabilities)"
     agents:
       - id: recon
         path: agents/recon.md
-        capabilities: [attack-surface-mapping]
+        capabilities: [attack-surface-mapping, initial-access-assessment]
       - id: scanner
         path: agents/scanner.md
         capabilities: [web-application-security, api-security, network-infrastructure-security]
@@ -296,7 +335,7 @@ agent_taxonomy:
         capabilities: [cryptographic-security]
       - id: privesc-advisor
         path: agents/privesc-advisor.md
-        capabilities: [privilege-escalation]
+        capabilities: [privilege-escalation, credential-access-security]
       - id: lateral-movement
         path: agents/lateral-movement.md
         capabilities: [post-exploitation]
@@ -327,6 +366,12 @@ agent_taxonomy:
       - id: engagement-planner
         path: agents/engagement-planner.md
         capabilities: [utility-operations]
+      - id: evasion-specialist
+        path: agents/evasion-specialist.md
+        capabilities: [defense-evasion-assessment]
+      - id: c2-operator
+        path: agents/c2-operator.md
+        capabilities: [command-and-control-resilience]
   delegated:
     description: "Invoked downstream by workflows, primary agents, or purple-team loops (5 specialist agents)"
     agents:
@@ -378,6 +423,10 @@ skills:
   - skills/privilege-escalation
   - skills/post-exploitation
   - skills/utility
+  - skills/defense-evasion
+  - skills/c2-operations
+  - skills/initial-access
+  - skills/credential-access
 
 workflows:
   - workflows/standard-pentest.md

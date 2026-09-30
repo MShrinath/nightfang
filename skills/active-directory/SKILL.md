@@ -46,6 +46,20 @@ Comprehensive assessment of on-premises and hybrid Active Directory infrastructu
 - Graph analysis via BloodHound to identify shortest paths to Tier 0 assets (Domain Admins, Enterprise Admins).
 - Detect dangerous DACLs: `GenericAll`, `WriteOwner`, `WriteDacl`, and `ForceChangePassword` on privileged groups or accounts.
 
+### 5. Domain Secret Extraction & DCSync Auditing (T1003.006)
+- Cross-link with [`skills/credential-access`](../credential-access/SKILL.md):
+  - Audit accounts configured with directory replication rights (`DS-Replication-Get-Changes` and `DS-Replication-Get-Changes-All`) on the root domain NC.
+  - Assess network and SIEM detection telemetry for MS-DRSR replication requests initiated from non-DC workstations (Windows Event ID 4662 with access mask `0x100`).
+
+### 6. Kerberos Ticket Forgery & Persistence Resistance (T1558.001 / T1558.002)
+- **krbtgt Key Rotation**: Inspect domain `krbtgt` password last set timestamp; verify dual-rotation hygiene to invalidate forged Ticket Granting Tickets (Golden Tickets).
+- **PAC Validation & Kerberos Armoring (FAST)**: Verify enforcement of RFC 6113 Flexible Authentication Secure Tunneling (FAST) to mitigate offline ticket tampering.
+- **Service Ticket Forgery (Silver Tickets)**: Identify high-privilege service accounts using static weak passwords allowing service ticket forgery without KDC interaction.
+
+### 7. Hybrid Identity & Azure AD Connect Security
+- Audit Azure AD Connect staging servers and MSOL service accounts for elevated on-premises replication permissions.
+- Evaluate Seamless Single Sign-On (`AZUREADSSOACC` computer account) Kerberos key age and rotation procedures.
+
 ## Output
 - Active Directory attack path graph and risk inventory.
 - Structured findings formatted per [`schemas/finding.md`](../../schemas/finding.md).

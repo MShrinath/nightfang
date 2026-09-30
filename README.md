@@ -193,7 +193,7 @@ An approval of finding `NF-2026-0042` does not authorize any other action. If th
 ```
 nightfang/
 ├── AGENTS.md                  # Constitution: identity, safety rules, routing & delegation
-├── manifest.yaml              # Hermes integration contract & Capability Router (24 capabilities)
+├── manifest.yaml              # Hermes integration contract & Capability Router (28 capabilities)
 │
 ├── agents/                    # WHO (Decision-making roles)
 │   ├── recon.md               # Asset discovery & reconnaissance
@@ -222,7 +222,9 @@ nightfang/
 │   ├── code-auditor.md        # Static application security testing (SAST)
 │   ├── risk-scorer.md         # Multi-metric risk scoring (CVSS/EPSS/KEV)
 │   ├── fix-verifier.md        # Remediation verification & regression testing
-│   └── engagement-planner.md  # Scope governance & engagement orchestration
+│   ├── engagement-planner.md  # Scope governance & engagement orchestration
+│   ├── evasion-specialist.md  # Defense evasion & EDR resilience analysis
+│   └── c2-operator.md         # C2 infrastructure & covert egress emulation
 │
 ├── skills/                    # HOW (Security procedures, loaded on-demand)
 │   ├── recon/                 # OSINT, DNS & network discovery
@@ -250,7 +252,11 @@ nightfang/
 │   ├── attack-chain/          # Kill chain correlation & priority scoring
 │   ├── remediation/           # Tri-tier remediation, Sigma rules, SLAs
 │   ├── reporting/             # Finding deduplication & deliverable compilation
-│   └── utility/               # Rapid triage checklists & engagement memory
+│   ├── utility/               # Rapid triage checklists & engagement memory
+│   ├── defense-evasion/       # AMSI/ETW telemetry, API unhooking, injection
+│   ├── c2-operations/         # Multi-tier redirectors, malleable C2, covert egress
+│   ├── initial-access/        # Gateway assessment, MOTW bypass, DLL sideloading
+│   └── credential-access/     # LSASS dumping resistance, DPAPI, token theft
 │
 ├── workflows/                 # IN WHAT ORDER (Execution state machines)
 │   ├── standard-pentest.md    # 10-phase standard penetration test

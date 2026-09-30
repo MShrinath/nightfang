@@ -83,8 +83,8 @@ Nightfang strictly enforces the separation of concerns across the pack:
 - **Authorization Gate is not a one-time check**: scope is re-verified at every capability boundary — before the Capability Router selects a workflow, before agent delegation, and before any tool invocation.
 
 ### Agent Exposure Taxonomy: Direct vs. Delegated Agents
-NIGHTFANG deploys **27 specialized agents** organized into two operational tiers:
-1. **Direct Entrypoint Agents (22 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. Because the `scanner` agent handles 3 distinct network/web/API capabilities, 22 direct agents service all 24 registered capabilities.
+NIGHTFANG deploys **29 specialized agents** organized into two operational tiers:
+1. **Direct Entrypoint Agents (24 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. Because `scanner` handles 3 distinct network/web/API capabilities, and `recon` and `privesc-advisor` handle dual capabilities, 24 direct agents service all 28 registered capabilities.
 2. **Delegated Specialist Agents (5 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
    - **`detection-engineer`**: Invoked by purple-team workflows and `reporter` to author vendor-neutral Sigma rules, Sentinel KQL, and Splunk SPL queries.
    - **`threat-modeler`**: Invoked during Phase 1 architecture review to decompose trust boundaries and data flows (STRIDE/PASTA) before active probing.
@@ -155,21 +155,35 @@ flowchart TD
     REP --> O["11. Host Runtime Delivery<br/>(Hermes Interface)"]
 ```
 
-### Capability Router Summary
-- **Domains, CIDRs, IPs** $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/recon`)
-- **Web Applications, URLs, SPAs** $\to$ `workflows/web-assessment.md` $\to$ **`scanner`** (`skills/web`, `skills/hunting`)
-- **REST, GraphQL, gRPC APIs** $\to$ `workflows/api-assessment.md` $\to$ **`scanner`** (`skills/api`, `skills/hunting`)
-- **Network Ports & Services** $\to$ `workflows/standard-pentest.md` $\to$ **`scanner`** (`skills/network`)
-- **Active Directory Domains** $\to$ `workflows/ad-assessment.md` $\to$ **`ad-attacker`** (`skills/active-directory`, `skills/privilege-escalation`)
-- **Multi-Cloud & Kubernetes** $\to$ `workflows/cloud-assessment.md` $\to$ **`cloud-security`**, **`container-breakout`** (`skills/cloud`, `skills/container`)
-- **CI/CD Pipelines & Supply Chain** $\to$ `workflows/cicd-assessment.md` $\to$ **`cicd-redteam`**, **`supply-chain-auditor`** (`skills/cicd`, `skills/supply-chain`)
-- **Mobile Applications (iOS/Android)** $\to$ `workflows/mobile-assessment.md` $\to$ **`mobile-pentester`** (`skills/mobile`, `skills/api`)
-- **Wireless & Bluetooth RF** $\to$ `workflows/wireless-assessment.md` $\to$ **`wireless-pentester`** (`skills/wireless`, `skills/iot`)
-- **IoT & Industrial Control (OT/ICS)** $\to$ `workflows/iot-ics-assessment.md` $\to$ **`scada-attacker`**, **`iot-pentester`** (`skills/ot-ics`, `skills/iot`)
-- **Purple Team Emulation** $\to$ `workflows/purple-team.md` $\to$ **`purple-team-operator`**, **`detection-engineer`** (`skills/purple-team`, `skills/remediation`)
-- **LLM, Agents, MCP Servers** $\to$ `workflows/ai-security-assessment.md` $\to$ **`ai-security`** (`skills/ai-security`)
-- **Exploit Validation (HITL)** $\to$ `workflows/standard-pentest.md` $\to$ **`validation`** (`skills/attack-chain`, `skills/remediation`)
-- **Reporting & Compliance** $\to$ `workflows/standard-pentest.md` $\to$ **`reporter`**, **`compliance-mapper`** (`skills/reporting`, `skills/grc`)
+### Capability Router Summary (28 Capabilities)
+- **Domains, CIDRs, IPs** (`attack-surface-mapping`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/recon`)
+- **Web Applications, URLs, SPAs** (`web-application-security`) $\to$ `workflows/web-assessment.md` $\to$ **`scanner`** (`skills/web`, `skills/hunting`)
+- **REST, GraphQL, gRPC APIs** (`api-security`) $\to$ `workflows/api-assessment.md` $\to$ **`scanner`** (`skills/api`, `skills/hunting`)
+- **Network Ports & Services** (`network-infrastructure-security`) $\to$ `workflows/standard-pentest.md` $\to$ **`scanner`** (`skills/network`)
+- **Multi-Cloud Infrastructure** (`cloud-security`) $\to$ `workflows/cloud-assessment.md` $\to$ **`cloud-security`** (`skills/cloud`, `skills/container`)
+- **Container & Kubernetes** (`container-kubernetes-security`) $\to$ `workflows/cloud-assessment.md` $\to$ **`container-breakout`** (`skills/container`, `skills/privilege-escalation`)
+- **CI/CD Pipelines** (`cicd-pipeline-security`) $\to$ `workflows/cicd-assessment.md` $\to$ **`cicd-redteam`** (`skills/cicd`, `skills/supply-chain`)
+- **Active Directory Domains** (`active-directory-security`) $\to$ `workflows/ad-assessment.md` $\to$ **`ad-attacker`** (`skills/active-directory`, `skills/privilege-escalation`)
+- **Wireless & Bluetooth RF** (`wireless-security`) $\to$ `workflows/wireless-assessment.md` $\to$ **`wireless-pentester`** (`skills/wireless`, `skills/iot`)
+- **Mobile Applications (iOS/Android)** (`mobile-security`) $\to$ `workflows/mobile-assessment.md` $\to$ **`mobile-pentester`** (`skills/mobile`, `skills/api`, `skills/crypto`)
+- **IoT & Embedded Firmware** (`iot-embedded-security`) $\to$ `workflows/iot-ics-assessment.md` $\to$ **`iot-pentester`** (`skills/iot`, `skills/wireless`)
+- **Industrial Control & SCADA (OT/ICS)** (`ot-ics-security`) $\to$ `workflows/iot-ics-assessment.md` $\to$ **`scada-attacker`** (`skills/ot-ics`, `skills/network`)
+- **Cryptographic Protocols & Ciphers** (`cryptographic-security`) $\to$ `workflows/standard-pentest.md` $\to$ **`crypto-analyzer`** (`skills/crypto`, `skills/api`)
+- **Host Privilege Escalation** (`privilege-escalation`) $\to$ `workflows/standard-pentest.md` $\to$ **`privesc-advisor`** (`skills/privilege-escalation`)
+- **Post-Exploitation & Pivoting** (`post-exploitation`) $\to$ `workflows/standard-pentest.md` $\to$ **`lateral-movement`** (`skills/post-exploitation`, `skills/network`)
+- **Forensics & Incident Response** (`forensics-incident-response`) $\to$ `workflows/standard-pentest.md` $\to$ **`forensics-analyst`** (`skills/forensics`)
+- **Software Supply Chain & SBOM** (`supply-chain-security`) $\to$ `workflows/supply-chain-assessment.md` $\to$ **`supply-chain-auditor`** (`skills/supply-chain`, `skills/cicd`)
+- **GRC Compliance & Frameworks** (`grc-compliance`) $\to$ `workflows/standard-pentest.md` $\to$ **`compliance-mapper`** (`skills/grc`, `skills/reporting`)
+- **Threat Intelligence & IOCs** (`threat-intelligence`) $\to$ `workflows/standard-pentest.md` $\to$ **`cti-analyst`** (`skills/cti`, `skills/reporting`)
+- **Purple Team Emulation** (`purple-team-adversary-emulation`) $\to$ `workflows/purple-team.md` $\to$ **`purple-team-operator`**, **`detection-engineer`** (`skills/purple-team`, `skills/remediation`, `skills/cti`)
+- **LLM, Agents, MCP Servers** (`ai-llm-security`) $\to$ `workflows/ai-security-assessment.md` $\to$ **`ai-security`** (`skills/ai-security`)
+- **Exploit Validation (HITL)** (`exploit-validation`) $\to$ `workflows/standard-pentest.md` $\to$ **`validation`** (`skills/attack-chain`, `skills/remediation`)
+- **Security Deliverables & Reporting** (`security-reporting`) $\to$ `workflows/standard-pentest.md` $\to$ **`reporter`** (`skills/reporting`, `skills/remediation`)
+- **Utility & Engagement Planning** (`utility-operations`) $\to$ `workflows/standard-pentest.md` $\to$ **`engagement-planner`** (`skills/utility`, `skills/recon`)
+- **Defense Evasion & EDR Resilience** (`defense-evasion-assessment`) $\to$ `workflows/purple-team.md` $\to$ **`evasion-specialist`** (`skills/defense-evasion`, `skills/privilege-escalation`)
+- **C2 Infrastructure & Covert Egress** (`command-and-control-resilience`) $\to$ `workflows/purple-team.md` $\to$ **`c2-operator`** (`skills/c2-operations`, `skills/post-exploitation`)
+- **Initial Access & Delivery Staging** (`initial-access-assessment`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/initial-access`, `skills/recon`)
+- **Host Credential Access & LSASS** (`credential-access-security`) $\to$ `workflows/standard-pentest.md` $\to$ **`privesc-advisor`** (`skills/credential-access`, `skills/privilege-escalation`)
 
 ---
 
