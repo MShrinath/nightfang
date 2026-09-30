@@ -1,12 +1,12 @@
 ---
 name: iot
 description: IoT and embedded device security assessment covering firmware extraction and static analysis, hardware interfaces (UART, JTAG, SPI, I2C), IoT network protocols (MQTT, CoAP), and RTOS security.
+version: "2.0"
 domain: cybersecurity
 subdomain: iot-embedded-security
 tags: [iot, embedded, firmware, hardware, uart, jtag, mqtt, coap, rtos]
 mitre_attack: [T0846, T0855, T1200, T1429]
 d3fend_techniques: [D3-FWE, D3-HSA, D3-DCS]
-version: "1.0"
 ---
 
 # IoT & Embedded Systems Security Skill

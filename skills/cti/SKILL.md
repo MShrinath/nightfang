@@ -1,12 +1,12 @@
 ---
 name: cti
 description: Cyber Threat Intelligence (CTI) skill covering the intelligence cycle, IOC normalization and defanging, STIX 2.1/MISP exports, threat actor attribution, TLP markings, and Diamond Model analysis.
+version: "2.0"
 domain: cybersecurity
 subdomain: threat-intelligence
 tags: [cti, threat-intel, stix, misp, ioc, attribution, diamond-model, tlp]
 mitre_attack: [TA0043, TA0042]
 d3fend_techniques: [D3-IOC, D3-TIP]
-version: "1.0"
 ---
 
 # Cyber Threat Intelligence (CTI) Skill

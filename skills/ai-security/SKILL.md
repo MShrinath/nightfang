@@ -1,13 +1,13 @@
 ---
 name: ai-security
 description: Adversarial AI security testing covering direct/indirect prompt injection, agentic tool abuse, MCP server audits, and RAG poisoning.
+version: "2.0"
 domain: cybersecurity
 subdomain: ai-security
 tags: [ai, llm, prompt-injection, mcp, tool-abuse, rag-poisoning, mitre-atlas]
 mitre_attack: [T1190, T1059]
 mitre_atlas: [AML.T0051, AML.T0054, AML.T0043, AML.T0053]
 d3fend_techniques: [D3-PSA, D3-MCI, D3-EAA]
-version: "2.1"
 ---
 
 # AI & LLM Systems Security Skill (Index & Router)

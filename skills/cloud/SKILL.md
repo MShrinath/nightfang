@@ -1,12 +1,12 @@
 ---
 name: cloud
 description: Cloud security assessment covering AWS, Azure, and GCP, public storage bucket audits, IAM privilege escalation, and IMDS SSRF exploitation.
+version: "2.0"
 domain: cybersecurity
 subdomain: cloud-security
 tags: [cloud, aws, azure, gcp, imds, s3, iam, metadata-ssrf]
 mitre_attack: [T1580, T1530, T1078.004]
 d3fend_techniques: [D3-CSM, D3-IAM]
-version: "2.0"
 ---
 
 # Cloud Security Skill

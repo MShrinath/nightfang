@@ -1,12 +1,12 @@
 ---
 name: privilege-escalation
 description: Linux and Windows local privilege escalation methodology covering SUID binaries, Linux capabilities, sudo misconfigurations, cron jobs, Windows services, token manipulation, UAC bypasses, and unquoted service paths.
+version: "2.0"
 domain: cybersecurity
 subdomain: privilege-escalation
 tags: [privesc, linux-privesc, windows-privesc, suid, sudo, uac, tokens, services]
 mitre_attack: [T1548, T1068, T1134, T1574]
 d3fend_techniques: [D3-ARA, D3-PSA, D3-EAA]
-version: "1.0"
 ---
 
 # Local Privilege Escalation Skill

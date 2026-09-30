@@ -1,10 +1,10 @@
 ---
 name: reporting
 description: Technical report synthesis, finding deduplication, executive summary formatting, and final deliverable generation.
+version: "2.0"
 domain: cybersecurity
 subdomain: technical-reporting
 tags: [reporting, executive-summary, findings-compilation, deliverables]
-version: "2.0"
 ---
 
 # Reporting & Deliverables Compilation Skill

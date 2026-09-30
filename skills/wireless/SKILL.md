@@ -1,12 +1,12 @@
 ---
 name: wireless
 description: Wireless and radio frequency (RF) security assessment covering IEEE 802.11 (WPA2/WPA3-Personal, WPA-Enterprise), rogue APs, Bluetooth Low Energy (BLE), Zigbee, and sub-GHz IoT communication.
+version: "2.0"
 domain: cybersecurity
 subdomain: wireless-security
 tags: [wireless, wifi, wpa2, wpa3, ble, bluetooth, zigbee, rogue-ap, 802.11]
 mitre_attack: [T1040, T1200, T1407, T1412]
 d3fend_techniques: [D3-WSE, D3-CTA]
-version: "1.0"
 ---
 
 # Wireless & RF Security Skill

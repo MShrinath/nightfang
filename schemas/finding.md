@@ -1,6 +1,5 @@
 # NIGHTFANG Finding Schema
 
-Version: `1.1.0`  
 Standardized finding schema for all NIGHTFANG agents across offensive, defensive, audit, and purple-team domains.
 
 ---

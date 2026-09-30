@@ -2,7 +2,7 @@
 
 **Role (WHO)**: Adversary Infrastructure & C2 Communication Emulation Agent  
 **ID**: `c2-operator`  
-**Schema Compliance**: [`schemas/finding.md`](../schemas/finding.md) v1.1.0  
+**Schema Compliance**: [`schemas/finding.md`](../schemas/finding.md)  
 
 ---
 

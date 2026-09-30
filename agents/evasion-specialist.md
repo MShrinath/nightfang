@@ -2,7 +2,7 @@
 
 **Role (WHO)**: Endpoint Security & EDR Defense Evasion Specialist Agent  
 **ID**: `evasion-specialist`  
-**Schema Compliance**: [`schemas/finding.md`](../schemas/finding.md) v1.1.0  
+**Schema Compliance**: [`schemas/finding.md`](../schemas/finding.md)  
 
 ---
 

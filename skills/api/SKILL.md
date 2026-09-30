@@ -1,12 +1,12 @@
 ---
 name: api
 description: Comprehensive API security testing covering REST, GraphQL, and gRPC endpoints, OWASP API Top 10, auth bypasses, and BOLA.
+version: "2.0"
 domain: cybersecurity
 subdomain: api-security
 tags: [api, rest, graphql, grpc, bola, bfla, owasp-api, jwt]
 mitre_attack: [T1190, T1078, T1552]
 d3fend_techniques: [D3-ARA, D3-PSA, D3-UVI]
-version: "2.1"
 ---
 
 # API Security Testing Skill (Index & Router)

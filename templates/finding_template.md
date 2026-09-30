@@ -1,7 +1,6 @@
 # NIGHTFANG Finding Walkthrough Template
 
-> **Template Version:** `2.0.0`  
-> **Schema Contract:** [`schemas/finding.md`](../schemas/finding.md) v1.1.0  
+> **Schema Contract:** [`schemas/finding.md`](../schemas/finding.md)  
 > **Role:** Atomic presentation unit for individual technical findings within NIGHTFANG assessments.
 > 
 > *Instructions for Reporting Agent*: Render this template directly from the structured finding object in the findings store. Preserve all raw evidence verbatim without summarization or truncation. Maintain the exact evidence SHA-256 digests and validation gate outputs.

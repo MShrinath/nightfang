@@ -1,12 +1,12 @@
 ---
 name: purple-team
 description: Purple team adversary emulation and detection engineering skill covering threat-informed execution (Atomic Red Team, CALDERA), the detect-tune-validate loop, MTTD measurement, and detection gap visualization.
+version: "2.0"
 domain: cybersecurity
 subdomain: purple-team-adversary-emulation
 tags: [purple-team, emulation, atomic-red-team, caldera, detection-engineering, mttd, dett&ct]
 mitre_attack: [T1190, T1059, T1558, T1003, T1021]
 d3fend_techniques: [D3-DTE, D3-TVE]
-version: "1.0"
 ---
 
 # Purple Team Adversary Emulation Skill

@@ -1,12 +1,12 @@
 ---
 name: cicd
 description: CI/CD pipeline and software delivery security assessment covering workflow poisoning (Poisoned Pipeline Execution), runner token extraction, dependency confusion, OIDC identity abuse, and secrets hygiene.
+version: "2.0"
 domain: cybersecurity
 subdomain: cicd-pipeline-security
 tags: [cicd, github-actions, gitlab-ci, jenkins, pipeline-poisoning, oidc, runner-abuse, secrets]
 mitre_attack: [T1195.002, T1587.001, T1552.004]
 d3fend_techniques: [D3-PA, D3-SCA, D3-BCV]
-version: "1.0"
 ---
 
 # CI/CD Pipeline Security Skill

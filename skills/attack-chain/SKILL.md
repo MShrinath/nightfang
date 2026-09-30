@@ -1,12 +1,12 @@
 ---
 name: attack-chain
 description: Multi-step attack chain formulation, kill chain mapping, compound risk scoring, and attack path visualization.
+version: "2.0"
 domain: cybersecurity
 subdomain: attack-chain-analysis
 tags: [attack-chain, kill-chain, correlation, risk-prioritization, exploitation-planning]
 mitre_attack: [TA0001, TA0002, TA0003, TA0004, TA0005, TA0006, TA0007, TA0008, TA0009, TA0010, TA0040, TA0043]
 d3fend_techniques: [D3-TCA, D3-RCA]
-version: "2.0"
 ---
 
 # Attack Chain Analysis Skill

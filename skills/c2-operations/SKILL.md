@@ -1,12 +1,12 @@
 ---
 name: c2-operations
 description: Command and Control (C2) resilience and adversary infrastructure assessment covering multi-tier redirector architectures, malleable traffic profile analysis, covert protocol egress auditing (DNS/HTTPS/ICMP tunneling), and network beacon detection telemetry.
+version: "2.0"
 domain: cybersecurity
 subdomain: red-team-operations
 tags: [c2, command-and-control, redirectors, domain-fronting, malleable-c2, egress-testing, dns-tunneling, covert-channels]
 mitre_attack: [T1071, T1090, T1095, T1572, T1573, T1041]
 d3fend_techniques: [D3-NTF, D3-NTA, D3-DNSA, D3-PA]
-version: "1.0"
 ---
 
 # Command & Control (C2) Resilience Skill

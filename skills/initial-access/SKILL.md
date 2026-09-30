@@ -1,12 +1,12 @@
 ---
 name: initial-access
 description: Initial access vector assessment covering external perimeter gateway auditing (VPNs, Citrix/RDS, SSO), delivery staging inspection (ISO/VHD containers, MOTW handling, HTML smuggling), and DLL sideloading vulnerability analysis.
+version: "2.0"
 domain: cybersecurity
 subdomain: initial-access
 tags: [initial-access, delivery-staging, motw, html-smuggling, dll-sideloading, remote-services, perimeter-gateway]
 mitre_attack: [T1190, T1566, T1189, T1133, T1574.002, T1078]
 d3fend_techniques: [D3-MTA, D3-EAA, D3-FCI, D3-EI]
-version: "1.0"
 ---
 
 # Initial Access Resilience Skill

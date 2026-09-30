@@ -1,12 +1,12 @@
 ---
 name: recon
 description: Comprehensive reconnaissance methodologies, passive OSINT, DNS brute-forcing, active port scanning, and tech fingerprinting.
+version: "2.0"
 domain: cybersecurity
 subdomain: reconnaissance
 tags: [recon, osint, dns, port-scanning, fingerprinting, attack-surface]
 mitre_attack: [TA0043, T1593, T1594, T1596, T1046, T1595, T1018]
 d3fend_techniques: [D3-DNST, D3-WHIA, D3-NTA]
-version: "2.0"
 ---
 
 # Reconnaissance & Attack Surface Mapping

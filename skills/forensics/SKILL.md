@@ -1,12 +1,12 @@
 ---
 name: forensics
 description: Digital forensics and incident response (DFIR) skill covering memory analysis (Volatility), disk imaging, timeline reconstruction, YARA rule generation, artifact hunting, and malware static/dynamic triage.
+version: "2.0"
 domain: cybersecurity
 subdomain: forensics-incident-response
 tags: [forensics, dfir, memory, volatility, yara, timeline, incident-response, malware-triage]
 mitre_attack: [T1070, T1562, T1005, T1113]
 d3fend_techniques: [D3-MDA, D3-FHA, D3-TMA]
-version: "1.0"
 ---
 
 # Digital Forensics & Incident Response Skill

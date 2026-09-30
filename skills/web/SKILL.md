@@ -1,12 +1,12 @@
 ---
 name: web
 description: Web application penetration testing covering OWASP Top 10, injection, authentication, access control, and SSRF.
+version: "2.0"
 domain: cybersecurity
 subdomain: web-application
 tags: [web, owasp, xss, sqli, ssrf, ssti, idor, auth-bypass]
 mitre_attack: [T1190, T1059.007, T1505]
 d3fend_techniques: [D3-PSA, D3-WAF, D3-UVI, D3-SFI]
-version: "2.1"
 ---
 
 # Web Application Security Skill (Index & Router)

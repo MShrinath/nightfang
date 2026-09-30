@@ -1,11 +1,11 @@
 ---
 name: remediation
 description: Structured remediation advisory, tri-tier fix strategies (quick, proper, strategic), remediation SLA matrix, and D3FEND mappings.
+version: "2.0"
 domain: cybersecurity
 subdomain: defensive-remediation
 tags: [remediation, d3fend, mitigation, sla, security-architecture]
 d3fend_techniques: [D3-HSA, D3-PMA, D3-PSA, D3-UVI, D3-ARA]
-version: "2.0"
 ---
 
 # Remediation Advisory Skill

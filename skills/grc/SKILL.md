@@ -1,12 +1,12 @@
 ---
 name: grc
 description: Governance, Risk, and Compliance (GRC) skill covering multi-framework crosswalks (NIST CSF 2.0, ISO 27001:2022, SOC 2, CIS Controls v8, PCI-DSS v4.0), risk scoring, gap analysis, and audit evidence compilation.
+version: "2.0"
 domain: cybersecurity
 subdomain: grc-compliance
 tags: [grc, compliance, nist-csf, iso27001, soc2, cis-controls, pci-dss, audit]
 mitre_attack: []
 d3fend_techniques: [D3-GAC, D3-PAC]
-version: "1.0"
 ---
 
 # Governance, Risk, & Compliance (GRC) Skill

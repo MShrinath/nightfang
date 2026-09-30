@@ -1,12 +1,12 @@
 ---
 name: active-directory
 description: Active Directory domain security assessment covering Kerberos attacks (Kerberoasting, ASREProasting), ADCS certificate template abuse (ESC1-ESC15), ACL misconfigurations, and BloodHound attack path mapping.
+version: "2.0"
 domain: cybersecurity
 subdomain: active-directory-security
 tags: [active-directory, kerberos, kerberoast, asreproast, adcs, bloodhound, certipy, ldap, acl]
 mitre_attack: [T1558, T1003, T1484, T1078, T1069]
 d3fend_techniques: [D3-ARA, D3-KDC, D3-CAA]
-version: "1.0"
 ---
 
 # Active Directory Security Skill

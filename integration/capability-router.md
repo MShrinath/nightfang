@@ -1,6 +1,5 @@
 # NIGHTFANG Capability Router — Implementation Specification
 
-Version: `1.0.0`  
 This document is the executable specification for the Capability Router. A Hermes loader implementing NIGHTFANG support must implement the logic in this file exactly. It complements [`routing.md`](routing.md) (which describes the concept) with a precise algorithm a runtime can follow step by step.
 
 ---

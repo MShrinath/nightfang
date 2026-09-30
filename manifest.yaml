@@ -1,5 +1,5 @@
 name: nightfang
-version: "2.0.0"
+version: "2.0"
 type: security-capability-pack
 description: "Comprehensive autonomous security assessment, penetration testing, and purple-teaming capability pack for host agent runtimes."
 

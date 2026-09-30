@@ -1,12 +1,12 @@
 ---
 name: defense-evasion
 description: Defense evasion and endpoint security assessment covering AMSI/ETW telemetry auditing, userland API unhooking analysis, process injection detection, Living off the Land (LOLBAS/GTFOBins) auditing, and in-memory execution resilience.
+version: "2.0"
 domain: cybersecurity
 subdomain: defense-evasion
 tags: [defense-evasion, amsi, etw, edr-evasion, process-injection, lolbas, gtfobins, syscalls, unhooking]
 mitre_attack: [T1562, T1055, T1218, T1140, T1036, T1112]
 d3fend_techniques: [D3-EDR, D3-PSA, D3-EAA, D3-SFA]
-version: "1.0"
 ---
 
 # Defense Evasion & EDR Resilience Skill

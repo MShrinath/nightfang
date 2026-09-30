@@ -1,12 +1,12 @@
 ---
 name: supply-chain
 description: Software supply chain security assessment covering Software Bill of Materials (SBOM) generation and analysis, dependency confusion, typosquatting detection, malicious maintainer takeover, and SLSA provenance.
+version: "2.0"
 domain: cybersecurity
 subdomain: supply-chain-security
 tags: [supply-chain, sbom, dependency-confusion, typosquatting, slsa, provenance, npm, pypi]
 mitre_attack: [T1195.001, T1195.002]
 d3fend_techniques: [D3-SCA, D3-SLSA, D3-SIG]
-version: "1.0"
 ---
 
 # Software Supply Chain Security Skill

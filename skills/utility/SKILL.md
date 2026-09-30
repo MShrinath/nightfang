@@ -1,12 +1,12 @@
 ---
 name: utility
 description: Utility operations covering fast triage checklists, engagement session memory, pattern recall, cross-engagement deduplication, and quality assurance gates.
+version: "2.0"
 domain: cybersecurity
 subdomain: utility-operations
 tags: [utility, triage, engagement-memory, quality-assurance, checklists]
 mitre_attack: []
 d3fend_techniques: []
-version: "1.0"
 ---
 
 # Utility Operations Skill

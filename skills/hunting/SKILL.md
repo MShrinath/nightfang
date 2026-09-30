@@ -1,12 +1,12 @@
 ---
 name: hunting
 description: Advanced threat hunting, business logic flaws, race conditions, parameter pollution, and novel vulnerability chaining.
+version: "2.0"
 domain: cybersecurity
 subdomain: threat-hunting
 tags: [hunting, logic-flaws, race-conditions, toctou, parameter-pollution, request-smuggling]
 mitre_attack: [T1203, T1059, T1562]
 d3fend_techniques: [D3-THA, D3-MCI]
-version: "2.0"
 ---
 
 # Threat Hunting & Logic Flaw Discovery

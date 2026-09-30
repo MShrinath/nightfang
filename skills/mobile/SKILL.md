@@ -1,12 +1,12 @@
 ---
 name: mobile
 description: Mobile application security assessment covering Android (APK) and iOS (IPA) binaries, Frida dynamic instrumentation, certificate pinning bypass, insecure data storage, and OWASP MASVS v2.0 verification.
+version: "2.0"
 domain: cybersecurity
 subdomain: mobile-security
 tags: [mobile, android, ios, apk, ipa, frida, masvs, objection, certificate-pinning, jadx]
 mitre_attack: [T1404, T1407, T1417, T1426, T1437]
 d3fend_techniques: [D3-APP, D3-OBF, D3-RDT]
-version: "1.0"
 ---
 
 # Mobile Application Security Skill

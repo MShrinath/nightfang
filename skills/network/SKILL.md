@@ -1,12 +1,12 @@
 ---
 name: network
 description: Network service probing, CVE discovery, SSL/TLS cryptographic evaluation, SMB/SNMP auditing, and infrastructure testing.
+version: "2.0"
 domain: cybersecurity
 subdomain: network-security
 tags: [network, ports, services, cve, smb, snmp, ssl-tls, cryptography]
 mitre_attack: [T1021, T1110, T1558, T1040, T1573, T1557]
 d3fend_techniques: [D3-NA, D3-BA, D3-CTA, D3-CH]
-version: "2.0"
 ---
 
 # Network Security Skill

@@ -1,6 +1,5 @@
 # NIGHTFANG ↔ Hermes Integration Contract
 
-Version: `2.0.0`  
 This document describes what Hermes must provide to load and operate NIGHTFANG as a capability pack, and what NIGHTFANG contracts to provide in return.
 
 ---
@@ -14,7 +13,6 @@ Hermes loads NIGHTFANG by locating `manifest.yaml` in the pack root. The loader 
 | Field | Type | Required | Purpose |
 | :--- | :--- | :--- | :--- |
 | `pack.name` | string | ✅ | Pack identity |
-| `pack.version` | string | ✅ | Version for compatibility checks |
 | `runtime.name` | string | ✅ | Verify this is a Hermes-compatible pack |
 | `runtime.min_version` | string | ✅ | Reject if Hermes version is below this |
 | `runtime.entrypoint.agent` | string | ✅ | Path to the main agent file (`AGENTS.md`) |
@@ -123,14 +121,13 @@ Hermes must never execute external tools, network scans, or arbitrary commands r
 
 ---
 
-## 3. Hermes Version Compatibility
+## 3. Host Runtime Requirements
 
-| NIGHTFANG Pack Version | Min Hermes Version | Notes |
+| Component | Minimum Version | Notes |
 | :--- | :--- | :--- |
-| `0.1.x` | `0.1.0` | Initial integration contract |
-| `2.0.x` | `0.2.0` | Multi-domain expansion, Execution Policy Gateway enforcement, schema |
+| **Hermes Host Runtime** | `0.2.0` | Required for Execution Policy Gateway interception, dynamic capability routing, and unified finding schema |
 
-If Hermes does not meet `min_version`, it must refuse to load the pack and surface an error to the operator.
+If Hermes does not meet `runtime.min_version`, it must refuse to load the pack and surface an error to the operator.
 
 ---
 

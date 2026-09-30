@@ -1,12 +1,12 @@
 ---
 name: ot-ics
 description: Operational Technology (OT) and Industrial Control Systems (ICS) security assessment covering SCADA, PLC, DCS, industrial protocols (Modbus, DNP3, S7comm, EtherNet/IP, OPC-UA), and IEC 62443 compliance under strict safety controls.
+version: "2.0"
 domain: cybersecurity
 subdomain: ot-ics-security
 tags: [ot, ics, scada, plc, modbus, dnp3, s7comm, opc-ua, iec62443, purdue-model]
 mitre_attack: [T0800, T0814, T0836, T0843, T0846, T0855, T0886]
 d3fend_techniques: [D3-ICS, D3-NTA, D3-PRP]
-version: "1.0"
 ---
 
 # Operational Technology (OT) & ICS Security Skill

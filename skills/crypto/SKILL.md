@@ -1,12 +1,12 @@
 ---
 name: crypto
 description: Cryptographic security assessment covering SSL/TLS ciphers, weak algorithms (MD5, SHA1, DES, RC4), JWT/JWE implementation flaws, padding oracles, key length validation, and Post-Quantum Cryptography (PQC) readiness.
+version: "2.0"
 domain: cybersecurity
 subdomain: cryptographic-security
 tags: [crypto, tls, ciphers, jwt, padding-oracle, rsa, ecc, pqc]
 mitre_attack: [T1552, T1584, T1040]
 d3fend_techniques: [D3-CTA, D3-CH]
-version: "1.0"
 ---
 
 # Cryptographic Security Skill

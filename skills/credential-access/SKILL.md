@@ -1,12 +1,12 @@
 ---
 name: credential-access
 description: Credential access assessment covering LSASS memory protection auditing (RunAsPPL, Credential Guard), local credential store evaluation (SAM, LSA secrets, DPAPI), browser/vault secret extraction analysis, and token/PRT session hijacking resistance.
+version: "2.0"
 domain: cybersecurity
 subdomain: credential-access
 tags: [credential-access, lsass, mimikatz, dpapi, sam, prt, token-theft, credential-dumping, kerberos-tickets]
 mitre_attack: [T1003, T1555, T1552, T1110, T1558, T1134.001]
 d3fend_techniques: [D3-CAD, D3-EAA, D3-PSA, D3-CAA]
-version: "1.0"
 ---
 
 # Credential Access Resilience Skill

@@ -1,6 +1,5 @@
 # NIGHTFANG Execution Policy Gateway — Implementation Specification
 
-Version: `1.0.0`  
 This document is the executable specification for the **Execution Policy Gateway**. While the **Capability Router** handles dispatch (*which capability runs*), the Execution Policy Gateway handles runtime enforcement (*what network traffic and tool commands are permitted to run*). A host agent runtime (Hermes) implementing NIGHTFANG support must implement the gateway logic in this file exactly.
 
 ---

@@ -1,12 +1,12 @@
 ---
 name: container
 description: Container and Kubernetes security assessment covering container breakout vectors, insecure runtime privileges, Kubernetes RBAC audits, admission controller bypasses, and Kubelet API auditing.
+version: "2.0"
 domain: cybersecurity
 subdomain: container-kubernetes-security
 tags: [container, docker, kubernetes, k8s, escape, rbac, admission-controller, kubelet]
 mitre_attack: [T1611, T1612, T1613, T1610]
 d3fend_techniques: [D3-CIE, D3-CHM, D3-PSA]
-version: "1.0"
 ---
 
 # Container & Kubernetes Security Skill

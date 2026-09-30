@@ -1,9 +1,8 @@
 # Penetration Testing & Security Assessment Master Report
 
-> **Template Version:** `2.0.0`  
-> **Schema Contract:** [`schemas/finding.md`](../schemas/finding.md) v1.1.0  
+> **Schema Contract:** [`schemas/finding.md`](../schemas/finding.md)  
 > **Composition Layer:** Integrates atomic findings rendered per [`templates/finding_template.md`](finding_template.md).  
-> **Security Pack:** NIGHTFANG v2  
+> **Security Pack:** NIGHTFANG  
 > **Host Runtime:** Hermes  
 
 ---
@@ -18,7 +17,7 @@
 | **Assessment Window** | `[START_DATE]` to `[END_DATE]` |
 | **Document Version** | `1.0.0 (Final)` |
 | **Lead Operator** | `[OPERATOR_HANDLE]` (Host Runtime: Hermes) |
-| **Orchestration Layer** | NIGHTFANG Security Capability Pack v2.0.0 |
+| **Orchestration Layer** | NIGHTFANG Security Capability Pack |
 | **Classification** | **CONFIDENTIAL / RESTRICTED** |
 | **Authorized Distribution** | `[Client Security Team, CISO, Lead Systems Architect]` |
 
@@ -118,7 +117,7 @@ Tool Result                            ├── Stage 3: Rate Limiting & Backof
 Validation Gate                        └── Stage 6: Verbatim Capture & SHA-256 Digest
       │
       ▼
-Finding Schema (v1.1.0) ──► Reporter Agent ──► Executive & Technical Deliverable
+Finding Schema ──► Reporter Agent ──► Executive & Technical Deliverable
 ```
 
 ### Gateway Controls Enforced:
@@ -140,7 +139,7 @@ Finding Schema (v1.1.0) ──► Reporter Agent ──► Executive & Technical
 | `[YYYY-MM-DD 16:40]` | Phase 7 | `scanner` | Candidate SQL injection detected; emitted HITL approval request | `HITL_PAUSE` |
 | `[YYYY-MM-DD 16:42]` | Phase 7 | Operator | Operator issued `/go NF-2026-0001`; 5-D token validated | `TOKEN_VERIFIED` |
 | `[YYYY-MM-DD 16:45]` | Phase 8 | `validation` | Benign `version()` extraction verified; SHA-256 hashed | `VERDICT: PASS` |
-| `[YYYY-MM-DD 18:00]` | Phase 10| `reporter` | Deliverable compiled adhering to finding schema v1.1.0 | `COMPLETED` |
+| `[YYYY-MM-DD 18:00]` | Phase 10| `reporter` | Deliverable compiled adhering to finding schema | `COMPLETED` |
 
 ---
 
