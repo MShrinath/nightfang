@@ -40,8 +40,9 @@ Operational runbooks and standards governing all NIGHTFANG agents, workflows, an
 **Objective:** Complete operator governance prior to active or invasive actions without stalling autonomous background scanning.
 1. **Gate Trigger & Autonomy Tiers**:
    - **`REACTIVE` Tier**: Pauses execution and requests operator approval before dispatching any `MODERATE` or `LOUD` active action.
-   - **`SEMI_AUTONOMOUS` Tier (Default)**: Automatically approves and executes all `QUIET` passive reads and `MODERATE` active probes (port fingerprinting, web route discovery, parameter crawling) within safe rate limits. Pauses and requests approval only for `LOUD` exploit proofs-of-concept (`EXPLOIT_POC`) or invasive credential testing.
+   - **`SEMI_AUTONOMOUS` Tier (Default)**: Automatically approves and executes all `QUIET` passive reads and `MODERATE` active probes (port fingerprinting, web route discovery, directory fuzzing, parameter crawling, API testing, and vulnerability detection probes) within safe rate limits. Pauses and requests approval only for `LOUD` exploit proofs-of-concept (`EXPLOIT_POC`) or destructive actions.
    - **`FULL_AUTONOMOUS` Tier**: Automatically executes non-destructive PoCs within authorized scope, backed by the SOP-05 safety filter (blocks `rm`, `DROP`, `mkfs`, etc.).
+   - **Zero-Hesitation Mandate**: When an authorized scope is provided, the swarm must **NEVER** halt to ask the operator: *"Which domain should I prioritize?"* or *"May I have authorization to begin active scanning?"* The swarm must autonomously prioritize high-value targets (APIs, auth portals > static landing pages), enforce out-of-scope exclusions, and immediately execute scanning and vulnerability testing without waiting.
 2. **Non-Blocking Asynchronous HITL Queueing**:
    - When an action requires operator approval, the swarm does **NOT** halt entirely.
    - The specific exploit task is suspended into the `hitl_queue` (and persisted to `hitl_queue.json`), emitting an approval card to the active operator channel (Telegram, Discord, CLI, Web).
