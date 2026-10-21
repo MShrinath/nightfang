@@ -15,6 +15,16 @@ runtime:
     schemas: true
 
 capabilities:
+  - id: autonomous-supervision
+    description: "Adaptive multi-agent execution cycle with dynamic subtask decomposition, iterative refinement, and automated reflection"
+    target_types: [engagement_goal, target_inventory, multi_phase_scope, complex_objective]
+    workflow: workflows/dynamic-supervision.md
+    agent: agents/supervisor.md
+    skills:
+      - skills/utility
+      - skills/hunting
+      - skills/reporting
+
   - id: attack-surface-mapping
     description: "Passive intelligence gathering and active network/service discovery"
     target_types: [domain, cidr, ip_range, hostname, asset_inventory]
@@ -264,8 +274,49 @@ capabilities:
       - skills/credential-access
       - skills/privilege-escalation
 
+  - id: reverse-engineering
+    description: "Binary decompilation, firmware reverse engineering, proprietary protocol dissection, and key extraction"
+    target_types: [binary_executable, firmware_image, mobile_apk_ipa, proprietary_protocol]
+    workflow: workflows/reverse-engineering.md
+    agent: agents/reverse-engineer.md
+    skills:
+      - skills/reverse-engineering
+      - skills/iot
+      - skills/mobile
+
+  - id: database-security
+    description: "Relational/NoSQL DBMS vulnerability scanning, SQLi evaluation, privilege escalation, and configuration audits"
+    target_types: [database_server, sql_endpoint, nosql_store, db_credential]
+    workflow: workflows/standard-pentest.md
+    agent: agents/database-attacker.md
+    skills:
+      - skills/web
+      - skills/network
+      - skills/privilege-escalation
+
+  - id: social-engineering
+    description: "Authorized human-factor resilience assessments, phishing awareness simulations, and ROE pretext modeling"
+    target_types: [phishing_campaign, human_factor_scope, awareness_simulation]
+    workflow: workflows/social-engineering.md
+    agent: agents/social-engineer.md
+    skills:
+      - skills/initial-access
+      - skills/recon
+      - skills/utility
+
+  - id: red-team-operations
+    description: "Full cyber kill chain adversary simulation, resilient C2 staging, evasion, and objective verification"
+    target_types: [target_organization, crown_jewel, red_team_scope]
+    workflow: workflows/red-team.md
+    agent: agents/c2-operator.md
+    skills:
+      - skills/c2-operations
+      - skills/post-exploitation
+      - skills/defense-evasion
+
 
 agents:
+  - agents/supervisor.md
   - agents/recon.md
   - agents/scanner.md
   - agents/ai-security.md
@@ -295,11 +346,21 @@ agents:
   - agents/engagement-planner.md
   - agents/evasion-specialist.md
   - agents/c2-operator.md
+  - agents/reverse-engineer.md
+  - agents/malware-analyst.md
+  - agents/payload-crafter.md
+  - agents/database-attacker.md
+  - agents/traffic-analyzer.md
+  - agents/social-engineer.md
+  - agents/opsec-anonymizer.md
 
 agent_taxonomy:
   direct:
-    description: "Reachable directly through manifest capabilities[] routing table (24 agents covering 28 capabilities)"
+    description: "Reachable directly through manifest capabilities[] routing table (28 agents covering 33 capabilities)"
     agents:
+      - id: supervisor
+        path: agents/supervisor.md
+        capabilities: [autonomous-supervision]
       - id: recon
         path: agents/recon.md
         capabilities: [attack-surface-mapping, initial-access-assessment]
@@ -371,9 +432,18 @@ agent_taxonomy:
         capabilities: [defense-evasion-assessment]
       - id: c2-operator
         path: agents/c2-operator.md
-        capabilities: [command-and-control-resilience]
+        capabilities: [command-and-control-resilience, red-team-operations]
+      - id: reverse-engineer
+        path: agents/reverse-engineer.md
+        capabilities: [reverse-engineering]
+      - id: database-attacker
+        path: agents/database-attacker.md
+        capabilities: [database-security]
+      - id: social-engineer
+        path: agents/social-engineer.md
+        capabilities: [social-engineering]
   delegated:
-    description: "Invoked downstream by workflows, primary agents, or purple-team loops (5 specialist agents)"
+    description: "Invoked downstream by workflows, primary agents, or purple-team loops (9 specialist agents)"
     agents:
       - id: detection-engineer
         path: agents/detection-engineer.md
@@ -395,6 +465,22 @@ agent_taxonomy:
         path: agents/fix-verifier.md
         invoked_by: [workflows/standard-pentest.md, workflows/web-assessment.md]
         purpose: "Post-remediation patch validation and regression testing"
+      - id: malware-analyst
+        path: agents/malware-analyst.md
+        invoked_by: [workflows/reverse-engineering.md, agents/forensics-analyst.md]
+        purpose: "Suspicious binary triage, behavior profiling, and YARA detection rule authoring"
+      - id: payload-crafter
+        path: agents/payload-crafter.md
+        invoked_by: [workflows/standard-pentest.md, workflows/red-team.md, agents/validation.md]
+        purpose: "Benign exploit Proof-of-Concept and non-destructive payload synthesis"
+      - id: traffic-analyzer
+        path: agents/traffic-analyzer.md
+        invoked_by: [workflows/standard-pentest.md, workflows/red-team.md, agents/forensics-analyst.md]
+        purpose: "Network packet capture inspection, covert beacon hunting, and protocol dissection"
+      - id: opsec-anonymizer
+        path: agents/opsec-anonymizer.md
+        invoked_by: [workflows/red-team.md, workflows/standard-pentest.md, workflows/social-engineering.md]
+        purpose: "Operator anonymity verification, egress profiling, and network deconfliction"
 
 skills:
   - skills/recon
@@ -429,7 +515,11 @@ skills:
   - skills/credential-access
 
 workflows:
+  - workflows/dynamic-supervision.md
   - workflows/standard-pentest.md
+  - workflows/red-team.md
+  - workflows/reverse-engineering.md
+  - workflows/social-engineering.md
   - workflows/web-assessment.md
   - workflows/api-assessment.md
   - workflows/ai-security-assessment.md
@@ -445,6 +535,11 @@ workflows:
 
 schemas:
   - schemas/finding.md
+  - schemas/validator.py
+
+tools:
+  - tools/gateway.py
+  - tools/sandbox.py
 
 references:
   - references/sops.md
@@ -462,3 +557,4 @@ integration:
 templates:
   - templates/full_report_template.md
   - templates/finding_template.md
+  - templates/detection_rules.md

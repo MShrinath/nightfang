@@ -83,14 +83,18 @@ Nightfang strictly enforces the separation of concerns across the pack:
 - **Authorization Gate is not a one-time check**: scope is re-verified at every capability boundary — before the Capability Router selects a workflow, before agent delegation, and before any tool invocation.
 
 ### Agent Exposure Taxonomy: Direct vs. Delegated Agents
-NIGHTFANG deploys **29 specialized agents** organized into two operational tiers:
-1. **Direct Entrypoint Agents (24 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. Because `scanner` handles 3 distinct network/web/API capabilities, and `recon` and `privesc-advisor` handle dual capabilities, 24 direct agents service all 28 registered capabilities.
-2. **Delegated Specialist Agents (5 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
+NIGHTFANG deploys **37 specialized agents** organized into two operational tiers:
+1. **Direct Entrypoint Agents (28 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. Because `scanner` handles 3 distinct network/web/API capabilities, and `recon`, `privesc-advisor`, and `c2-operator` handle dual capabilities, 28 direct agents service all 33 registered capabilities (including `supervisor` for autonomous supervision).
+2. **Delegated Specialist Agents (9 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
    - **`detection-engineer`**: Invoked by purple-team workflows and `reporter` to author vendor-neutral Sigma rules, Sentinel KQL, and Splunk SPL queries.
    - **`threat-modeler`**: Invoked during Phase 1 architecture review to decompose trust boundaries and data flows (STRIDE/PASTA) before active probing.
    - **`code-auditor`**: Invoked during SAST, source code reviews, and supply chain audits for sink-to-source taint tracking.
    - **`risk-scorer`**: Invoked during finding triage to compute formulaic CVSS v3.1/v4.0 vectors, query EPSS feeds, and assign remediation SLAs.
    - **`fix-verifier`**: Invoked during post-remediation validation and regression testing to confirm patch efficacy and canary cleanup.
+   - **`malware-analyst`**: Invoked during binary assessment and forensics for suspicious file triage, behavioral dissection, and YARA authoring.
+   - **`payload-crafter`**: Invoked during exploit validation and red-team operations to synthesize non-destructive proof-of-concept payloads.
+   - **`traffic-analyzer`**: Invoked during network audits and post-exploitation to dissect packet captures and hunt for covert beaconing channels.
+   - **`opsec-anonymizer`**: Invoked prior to active operations to verify proxychains, egress IP isolation, and network deconfliction.
 
 ### OPSEC Noise Classification
 Every tool invocation proposed by any agent must declare its OPSEC noise profile:
@@ -155,7 +159,8 @@ flowchart TD
     REP --> O["11. Host Runtime Delivery<br/>(Hermes Interface)"]
 ```
 
-### Capability Router Summary (28 Capabilities)
+### Capability Router Summary (33 Capabilities)
+- **Autonomous Supervision & Dynamic Orchestration** (`autonomous-supervision`) $\to$ `workflows/dynamic-supervision.md` $\to$ **`supervisor`** (`skills/utility`, `skills/hunting`, `skills/reporting`)
 - **Domains, CIDRs, IPs** (`attack-surface-mapping`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/recon`)
 - **Web Applications, URLs, SPAs** (`web-application-security`) $\to$ `workflows/web-assessment.md` $\to$ **`scanner`** (`skills/web`, `skills/hunting`)
 - **REST, GraphQL, gRPC APIs** (`api-security`) $\to$ `workflows/api-assessment.md` $\to$ **`scanner`** (`skills/api`, `skills/hunting`)
@@ -184,6 +189,10 @@ flowchart TD
 - **C2 Infrastructure & Covert Egress** (`command-and-control-resilience`) $\to$ `workflows/purple-team.md` $\to$ **`c2-operator`** (`skills/c2-operations`, `skills/post-exploitation`)
 - **Initial Access & Delivery Staging** (`initial-access-assessment`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/initial-access`, `skills/recon`)
 - **Host Credential Access & LSASS** (`credential-access-security`) $\to$ `workflows/standard-pentest.md` $\to$ **`privesc-advisor`** (`skills/credential-access`, `skills/privilege-escalation`)
+- **Reverse Engineering & Protocol Dissection** (`reverse-engineering`) $\to$ `workflows/reverse-engineering.md` $\to$ **`reverse-engineer`** (`skills/reverse-engineering`, `skills/iot`, `skills/mobile`)
+- **Relational & NoSQL Database Security** (`database-security`) $\to$ `workflows/standard-pentest.md` $\to$ **`database-attacker`** (`skills/web`, `skills/network`, `skills/privilege-escalation`)
+- **Authorized Social Engineering** (`social-engineering`) $\to$ `workflows/social-engineering.md` $\to$ **`social-engineer`** (`skills/initial-access`, `skills/recon`, `skills/utility`)
+- **Full-Scope Adversary Simulation** (`red-team-operations`) $\to$ `workflows/red-team.md` $\to$ **`c2-operator`** (`skills/c2-operations`, `skills/post-exploitation`, `skills/defense-evasion`)
 
 ---
 
