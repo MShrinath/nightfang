@@ -178,31 +178,40 @@ The Gateway evaluates the `tool_request` strictly sequentially. If any stage fai
 
 ### Stage 4: Action Classification & HITL Gate Evaluation (SOP-04, Heuristics §1b)
 
-**Objective**: Absolute human governance before active probing or exploit execution, calibrated with OPSEC noise classification.
+**Objective**: Calibrated operator governance before active probing or exploit execution, supporting tiered autonomy and non-blocking asynchronous approvals.
 
 ```
 Is action_type == PASSIVE_READ and opsec.noise == QUIET?
       │
-      ├── YES ──► Pass Stage 4 autonomously (No operator prompt required)
+      ├── YES ──► Pass Stage 4 autonomously across all tiers (No prompt)
       │
       └── NO (ACTIVE_PROBE or EXPLOIT_POC)
             │
             ▼
-      Is action_type == ACTIVE_PROBE, opsec.noise == MODERATE, and strict_hitl != true?
+      Is AutonomyTier == SEMI_AUTONOMOUS or FULL_AUTONOMOUS,
+      opsec.noise in (QUIET, MODERATE), and strict_hitl != true?
             │
             ├── YES ──► Pass Stage 4 under strict Stage 3 Rate Limits
             │
-            └── NO (LOUD active probe, EXPLOIT_POC, or strict_hitl == true)
+            └── NO
                   │
                   ▼
-            Does a valid 5-D Approval Token exist in engagement.hitl_tokens[]?
+            Is AutonomyTier == FULL_AUTONOMOUS and strict_hitl != true?
                   │
-                  ├── YES (all 5 dimensions match & unexpired) ──► Pass Stage 4 (Approved)
+                  ├── YES ──► Pass Stage 4 (Protected by Stage 5 Non-Destructive Filter)
                   │
-                  └── NO (Missing, mismatched, or expired token)
+                  └── NO (LOUD action, EXPLOIT_POC, or REACTIVE tier)
                         │
                         ▼
-                  SUSPEND EXECUTION ──► Emit HITL_REQUEST to Hermes
+                  Does a valid 5-D Approval Token exist in engagement.hitl_tokens[]?
+                        │
+                        ├── YES (all 5 dimensions match & unexpired) ──► Pass Stage 4 (Approved)
+                        │
+                        └── NO (Missing, mismatched, or expired token)
+                              │
+                              ▼
+                        SUSPEND TASK ASYNCHRONOUSLY ──► Emit HITL_REQUEST to Hermes
+                        (Daemon continues executing sibling tasks in parallel)
 ```
 
 #### 5-Dimensional Token Verification
@@ -216,12 +225,13 @@ If an approval token exists, the Gateway verifies all five dimensions simultaneo
 | **4. Proposed Action** | `token.technique == tool_request.technique` AND `token.tool_name == tool_request.tool_name` | Deny technique drift |
 | **5. Expiration** | `token.expires_at > current_timestamp` | Expired token; reject reuse |
 
-#### HITL Request Emission
-If no valid token exists for a LOUD action or exploit PoC, the Gateway pauses the calling agent and emits a structured request:
+#### HITL Request Emission & Asynchronous Queueing
+If no valid token exists for a LOUD action or exploit PoC, the Gateway marks disposition as `HITL_REQUIRED` and emits a structured request to Hermes:
 
 ```yaml
 HITL_REQUEST:
   event_type: "OPERATOR_APPROVAL_REQUIRED"
+  request_id: tool_request.request_id
   finding_id: tool_request.finding_id
   target: tool_request.target.raw_target
   proposed_action: tool_request.technique
@@ -230,13 +240,23 @@ HITL_REQUEST:
   command_preview: tool_request.command_template
   severity_score: tool_request.severity_hint  # Urgency context only; does not alter gate
   reversible: (tool_request.canaries.length > 0)
+  prompt: |
+    ⚠️ [HITL APPROVAL GATE]
+    Target: <target>
+    Tool: <tool> (Noise: <noise>)
+    Technique: <technique>
+    Command: <command_template>
+    Action: [ APPROVE ] or [ DENY ]
+    Reply: approve <request_id>
+           deny <request_id>
   timestamp: ISO-8601
 ```
 
-Hermes delivers this prompt to the active operator interface. The Gateway pauses execution:
-- **Operator replies `/go [ID]`**: Hermes issues an unforgeable, 5-dimensional token. The Gateway validates the token and resumes to Stage 5.
-- **Operator replies `/hold [ID]`**: The Gateway aborts the tool request with `GATEWAY_DISPOSITION: HELD`, records the candidate finding at its current unverified confidence, and returns execution control to the workflow.
-- **Operator timeout**: Action remains queued; swarm continues passive work only.
+Hermes delivers this prompt to the active operator interface (Telegram, Discord, CLI, Web).
+- **Non-Blocking Architecture**: The specific task is suspended into `hitl_queue.json`, and the background hunter immediately pops the next task from the PriorityDAG, ensuring testing never halts.
+- **Operator replies `approve <ID>` (or `/go <ID>`)**: Hermes issues an unforgeable 5-dimensional token. The paused task transitions back into the PriorityDAG for execution at Stage 5.
+- **Operator replies `deny <ID>` (or `/hold <ID>`)**: The Gateway aborts the tool request with `GATEWAY_DISPOSITION: HELD`, records the candidate finding at its current unverified confidence, and drops the invasive attack vector.
+- **Operator timeout**: Action remains queued in `hitl_queue.json`; swarm continues non-blocking work.
 
 ---
 

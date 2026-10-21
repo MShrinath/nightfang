@@ -36,21 +36,37 @@ Operational runbooks and standards governing all NIGHTFANG agents, workflows, an
 
 ---
 
-## SOP-04: Human-in-the-Loop (HITL) Exploitation Gate
-**Objective:** Complete operator governance prior to any active, invasive action.
-1. **Gate Trigger**: The HITL gate is triggered by the **nature of the proposed next action**, not by severity score alone.
-   - **Passive / non-invasive work** (fingerprinting, OSINT, reading public data): may continue autonomously.
-   - **Active validation** (sending payloads, executing PoCs, triggering out-of-band callbacks, interacting with internal infrastructure): **requires explicit operator approval** before proceeding.
-   - Severity score influences **priority and urgency** of the approval request, but does not itself authorize or block execution.
-2. **Approval Request**: Nightfang raises a structured request via the operator interface specifying: finding ID, target, proposed action, technique, potential impact, and whether the action is reversible.
-3. **Approval Token Scope**: A `/go [ID]` approval is a bounded authorization, not a generic pass. It is scoped to all five dimensions simultaneously:
+## SOP-04: Human-in-the-Loop (HITL) Exploitation Gate & Tiered Autonomy
+**Objective:** Complete operator governance prior to active or invasive actions without stalling autonomous background scanning.
+1. **Gate Trigger & Autonomy Tiers**:
+   - **`REACTIVE` Tier**: Pauses execution and requests operator approval before dispatching any `MODERATE` or `LOUD` active action.
+   - **`SEMI_AUTONOMOUS` Tier (Default)**: Automatically approves and executes all `QUIET` passive reads and `MODERATE` active probes (port fingerprinting, web route discovery, parameter crawling) within safe rate limits. Pauses and requests approval only for `LOUD` exploit proofs-of-concept (`EXPLOIT_POC`) or invasive credential testing.
+   - **`FULL_AUTONOMOUS` Tier**: Automatically executes non-destructive PoCs within authorized scope, backed by the SOP-05 safety filter (blocks `rm`, `DROP`, `mkfs`, etc.).
+2. **Non-Blocking Asynchronous HITL Queueing**:
+   - When an action requires operator approval, the swarm does **NOT** halt entirely.
+   - The specific exploit task is suspended into the `hitl_queue` (and persisted to `hitl_queue.json`), emitting an approval card to the active operator channel (Telegram, Discord, CLI, Web).
+   - The swarm and background hunter **immediately continue processing remaining pending tasks** across other targets and endpoints.
+3. **Approval Card Format & "Approve / Deny" Protocol**:
+   - Structured notification emitted across the active channel:
+     ```text
+     ⚠️ [HITL APPROVAL GATE]
+     Target: <endpoint>
+     Action: <technique description>
+     Tool: <tool and proposed command>
+     Noise: LOUD | Impact: <impact rating>
+     Action Required: [ APPROVE ] or [ DENY ]
+     Reply: approve <ID> to proceed  |  deny <ID> to cancel
+     (aliases accepted: /go <ID> or /hold <ID>)
+     ```
+   - **Approve (`approve <ID>`, `APPROVE`, `/go <ID>`)**: Mints a 5-dimensional unforgeable approval token; the paused task transitions back to the PriorityDAG for immediate execution.
+   - **Deny (`deny <ID>`, `DENY`, `/hold <ID>`)**: The candidate finding is recorded at its current unvalidated confidence; the invasive attack vector is permanently dropped.
+4. **5-Dimensional Token Scope**: An approval is valid only when matching all five dimensions simultaneously:
    - **Engagement ID**: Valid only within the active engagement session
    - **Operator identity**: Only the operator who initiated the engagement may approve
    - **Finding ID**: Authorizes the validation action for that specific finding only
    - **Proposed action**: The exact technique and target endpoint stated in the HITL request. A different technique or endpoint requires a new HITL request
-   - **Expiration**: Approval expires if not acted upon within the operator-configured timeout. An expired approval must be re-requested; it cannot be reused
-4. **Execution Block**: The `validation` agent remains in a paused state until a valid, unexpired `/go [ID]` is received.
-5. **Timeout Handling**: If operator does not respond within the defined window, the action is queued and the swarm continues non-intrusive scanning tasks only.
+   - **Expiration**: Approval expires if not acted upon within the operator-configured timeout window
+5. **Timeout Handling**: Unapproved actions remain stored in the HITL queue without blocking the wider assessment.
 
 ---
 

@@ -37,6 +37,12 @@ class NoiseProfile(str, Enum):
     LOUD = "LOUD"
 
 
+class AutonomyTier(str, Enum):
+    REACTIVE = "REACTIVE"              # Halts on any moderate/loud active probe for manual confirmation
+    SEMI_AUTONOMOUS = "SEMI_AUTONOMOUS"# Traffic Light: Auto-runs GREEN (passive) & YELLOW (moderate) at safe rates; queues RED (exploits) asynchronously
+    FULL_AUTONOMOUS = "FULL_AUTONOMOUS"# Continuous: Auto-runs GREEN, YELLOW, and safe non-destructive RED PoCs within scope
+
+
 class ActionType(str, Enum):
     PASSIVE_READ = "PASSIVE_READ"
     ACTIVE_PROBE = "ACTIVE_PROBE"
@@ -245,6 +251,7 @@ class EngagementConfig:
     operator_defined_rate: Optional[int] = None
     max_concurrency_per_host: int = DEFAULT_MAX_CONCURRENCY
     strict_hitl: bool = False
+    autonomy_tier: AutonomyTier = AutonomyTier.SEMI_AUTONOMOUS
 
 
 class EngagementState:
@@ -510,17 +517,22 @@ class ExecutionPolicyGateway:
     # ------------------------------------------------------------------------
     def stage4_hitl_gate(self, req: ToolInvocationRequest) -> Optional[GatewayDisposition]:
         opsec_noise = req.opsec.noise if req.opsec else NoiseProfile.LOUD
+        tier = self.state.config.autonomy_tier
 
-        # Passive read + QUIET: auto-pass
+        # Passive read + QUIET: auto-pass across all autonomy tiers
         if req.action_type == ActionType.PASSIVE_READ and opsec_noise == NoiseProfile.QUIET:
             return None
 
-        # Active probe + MODERATE + not strict_hitl: auto-pass under rate limits
+        # SEMI_AUTONOMOUS & FULL_AUTONOMOUS: Auto-pass MODERATE active probes (recon/directory/parameters)
         if (
-            req.action_type == ActionType.ACTIVE_PROBE
-            and opsec_noise == NoiseProfile.MODERATE
+            tier in (AutonomyTier.SEMI_AUTONOMOUS, AutonomyTier.FULL_AUTONOMOUS)
+            and opsec_noise in (NoiseProfile.QUIET, NoiseProfile.MODERATE)
             and not self.state.config.strict_hitl
         ):
+            return None
+
+        # FULL_AUTONOMOUS: Auto-pass LOUD actions (relies on Stage 5 safety filter for protection)
+        if tier == AutonomyTier.FULL_AUTONOMOUS and not self.state.config.strict_hitl:
             return None
 
         # Invasive, LOUD, or EXPLOIT_POC actions require valid 5-D HITL token

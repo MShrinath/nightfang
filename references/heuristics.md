@@ -155,3 +155,45 @@ When auditing open-source components or target fixes:
    - Check if the fix sanitizes only the reported payload vector (e.g., blacklisting `<script>` instead of context-aware escaping).
    - Check if adjacent endpoints, alternative encodings (URL, Unicode, double-URL), or alternate HTTP verbs (`POST` vs `GET`) bypass the patch.
 3. **Regression Test Verification**: Verify whether a regression test suite exists and whether the fix introduces side-channel timing differences.
+
+---
+
+## 10. PriorityDAG Lead Queue & Autonomous Task Dispatch Heuristic
+
+The autonomous engine organizes pending tasks using a Directed Acyclic Graph (DAG) with priority min-heap semantics:
+1. **Priority Hierarchy**:
+   - `CRITICAL (Priority 0)`: Verified candidate exploit PoCs, out-of-band callback handling, immediate RCE / SQLi verification.
+   - `HIGH (Priority 1)`: Newly uncovered subdomains, exposed admin consoles, active route and port discovery.
+   - `MEDIUM (Priority 2)`: Parameter fuzzing, variant analysis hypothesis testing, API schema traversal.
+   - `LOW (Priority 3)`: Comprehensive directory brute-forcing, passive OSINT aggregation, WHOIS enrichment.
+   - `INFORMATIONAL (Priority 4)`: Background documentation generation, header baseline checks.
+2. **Dependency & Cycle Invariants**:
+   - A downstream verification task cannot execute until its prerequisite fingerprinting task completes successfully (`depends_on: [task_id]`).
+   - If a prerequisite fails, downstream dependent tasks are automatically cancelled with rationale recorded in engagement memory.
+3. **State Machine Transitions**:
+   - `PENDING` $\to$ `RUNNING` $\to$ `COMPLETED` | `FAILED` | `PAUSED_FOR_APPROVAL`
+   - Paused tasks do not block the min-heap pop of independent sibling tasks.
+
+---
+
+## 11. Recursive Lead Generation & Attack Surface Expansion Heuristic
+
+Autonomous security assessment requires continuous surface discovery without manual intervention:
+1. **Domain & Subdomain Ingestion**: Every stdout/stderr stream from recon and scanning tools is regex-analyzed for newly disclosed hostnames. Discovered hostnames matching `engagement.scope.domains` are automatically enqueued for service and port discovery.
+2. **Endpoint & Route Ingestion**: Discovered HTTP URLs, API routes (REST/GraphQL/gRPC endpoints), and form action targets are immediately extracted, deduplicated against `engagement.crawled_endpoints[]`, and enqueued for parameter fuzzing (`variant_hunt.py`).
+3. **Technology-Triggered Specialization**:
+   - Web server exposes WordPress / Drupal $\to$ dynamically enqueues CMS plugin vulnerability check.
+   - Endpoint returns GraphQL schema $\to$ dynamically enqueues introspective field traversal.
+   - Host exposes SMB port 445 / RPC $\to$ dynamically enqueues `ad-attacker` Kerberos / null session check.
+   - Cloud metadata reflection observed (IMDS `169.254.169.254`) $\to$ dynamically enqueues `cloud-security` token extraction task.
+
+---
+
+## 12. Self-Healing Reflection & Rate Backoff Heuristic
+
+When active tools encounter infrastructure defense triggers, the engine adapts dynamically rather than failing:
+1. **Status Code Reflection**:
+   - HTTP `429 Too Many Requests` or `503 Service Unavailable` triggers SOP-02 backoff: pauses target operations for 30s, halves target rate ceiling, and re-enqueues failed tasks with exponential backoff (up to 2 retries).
+   - HTTP `403 Forbidden` / Cloudflare WAF challenge on a specific path triggers OPSEC noise downgrade (`LOUD` $\to$ `MODERATE` or `QUIET`), injects header variations (e.g. `X-Forwarded-For: 127.0.0.1`), and schedules variant route probing.
+2. **Socket Timeout & Connection Reset**:
+   - 3 consecutive connection timeouts on a port triggers temporary port deactivation and marks the target service as latency-sensitive, reducing concurrency to 1.

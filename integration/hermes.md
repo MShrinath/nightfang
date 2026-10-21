@@ -1,162 +1,131 @@
 # NIGHTFANG ↔ Hermes Integration Contract
 
-This document describes what Hermes must provide to load and operate NIGHTFANG as a capability pack, and what NIGHTFANG contracts to provide in return.
+This document describes how Hermes hosts, operates, and becomes **NIGHTFANG** as an autonomous security intelligence layer, detailing what Hermes provides, what NIGHTFANG delivers, and how remote channels (Telegram, Discord, Web, CLI) interact with the autonomous hunting engine.
 
 ---
 
-## 1. What Hermes Must Do
+## 1. Architectural Philosophy: Hermes IS Nightfang
 
-### 1.1 Pack Discovery & Loading
+NIGHTFANG is not an isolated command-line script — it is the **security brain and capability pack for Hermes**. When an operator installs NIGHTFANG via `install.sh` (Linux/macOS) or `install.ps1` (Windows):
 
-Hermes loads NIGHTFANG by locating `manifest.yaml` in the pack root. The loader must read the following manifest fields at startup:
-
-| Field | Type | Required | Purpose |
-| :--- | :--- | :--- | :--- |
-| `pack.name` | string | ✅ | Pack identity |
-| `runtime.name` | string | ✅ | Verify this is a Hermes-compatible pack |
-| `runtime.min_version` | string | ✅ | Reject if Hermes version is below this |
-| `runtime.entrypoint.agent` | string | ✅ | Path to the main agent file (`AGENTS.md`) |
-| `runtime.capabilities.*` | boolean map | ✅ | Which capability types this pack uses |
-| `capabilities[]` | list | ✅ | **Capability Router** table: maps target types to workflow + agent + skills |
-
-**Loading order:**
-1. Parse `manifest.yaml`
-2. Verify `runtime.name == "hermes"` and `runtime.min_version` compatibility
-3. Load entrypoint agent at `runtime.entrypoint.agent` (`AGENTS.md`) into the active context
-4. Register all entries from `capabilities[]` in the Hermes **Capability Router** index
-5. Initialize the **Execution Policy Gateway** ([`integration/execution-policy-gateway.md`](execution-policy-gateway.md)) across all external tool and network execution handlers
-
-### 1.2 Operator Interface (Channel Abstraction)
-
-NIGHTFANG is channel-agnostic. Hermes owns and manages all operator-facing channels. NIGHTFANG emits structured messages; Hermes is responsible for delivery.
-
-**What Hermes must expose to NIGHTFANG at runtime:**
-- `send_operator_message(content: str)` — deliver a NIGHTFANG alert or status message to the operator via whatever channel is active
-- `receive_operator_command() -> str` — receive operator replies (`/go [ID]`, `/hold [ID]`, `/stop`, `PROCEED`, etc.)
-
-NIGHTFANG never calls Telegram, Discord, CLI, or Web APIs directly.
-
-**Hermes must relay NIGHTFANG operator messages as-is**, preserving the structured format defined in `AGENTS.md §7`. Hermes may apply transport-appropriate formatting (e.g., Markdown for Telegram, plain text for CLI).
-
-### 1.3 Persistent Memory
-
-NIGHTFANG agents are stateless within a single turn. Hermes provides memory continuity across turns.
-
-**Hermes must persist:**
-- Active scope document (target list, in/out-of-scope boundaries)
-- Findings store: all findings recorded by agents in this engagement
-- Engagement configuration: operator-defined rate limit, engagement ID, authorized tester identity
-- HITL queue: findings awaiting operator approval
-
-**NIGHTFANG will reference memory via scoped keys:**
-```
-engagement.scope
-engagement.findings[]
-engagement.config.rate_limit
-engagement.hitl_queue[]
-```
-
-Hermes maps these keys to its internal memory backend (file, database, vector store, etc.).
-
-### 1.4 Scheduling
-
-Hermes manages all scheduling. NIGHTFANG may request deferred execution (e.g., "retry this scan in 30 minutes") by emitting a schedule intent:
+1. NIGHTFANG's persona, constitution, and operating procedures are installed as the default Hermes system prompt (`~/.hermes/nightfang/system.md`).
+2. All 31 domain skills are symlinked/copied into Hermes's skill store (`~/.hermes/skills/nightfang`).
+3. Hermes's runtime config (`~/.hermes/nightfang/config.yaml`) is overlaid with NIGHTFANG's 33 capabilities, execution policy gateway, and tiered autonomy settings.
+4. When Hermes connects to any transport channel (Telegram bot, Discord bot, Web UI, or local CLI terminal), **the operator is talking directly to NIGHTFANG**.
 
 ```
-SCHEDULE_INTENT: retry scan of <target> in <duration>
-REASON: rate-limited, backoff applied
+┌────────────────────────────────────────────────────────────────────────┐
+│                         Host Runtime (Hermes)                          │
+│     Model Selection • Token Efficiency / Terse Mode • Scheduling       │
+│                 Long-Term Memory • Channel Adaptors                    │
+├───────────────────┬───────────────────┬───────────────────┬────────────┤
+│     Telegram      │      Discord      │        CLI        │    Web     │
+└───────────────────┴───────────────────┴───────────────────┴────────────┘
+                                   │ Loads via manifest.yaml
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        NIGHTFANG Capability Pack                       │
+│                       Security Orchestration Layer                     │
+├───────────────────┬───────────────────┬────────────────────────────────┤
+│      Agents       │      Skills       │           Workflows            │
+│    (37 Agents)    │    (31 Skills)    │         (17 Workflows)         │
+├───────────────────┴───────────────────┴────────────────────────────────┤
+│                   Autonomous Hunter Engine Daemon                      │
+│            PriorityDAG Task Queue • Recursive Lead Expansion           │
+│             Execution Policy Gateway (6-Stage Verification)            │
+│               Container / Subprocess Sandbox Isolation                 │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │ Findings conforming to
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                          Shared Finding Schema                         │
+│                         (schemas/finding.md)                           │
+└────────────────────────────────────────────────────────────────────────┘
 ```
-
-Hermes intercepts this, creates the scheduled job, and reinvokes the relevant capability when the timer fires.
 
 ---
 
-## 2. What NIGHTFANG Provides to Hermes
+## 2. What Hermes Must Provide
 
-### 2.1 Entrypoint Agent
+### 2.1 Pack Discovery & Loading
 
-`AGENTS.md` is the single entrypoint. It contains NIGHTFANG's constitution: identity, safety rules, delegation model, and Capability Router dispatch logic. Hermes loads this as the primary instruction context.
+Hermes loads NIGHTFANG by locating `manifest.yaml` in the pack root. The loader reads:
+- `runtime.name == "hermes"` and `runtime.min_version >= "0.2.0"`.
+- `runtime.entrypoint.agent`: Path to `AGENTS.md`.
+- `capabilities[]`: The 33-capability routing table mapping target classifications to workflows, agents, and skills.
 
-### 2.2 Capability Router Table
+### 2.2 Channel Adaptors (Telegram, Discord, Web, CLI)
 
-`manifest.yaml` contains a `capabilities[]` list. Each entry defines:
-- `id`: unique capability identifier (e.g., `web-application-security`)
-- `target_types[]`: what kinds of input trigger this capability
-- `workflow`: which workflow file to execute
-- `agent`: which agent is responsible
-- `skills[]`: which skill modules the agent invokes
+NIGHTFANG is completely channel-agnostic. Hermes owns and manages all operator-facing transports. 
 
-Hermes uses this table to dispatch incoming requests to the correct Nightfang capability without parsing `AGENTS.md`.
+**Runtime API exposed to NIGHTFANG:**
+- `send_operator_message(content: str)` — Deliver structured findings, progress updates, or approval cards.
+- `receive_operator_command() -> str` — Ingest operator replies (`approve <ID>`, `deny <ID>`, `/hunt`, `/queue`, `/stop`).
 
-### 2.3 Structured Findings
+#### Remote Telegram & Discord Experience:
+1. **Autonomous Launch**: The operator sends `/hunt target.corp` or "Nightfang, scan target.corp" on Telegram.
+2. **Continuous Background Execution**: Hermes delegates the target to NIGHTFANG's Autonomous Hunter. The engine does **not** stop after each turn. It maintains a background PriorityDAG queue, auto-running passive recon and active scanning.
+3. **Non-Blocking Approval Cards**: When an invasive exploit PoC is identified, NIGHTFANG formats an approval card and sends it to Telegram:
+   ```text
+   ⚠️ [HITL APPROVAL GATE]
+   Target: api.target.corp
+   Tool: sqlmap (Noise: LOUD)
+   Technique: SQL Injection Verification
+   Command: sqlmap -u "https://api.target.corp/v1/user?id=1" --batch
+   Action: [ APPROVE ] or [ DENY ]
+   Reply: approve REQ-9a3b8c
+          deny REQ-9a3b8c
+   ```
+4. **Uninterrupted Parallel Hunting**: While waiting for the operator to tap or text `approve REQ-9a3b8c`, NIGHTFANG **continues scanning other subdomains, ports, and endpoints in parallel**. The assessment never stalls.
 
-All findings produced by NIGHTFANG agents conform to `schemas/finding.md`. Hermes can ingest these findings for:
-- Operator alert delivery
-- Persistent storage in the findings store
-- Generating engagement reports on demand
+### 2.3 Persistent Memory & State Store
 
-### 2.4 HITL Approval Requests
-
-When NIGHTFANG reaches an action-based HITL gate (active validation required), it emits a structured approval request:
-
-```
-HITL_REQUEST:
-  finding_id: NF-YYYY-NNNN
-  target: <endpoint>
-  proposed_action: <technique description>
-  technique: <specific payload/tool>
-  reversible: false
-  potential_impact: <brief description>
-  severity: <N>/10
-```
-
-### 2.5 Execution Policy Gateway Contract
-
-Hermes must never execute external tools, network scans, or arbitrary commands requested by skills directly. All tool execution must be proxied through the **Execution Policy Gateway** ([`integration/execution-policy-gateway.md`](execution-policy-gateway.md)):
-- Evaluates scope boundaries (SOP-01), emergency stop state (SOP-07), and resource locks (Heuristics §4)
-- Enforces the rate hierarchy and auto-backoff delays (SOP-02)
-- Enforces the 5-dimensional approval token check on active actions (SOP-04)
-- Blocks prohibited destructive payloads and registers canaries for cleanup (SOP-05)
-- Captures raw execution streams and computes SHA-256 evidence digests (SOP-06)
+Hermes persists engagement state across turns and restarts:
+- `engagement.scope`: Authorized domains, CIDRs, and exclusions.
+- `engagement.findings[]`: Verified and candidate findings conforming to `schemas/finding.md`.
+- `engagement.hitl_queue[]`: Pending approval cards awaiting operator response (`hitl_queue.json`).
+- `engagement.crawled_endpoints[]`: Deduplicated routes and assets discovered during execution.
+- `engagement.config`: Active autonomy tier, rate limits, and operator identity.
 
 ---
 
-## 3. Host Runtime Requirements
+## 3. Tiered Autonomy ("Traffic Light" Model)
 
-| Component | Minimum Version | Notes |
+Hermes and the Execution Policy Gateway enforce 3 configurable autonomy tiers:
+
+| Tier | Behavior | Best Used For |
 | :--- | :--- | :--- |
-| **Hermes Host Runtime** | `0.2.0` | Required for Execution Policy Gateway interception, dynamic capability routing, and unified finding schema |
-
-If Hermes does not meet `runtime.min_version`, it must refuse to load the pack and surface an error to the operator.
-
----
-
-## 4. What Hermes Must NOT Do
-
-- Must not modify or inject content into NIGHTFANG agent prompts beyond the registered entrypoint
-- Must not bypass the HITL gate by auto-approving HITL requests
-- Must not execute external tools or network requests without routing them through the Execution Policy Gateway
-- Must not expose out-of-scope targets to NIGHTFANG agents; scope enforcement is shared but Hermes must not route requests that clearly violate scope
-- Must not strip or truncate finding schemas before persisting them
+| **`REACTIVE`** | Halts on every active probe (`MODERATE` or `LOUD`) for explicit manual approval. | Sensitive production environments, manual walkthroughs, initial scoping. |
+| **`SEMI_AUTONOMOUS` *(Default)*** | Auto-executes GREEN (passive) and YELLOW (moderate scanning) within safe rate limits. Queues RED (exploit PoCs) asynchronously without blocking the swarm. | Autonomous continuous bug hunting via Telegram/Discord. Maximizes finding yield without risking service outages. |
+| **`FULL_AUTONOMOUS`** | Auto-executes GREEN, YELLOW, and safe non-destructive RED PoCs within scope boundaries. Protected by SOP-05 destructive command filtering (`rm`, `DROP`, `mkfs`, etc.). | Isolated test environments, capture-the-flag competitions, authorized staging labs. |
 
 ---
 
-## 5. Integration Verification Checklist
+## 4. Operator Commands in Hermes
 
-Before declaring NIGHTFANG operational on a Hermes instance, dynamically verify:
+When chatting with Hermes (on Telegram, Discord, CLI, or Web), the following commands are registered:
 
-- [ ] `manifest.yaml` parsed successfully
-- [ ] `runtime.min_version` check passed
-- [ ] `AGENTS.md` loaded as entrypoint
-- [ ] All `manifest.capabilities[]` entries registered successfully in the Capability Router
-- [ ] Registered capability count dynamically matches manifest capability count
-- [ ] No duplicate capability IDs exist in routing index
-- [ ] Every registered capability resolves to an existing workflow file
-- [ ] Every registered capability resolves to an existing agent file
-- [ ] Every referenced skill directory exists and contains a valid `SKILL.md`
-- [ ] Execution Policy Gateway intercepting all tool invocations and network requests
-- [ ] `send_operator_message()` wired to active channel
-- [ ] `receive_operator_command()` polling active
-- [ ] Engagement memory scoped and initialized (`engagement.scope`, `engagement.findings[]`, `engagement.config`)
-- [ ] HITL queue initialized and operator-facing
-- [ ] End-to-end smoke test: send a test finding through the full pipeline and verify operator receives alert
+| Command | Syntax | Description |
+| :--- | :--- | :--- |
+| `/hunt` | `/hunt <target> [--tier TIER]` | Seeds target into PriorityDAG and starts continuous autonomous hunting. |
+| `/queue` | `/queue` | Displays current pending tasks, completed jobs, and paused HITL approvals. |
+| `/autonomy` | `/autonomy [REACTIVE\|SEMI_AUTONOMOUS\|FULL_AUTONOMOUS]` | Displays or switches the active autonomy tier. |
+| `approve` | `approve <REQ_ID>` (or `/go <REQ_ID>`) | Approves a queued exploit action, mints a 5-D token, and resumes execution. |
+| `deny` | `deny <REQ_ID>` (or `/hold <REQ_ID>`) | Denies an exploit action, records finding as candidate, and cancels tool invocation. |
+| `/scope` | `/scope [view\|set <target>]` | Views or updates authorized engagement boundaries and CIDRs. |
+| `/findings` | `/findings` | Summarizes all discovered vulnerabilities with severity and confidence scores. |
+| `/report` | `/report [full\|executive]` | Compiles formal executive and technical deliverable markdown reports. |
+| `/clean` | `/clean` | Verifies target baseline and deletes all temporary test files/canaries. |
+| `/stop` | `/stop` (or `/halt`) | Immediate emergency stop; kills all running processes and subagents. |
+
+---
+
+## 5. Execution Policy Gateway Enforcement
+
+Hermes must never execute security tools or network traffic directly. All tool invocations are proxied through the **Execution Policy Gateway** ([`integration/execution-policy-gateway.md`](execution-policy-gateway.md)):
+1. **Stage 1 (Scope & OPSEC)**: Re-validates target against `engagement.scope` before every request.
+2. **Stage 2 (Emergency Stop & Deconfliction)**: Checks emergency halt flag and host/port locks.
+3. **Stage 3 (Rate Limiting & Backoff)**: Auto-injects rate flags (`-rate 20`, `--max-rate 20`) and executes backoff on 429/503.
+4. **Stage 4 (Action Classification & HITL Gate)**: Applies the Autonomy Tier and checks 5-D approval tokens.
+5. **Stage 5 (Non-Destructive Safety Filter)**: Blocks destructive commands and tracks artifact canaries.
+6. **Stage 6 (Evidence Hashing)**: Captures raw execution streams and computes cryptographic SHA-256 digests (`[EVD-XXXXXX]`).
