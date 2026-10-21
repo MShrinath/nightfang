@@ -1,0 +1,72 @@
+# NIGHTFANG Configuration for Hermes Host Runtime
+name: "nightfang"
+version: "2.0"
+runtime: "hermes"
+system_prompt: "system.md"
+skills_path: "skills/nightfang"
+
+orchestration:
+  supervisor:
+    enabled: true
+    subtask_limit: 7
+    loop_detection_threshold: 2
+    summarize_history_interval: 5
+
+gateway:
+  enabled: true
+  enforce_scope: true
+  rate_limit: 20
+  burst_limit: 50
+  hitl_required: true
+  non_destructive_filter: true
+  evidence_hashing: true
+
+autonomy:
+  tier: "SEMI_AUTONOMOUS"  # REACTIVE | SEMI_AUTONOMOUS | FULL_AUTONOMOUS
+  continuous_mode: true
+  non_blocking_hitl: true
+  max_cycles: 100
+  poll_interval_seconds: 2
+
+memory:
+  scope_file: "memory/scope.yaml"
+  findings_file: "memory/findings.json"
+  audit_log_file: "memory/audit.log"
+
+commands:
+  - name: "/hunt"
+    description: "Launch continuous autonomous hunting against target"
+    usage: "/hunt <target> [--tier SEMI_AUTONOMOUS|FULL_AUTONOMOUS]"
+  - name: "/queue"
+    description: "Display current PriorityDAG task queue and pending HITL approvals"
+    usage: "/queue"
+  - name: "/autonomy"
+    description: "Display or set the current autonomy tier"
+    usage: "/autonomy [REACTIVE|SEMI_AUTONOMOUS|FULL_AUTONOMOUS]"
+  - name: "approve"
+    description: "Approve a pending HITL tool execution token"
+    usage: "approve <REQUEST_ID> (or /go <REQUEST_ID>)"
+  - name: "deny"
+    description: "Deny/cancel a pending HITL tool execution"
+    usage: "deny <REQUEST_ID> (or /hold <REQUEST_ID>)"
+  - name: "/go"
+    description: "Approve a pending HITL tool execution token (alias)"
+    usage: "/go <REQUEST_ID>"
+  - name: "/hold"
+    description: "Deny/hold a pending HITL tool execution (alias)"
+    usage: "/hold <REQUEST_ID>"
+  - name: "/stop"
+    description: "Emergency abort for all running operations"
+    usage: "/stop"
+  - name: "/scope"
+    description: "View or update engagement target boundaries"
+    usage: "/scope [view|set <CIDR/Domain>]"
+  - name: "/findings"
+    description: "Display summary of discovered findings"
+    usage: "/findings"
+  - name: "/report"
+    description: "Compile and render assessment deliverable"
+    usage: "/report [full|executive]"
+  - name: "/clean"
+    description: "Trigger artifact and canary cleanup verification"
+    usage: "/clean"

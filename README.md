@@ -105,14 +105,14 @@ To install NIGHTFANG directly into Hermes so Hermes operates as NIGHTFANG:
 
 ### Linux / macOS
 ```bash
-git clone https://github.com/your-org/nightfang.git
+git clone https://github.com/mshrinath/nightfang.git
 cd nightfang
 ./install/install.sh
 ```
 
 ### Windows (PowerShell)
 ```powershell
-git clone https://github.com/your-org/nightfang.git
+git clone https://github.com/mshrinath/nightfang.git
 cd nightfang
 powershell -ExecutionPolicy Bypass -File install\install.ps1
 ```

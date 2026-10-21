@@ -1,0 +1,18 @@
+# Engagement Scope & Rules of Engagement
+engagement_id: "NF-ENG-INIT"
+created_at: ""
+authorized_operator: "operator"
+rules_of_engagement:
+  emergency_stop_contact: "security-ops"
+  testing_window: "24/7"
+  rate_limit_req_sec: 20
+authorized_targets:
+  ipv4_cidrs: []
+  ipv6_cidrs: []
+  domains: []
+  urls: []
+prohibited_targets:
+  - "169.254.169.254" # Cloud metadata IP (unless specifically testing SSRF under HITL)
+  - "*.s3.amazonaws.com"
+  - "*.blob.core.windows.net"
+  - "storage.googleapis.com"
