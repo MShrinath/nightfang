@@ -55,14 +55,23 @@ Write-Host "[OK] Linked 31 skills into $NfSkillLink" -ForegroundColor Green
 Write-Host "[+] Infusing Hermes with NIGHTFANG persona and constitution..." -ForegroundColor Blue
 Copy-Item "$NightfangRoot\adapters\hermes\system.md" "$NfHermesHome\system.md" -Force
 Copy-Item "$NightfangRoot\adapters\hermes\system.md" "$HermesHome\system.md" -Force
+if (Test-Path "$HermesHome\SOUL.md") {
+    $backupTs = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    Copy-Item "$HermesHome\SOUL.md" "$HermesHome\SOUL.md.backup.$backupTs" -Force
+}
+Copy-Item "$NightfangRoot\adapters\hermes\system.md" "$HermesHome\SOUL.md" -Force
 Copy-Item "$NightfangRoot\adapters\hermes\config.yaml" "$NfHermesHome\config.yaml" -Force
 
 if (Test-Path "$HermesHome\config.yaml") {
-    $backupTs = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-    Copy-Item "$HermesHome\config.yaml" "$HermesHome\config.yaml.backup.$backupTs" -Force
+    $existingConfig = Get-Content "$HermesHome\config.yaml" -Raw
+    if ($existingConfig -notmatch "nightfang") {
+        Add-Content -Path "$HermesHome\config.yaml" -Value "`n# --- NIGHTFANG Extension Configuration ---`n"
+        Get-Content "$NightfangRoot\adapters\hermes\config.yaml" | Add-Content -Path "$HermesHome\config.yaml"
+    }
+} else {
+    Copy-Item "$NightfangRoot\adapters\hermes\config.yaml" "$HermesHome\config.yaml" -Force
 }
-Copy-Item "$NightfangRoot\adapters\hermes\config.yaml" "$HermesHome\config.yaml" -Force
-Write-Host "[OK] NIGHTFANG installed as default Hermes system context." -ForegroundColor Green
+Write-Host "[OK] NIGHTFANG persona (SOUL.md) and skills configured in Hermes." -ForegroundColor Green
 
 # 5. Initialize Memory & Scope
 Write-Host "[+] Initializing engagement memory store..." -ForegroundColor Blue

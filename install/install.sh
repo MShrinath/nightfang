@@ -105,14 +105,23 @@ success "Linked 31 skills and 35+ tools to $NF_SKILL_LINK"
 info "Infusing Hermes with NIGHTFANG persona & constitution..."
 cp "$SYSTEM_PROMPT_SRC" "$NF_HERMES_HOME/system.md"
 cp "$SYSTEM_PROMPT_SRC" "$HERMES_HOME/system.md"
+if [[ -f "$HERMES_HOME/SOUL.md" ]]; then
+    cp "$HERMES_HOME/SOUL.md" "$HERMES_HOME/SOUL.md.backup.$(date +%s)"
+fi
+cp "$SYSTEM_PROMPT_SRC" "$HERMES_HOME/SOUL.md"
 cp "$CONFIG_SRC" "$NF_HERMES_HOME/config.yaml"
 
+# Safely inject nightfang configuration without destroying Hermes's root config.yaml
 if [[ -f "$HERMES_HOME/config.yaml" ]]; then
-    # Merge or backup if existing
-    cp "$HERMES_HOME/config.yaml" "$HERMES_HOME/config.yaml.backup.$(date +%s)"
+    if ! grep -q "nightfang" "$HERMES_HOME/config.yaml"; then
+        echo "" >> "$HERMES_HOME/config.yaml"
+        echo "# --- NIGHTFANG Extension Configuration ---" >> "$HERMES_HOME/config.yaml"
+        cat "$CONFIG_SRC" >> "$HERMES_HOME/config.yaml"
+    fi
+else
+    cp "$CONFIG_SRC" "$HERMES_HOME/config.yaml"
 fi
-cp "$CONFIG_SRC" "$HERMES_HOME/config.yaml"
-success "Configured NIGHTFANG as primary Hermes cognitive layer."
+success "Configured NIGHTFANG persona (SOUL.md) and extension settings in Hermes."
 
 # 5. Initialize Memory & Scope Templates
 info "Initializing engagement state & memory store..."
@@ -193,6 +202,12 @@ cat > "$NF_HERMES_HOME/installation.json" <<EOF
   "launcher": "$HERMES_BIN_DIR/nightfang"
 }
 EOF
+
+if command_exists systemctl && systemctl --user is-active --quiet hermes-gateway 2>/dev/null; then
+    info "Reloading Hermes Gateway service..."
+    systemctl --user restart hermes-gateway || true
+    success "Hermes Gateway service reloaded with NIGHTFANG persona."
+fi
 
 # ------------------------------------------------------------
 # Verification & Summary
