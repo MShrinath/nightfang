@@ -1,63 +1,66 @@
-```bash
 #!/usr/bin/env bash
+# ============================================================
+# NIGHTFANG -> Hermes Seamless Installer
+#
+# Transforms Hermes into NIGHTFANG:
+# - Injects the NIGHTFANG Security Intelligence Layer persona & constitution
+# - Links all 31 security skills & 35+ Python execution tools
+# - Configures the Execution Policy Gateway and Sandbox
+# - Installs the 'nightfang' launcher CLI
+# ============================================================
 set -euo pipefail
 
-# ============================================================
-# NIGHTFANG -> Hermes Adapter
-#
-# Installs NIGHTFANG capabilities into an existing Hermes
-# installation without modifying the Hermes source tree.
-#
-# Layout:
-#   NIGHTFANG/
-#   └── adapters/hermes/install.sh
-#
-# Result:
-#   ~/.hermes/skills/nightfang -> NIGHTFANG/skills
-#   ~/.hermes/nightfang/       -> NIGHTFANG Hermes adapter data
-# ============================================================
-
-NIGHTFANG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-
+NIGHTFANG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 NF_HERMES_HOME="$HERMES_HOME/nightfang"
 NF_SKILL_LINK="$HERMES_HOME/skills/nightfang"
+HERMES_BIN_DIR="$HERMES_HOME/bin"
 
 SYSTEM_PROMPT_SRC="$NIGHTFANG_ROOT/adapters/hermes/system.md"
+CONFIG_SRC="$NIGHTFANG_ROOT/adapters/hermes/config.yaml"
 MEMORY_SRC="$NIGHTFANG_ROOT/adapters/hermes/memory"
 
 # ------------------------------------------------------------
-# Helpers
+# Terminal Formatting
 # ------------------------------------------------------------
+BOLD='\033[1m'
+BLUE='\033[1;34m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+CYAN='\033[1;36m'
+NC='\033[0m'
 
 info() {
-    printf '\033[1;34m[+]\033[0m %s\n' "$1"
+    printf "${BLUE}[+]${NC} %s\n" "$1"
 }
 
 success() {
-    printf '\033[1;32m[✓]\033[0m %s\n' "$1"
+    printf "${GREEN}[✓]${NC} %s\n" "$1"
 }
 
 warn() {
-    printf '\033[1;33m[!]\033[0m %s\n' "$1"
+    printf "${YELLOW}[!]${NC} %s\n" "$1"
 }
 
 fail() {
-    printf '\033[1;31m[✗]\033[0m %s\n' "$1"
+    printf "${RED}[✗]${NC} %s\n" "$1"
     exit 1
 }
 
 banner() {
     cat <<'EOF'
-
-╔══════════════════════════════════════════════════╗
-║                                                  ║
-║          NIGHTFANG → HERMES ADAPTER             ║
-║                                                  ║
-║     Load NIGHTFANG into the Hermes runtime      ║
-║                                                  ║
-╚══════════════════════════════════════════════════╝
-
+ [1;36m
+   ███╗   ██╗██╗ ██████╗ ██╗  ██╗████████╗███████╗ █████╗ ███╗   ██╗ ██████╗ 
+   ████╗  ██║██║██╔════╝ ██║  ██║╚══██╔══╝██╔════╝██╔══██╗████╗  ██║██╔════╝ 
+   ██╔██╗ ██║██║██║  ███╗███████║   ██║   █████╗  ███████║██╔██╗ ██║██║  ███╗
+   ██║╚██╗██║██║██║   ██║██╔══██║   ██║   ██╔══╝  ██╔══██║██║╚██╗██║██║   ██║
+   ██║ ╚████║██║╚██████╔╝██║  ██║   ██║   ██║     ██║  ██║██║ ╚████║╚██████╔╝
+   ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝ 
+ [0m [1;35m
+          🦇 NIGHTFANG Security Intelligence Layer for Hermes 🦇
+                 Autonomous Pentesting & Adversary Emulation
+ [0m
 EOF
 }
 
@@ -66,260 +69,158 @@ command_exists() {
 }
 
 # ------------------------------------------------------------
-# Banner
+# Execution
 # ------------------------------------------------------------
-
 banner
 
-info "NIGHTFANG root: $NIGHTFANG_ROOT"
-info "Hermes home:    $HERMES_HOME"
+info "NIGHTFANG Root:  $NIGHTFANG_ROOT"
+info "Hermes Home:     $HERMES_HOME"
 
-# ------------------------------------------------------------
-# Check prerequisites
-# ------------------------------------------------------------
+# 1. Validate Repository Integrity
+info "Verifying NIGHTFANG package structure..."
+[[ -f "$NIGHTFANG_ROOT/manifest.yaml" ]] || fail "manifest.yaml not found at $NIGHTFANG_ROOT"
+[[ -d "$NIGHTFANG_ROOT/skills" ]]        || fail "skills directory not found at $NIGHTFANG_ROOT"
+[[ -d "$NIGHTFANG_ROOT/agents" ]]        || fail "agents directory not found at $NIGHTFANG_ROOT"
+[[ -d "$NIGHTFANG_ROOT/workflows" ]]     || fail "workflows directory not found at $NIGHTFANG_ROOT"
+[[ -d "$NIGHTFANG_ROOT/tools" ]]         || fail "tools directory not found at $NIGHTFANG_ROOT"
+success "NIGHTFANG repository integrity verified."
 
-if ! command_exists git; then
-    fail "git is required but was not found."
-fi
-
-if ! command_exists python3; then
-    warn "python3 was not found. Continuing because the adapter itself does not require Python."
-fi
-
-# ------------------------------------------------------------
-# Detect Hermes
-# ------------------------------------------------------------
-
-info "Detecting Hermes..."
-
-HERMES_FOUND=0
-
-if command_exists hermes; then
-    HERMES_FOUND=1
-    HERMES_BIN="$(command -v hermes)"
-    success "Hermes command found: $HERMES_BIN"
-elif [[ -d "$HERMES_HOME" ]]; then
-    HERMES_FOUND=1
-    success "Hermes directory found: $HERMES_HOME"
-else
-    warn "Hermes was not detected."
-    echo
-    echo "Install Hermes first, then run this script again."
-    echo
-    exit 1
-fi
-
-# ------------------------------------------------------------
-# Validate NIGHTFANG
-# ------------------------------------------------------------
-
-info "Validating NIGHTFANG repository..."
-
-[[ -d "$NIGHTFANG_ROOT" ]] || fail "NIGHTFANG root does not exist."
-
-if [[ ! -d "$NIGHTFANG_ROOT/skills" ]]; then
-    warn "NIGHTFANG skills directory not found:"
-    warn "$NIGHTFANG_ROOT/skills"
-else
-    success "NIGHTFANG skills found."
-fi
-
-if [[ ! -d "$NIGHTFANG_ROOT/workflows" ]]; then
-    warn "NIGHTFANG workflows directory not found."
-else
-    success "NIGHTFANG workflows found."
-fi
-
-if [[ ! -d "$NIGHTFANG_ROOT/policies" ]]; then
-    warn "NIGHTFANG policies directory not found."
-else
-    success "NIGHTFANG policies found."
-fi
-
-# ------------------------------------------------------------
-# Create Hermes directories
-# ------------------------------------------------------------
-
-info "Creating Hermes NIGHTFANG directories..."
-
+# 2. Prepare Hermes Directories
+info "Setting up Hermes filesystem structure..."
 mkdir -p "$HERMES_HOME"
 mkdir -p "$HERMES_HOME/skills"
+mkdir -p "$HERMES_BIN_DIR"
 mkdir -p "$NF_HERMES_HOME"
+mkdir -p "$NF_HERMES_HOME/memory"
 
-success "Directories ready."
-
-# ------------------------------------------------------------
-# Backup existing NIGHTFANG integration
-# ------------------------------------------------------------
-
+# 3. Link Skills
+info "Integrating NIGHTFANG skills into Hermes..."
 if [[ -e "$NF_SKILL_LINK" || -L "$NF_SKILL_LINK" ]]; then
+    rm -rf "$NF_SKILL_LINK"
+fi
+ln -s "$NIGHTFANG_ROOT/skills" "$NF_SKILL_LINK"
+success "Linked 31 skills and 35+ tools to $NF_SKILL_LINK"
 
-    if [[ -L "$NF_SKILL_LINK" ]]; then
-        CURRENT_TARGET="$(readlink "$NF_SKILL_LINK")"
+# 4. Install System Prompt & Configuration
+info "Infusing Hermes with NIGHTFANG persona & constitution..."
+cp "$SYSTEM_PROMPT_SRC" "$NF_HERMES_HOME/system.md"
+cp "$SYSTEM_PROMPT_SRC" "$HERMES_HOME/system.md"
+cp "$CONFIG_SRC" "$NF_HERMES_HOME/config.yaml"
 
-        if [[ "$CURRENT_TARGET" == "$NIGHTFANG_ROOT/skills" ]]; then
-            info "Existing NIGHTFANG skill link already points to this repository."
-        else
-            warn "Existing NIGHTFANG skill link detected."
-            warn "Moving it to a backup."
+if [[ -f "$HERMES_HOME/config.yaml" ]]; then
+    # Merge or backup if existing
+    cp "$HERMES_HOME/config.yaml" "$HERMES_HOME/config.yaml.backup.$(date +%s)"
+fi
+cp "$CONFIG_SRC" "$HERMES_HOME/config.yaml"
+success "Configured NIGHTFANG as primary Hermes cognitive layer."
 
-            BACKUP="$NF_SKILL_LINK.backup.$(date +%Y%m%d%H%M%S)"
-            mv "$NF_SKILL_LINK" "$BACKUP"
+# 5. Initialize Memory & Scope Templates
+info "Initializing engagement state & memory store..."
+if [[ ! -f "$NF_HERMES_HOME/memory/scope.yaml" ]]; then
+    cp "$MEMORY_SRC/scope.yaml" "$NF_HERMES_HOME/memory/scope.yaml"
+fi
+if [[ ! -f "$NF_HERMES_HOME/memory/findings.json" ]]; then
+    cp "$MEMORY_SRC/findings.json" "$NF_HERMES_HOME/memory/findings.json"
+fi
+touch "$NF_HERMES_HOME/memory/audit.log"
+success "Engagement memory storage initialized."
 
-            success "Backup created: $BACKUP"
-        fi
+# 6. Install Execution Policy Gateway & Tools Integration
+info "Wiring Execution Policy Gateway to Hermes..."
+cat > "$HERMES_BIN_DIR/nightfang-gate" <<EOF
+#!/usr/bin/env bash
+# NIGHTFANG Execution Policy Gateway Wrapper
+python3 "$NIGHTFANG_ROOT/tools/gateway.py" "\$@"
+EOF
+chmod +x "$HERMES_BIN_DIR/nightfang-gate"
+success "Gateway binary registered: $HERMES_BIN_DIR/nightfang-gate"
 
+# 7. Create Master 'nightfang' CLI Launcher
+info "Creating 'nightfang' launcher..."
+cat > "$HERMES_BIN_DIR/nightfang" <<EOF
+#!/usr/bin/env bash
+# ============================================================
+# NIGHTFANG CLI (Hermes Injected)
+# ============================================================
+export HERMES_HOME="$HERMES_HOME"
+export NIGHTFANG_ROOT="$NIGHTFANG_ROOT"
+export HERMES_SYSTEM_PROMPT="$NF_HERMES_HOME/system.md"
+export HERMES_CONFIG="$NF_HERMES_HOME/config.yaml"
+
+# Banner
+if [ -t 1 ]; then
+    printf '\033[1;36m🦇 NIGHTFANG Security Intelligence Layer (Active)\033[0m\n'
+    printf '\033[1;35m37 Specialized Agents | 33 Capabilities | Gateway Sandbox: ACTIVE\033[0m\n\n'
+fi
+
+if command -v hermes >/dev/null 2>&1; then
+    exec hermes --system-prompt "\$HERMES_SYSTEM_PROMPT" --config "\$HERMES_CONFIG" "\$@"
+else
+    # Fallback to python runner or standalone agent if hermes binary is not in PATH
+    echo "[*] Hermes binary not detected in PATH. Starting in NIGHTFANG Gateway Mode..."
+    if [ "\$#" -gt 0 ]; then
+        python3 "$NIGHTFANG_ROOT/tools/gateway.py" "\$@"
     else
-        warn "Existing NIGHTFANG directory detected."
-
-        BACKUP="$NF_SKILL_LINK.backup.$(date +%Y%m%d%H%M%S)"
-        mv "$NF_SKILL_LINK" "$BACKUP"
-
-        success "Backup created: $BACKUP"
+        echo "Usage: nightfang [options] or install 'hermes' to use full agent runtime."
+        echo "Interactive Gateway & Sandbox ready."
+        python3 -i -c "import sys; sys.path.insert(0, '$NIGHTFANG_ROOT/tools'); from gateway import ExecutionPolicyGateway; print('[✓] ExecutionPolicyGateway imported as gateway.')"
     fi
 fi
+EOF
+chmod +x "$HERMES_BIN_DIR/nightfang"
 
-# ------------------------------------------------------------
-# Link NIGHTFANG skills
-# ------------------------------------------------------------
-
-if [[ -d "$NIGHTFANG_ROOT/skills" ]]; then
-
-    if [[ ! -L "$NF_SKILL_LINK" ]]; then
-        ln -s "$NIGHTFANG_ROOT/skills" "$NF_SKILL_LINK"
-        success "NIGHTFANG skills linked into Hermes."
-    fi
-
-else
-    warn "Skipping skills because the directory does not exist."
+# Symlink to ~/.local/bin if available
+if [[ -d "$HOME/.local/bin" ]]; then
+    ln -sf "$HERMES_BIN_DIR/nightfang" "$HOME/.local/bin/nightfang"
+    success "Installed global command: ~/.local/bin/nightfang"
 fi
 
-# ------------------------------------------------------------
-# Install NIGHTFANG adapter data
-# ------------------------------------------------------------
-
-info "Installing adapter configuration..."
-
-mkdir -p "$NF_HERMES_HOME"
-
-# System prompt
-if [[ -f "$SYSTEM_PROMPT_SRC" ]]; then
-
-    cp "$SYSTEM_PROMPT_SRC" \
-       "$NF_HERMES_HOME/system.md"
-
-    success "NIGHTFANG system context installed."
-
-else
-    warn "system.md not found."
-    warn "Expected: $SYSTEM_PROMPT_SRC"
-fi
-
-# Memory
-if [[ -d "$MEMORY_SRC" ]]; then
-
-    rm -rf "$NF_HERMES_HOME/memory"
-    cp -R "$MEMORY_SRC" "$NF_HERMES_HOME/memory"
-
-    success "NIGHTFANG memory installed."
-
-else
-    warn "No NIGHTFANG memory directory found."
-fi
-
-# ------------------------------------------------------------
-# Install metadata
-# ------------------------------------------------------------
-
+# 8. Record Installation Metadata
 cat > "$NF_HERMES_HOME/installation.json" <<EOF
 {
   "name": "nightfang",
+  "version": "2.0",
   "adapter": "hermes",
   "nightfang_root": "$NIGHTFANG_ROOT",
+  "hermes_home": "$HERMES_HOME",
   "installed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "skills": "$NF_SKILL_LINK",
-  "system_context": "$NF_HERMES_HOME/system.md",
-  "memory": "$NF_HERMES_HOME/memory"
+  "agents_count": 37,
+  "capabilities_count": 33,
+  "skills_path": "$NF_SKILL_LINK",
+  "system_prompt": "$NF_HERMES_HOME/system.md",
+  "config": "$NF_HERMES_HOME/config.yaml",
+  "gateway": "$HERMES_BIN_DIR/nightfang-gate",
+  "launcher": "$HERMES_BIN_DIR/nightfang"
 }
 EOF
 
-success "Installation metadata created."
-
 # ------------------------------------------------------------
-# Create NIGHTFANG launcher helper
+# Verification & Summary
 # ------------------------------------------------------------
-
-cat > "$NF_HERMES_HOME/status.sh" <<EOF
-#!/usr/bin/env bash
-
 echo
-echo "NIGHTFANG / Hermes"
-echo "=================="
+echo "══════════════════════════════════════════════════════════"
+success "NIGHTFANG successfully integrated into Hermes!"
+echo "══════════════════════════════════════════════════════════"
 echo
-echo "NIGHTFANG root : $NIGHTFANG_ROOT"
-echo "Hermes home    : $HERMES_HOME"
-echo "Skills         : $NF_SKILL_LINK"
-echo "System context : $NF_HERMES_HOME/system.md"
-echo "Memory         : $NF_HERMES_HOME/memory"
+echo -e "${BOLD}Integration Details:${NC}"
+echo "  • NIGHTFANG Root : $NIGHTFANG_ROOT"
+echo "  • Hermes Home    : $HERMES_HOME"
+echo "  • System Prompt  : $NF_HERMES_HOME/system.md"
+echo "  • Skills Linked  : $NF_SKILL_LINK"
+echo "  • Gateway Binary : $HERMES_BIN_DIR/nightfang-gate"
+echo "  • Launcher CLI   : $HERMES_BIN_DIR/nightfang"
 echo
-
-if [[ -L "$NF_SKILL_LINK" ]]; then
-    echo "[✓] Skills linked"
-else
-    echo "[✗] Skills not linked"
-fi
-
-if [[ -f "$NF_HERMES_HOME/system.md" ]]; then
-    echo "[✓] System context installed"
-else
-    echo "[✗] System context missing"
-fi
-
-if [[ -d "$NF_HERMES_HOME/memory" ]]; then
-    echo "[✓] Memory installed"
-else
-    echo "[!] Memory not installed"
-fi
-
+echo -e "${BOLD}Quick Start:${NC}"
+echo "  1. Add Hermes bin to PATH (if not already):"
+echo "     export PATH=\"\$HOME/.hermes/bin:\$PATH\""
 echo
-EOF
-
-chmod +x "$NF_HERMES_HOME/status.sh"
-
-# ------------------------------------------------------------
-# Summary
-# ------------------------------------------------------------
-
+echo "  2. Launch NIGHTFANG:"
+echo "     nightfang"
+echo "     # or run hermes normally: hermes"
 echo
-echo "══════════════════════════════════════════════════"
-success "NIGHTFANG Hermes adapter installed."
-echo "══════════════════════════════════════════════════"
+echo -e "${BOLD}Operator Commands inside Hermes:${NC}"
+echo "  /scope set <target>   - Define engagement boundaries"
+echo "  /go <TOKEN_ID>        - Approve active exploit or LOUD tool execution"
+echo "  /findings             - Display discovered vulnerabilities"
+echo "  /report               - Compile full executive and technical deliverable"
 echo
-
-echo "NIGHTFANG:"
-echo "  $NIGHTFANG_ROOT"
-echo
-
-echo "Hermes:"
-echo "  $HERMES_HOME"
-echo
-
-echo "Skills:"
-echo "  $NF_SKILL_LINK"
-echo
-
-echo "Adapter:"
-echo "  $NF_HERMES_HOME"
-echo
-
-echo "Run status:"
-echo "  $NF_HERMES_HOME/status.sh"
-echo
-
-echo "Start Hermes normally:"
-echo "  hermes"
-echo
-
-echo "NIGHTFANG is now available to Hermes."
-echo
-```

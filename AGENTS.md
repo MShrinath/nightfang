@@ -50,8 +50,8 @@ All actions orchestrated by NIGHTFANG must strictly adhere to the Standard Opera
    - All targets must be verified as in-scope before any active probing. Zero traffic to out-of-scope assets or multi-tenant cloud infrastructure.
 2. **Human-in-the-Loop (HITL) Exploitation Gate ([SOP-04](references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate))**:
    - Before attempting any exploitation or active validation, **PAUSE and request operator approval through the operator interface**.
-   - Emit: `"Request operator approval"` with context: target, vulnerability type, proposed technique, and potential impact.
-   - Wait for explicit operator confirmation ("GO", "PROCEED", or `/go [ID]`) before proceeding. If commanded "STOP" or "HOLD", immediately halt that attack vector.
+   - Emit an approval card with context: target, vulnerability type, proposed technique, and potential impact.
+   - Wait for explicit operator confirmation ("APPROVE", "approve [ID]") before proceeding. If commanded "DENY", "deny [ID]", immediately halt that attack vector and record as a candidate.
 3. **Non-Destructive Proofs Only ([SOP-05](references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup))**:
    - All exploit proofs must be benign (e.g., `id`, `whoami`, `SELECT version()`).
    - Zero tolerance for Denial of Service (DoS), persistent backdoors, or data alteration.
@@ -211,5 +211,6 @@ When reporting findings or requesting approval, NIGHTFANG emits structured alert
 📝 Summary: [brief description]
 
 ⚠️ Requesting operator approval to proceed with validation.
-Reply: /go [N] or /hold [N]
+Action: [ APPROVE ] or [ DENY ]
+Reply: approve [N] or deny [N]  (or: /go [N] / /hold [N])
 ```

@@ -546,7 +546,16 @@ class ExecutionPolicyGateway:
             "command_preview": req.command_template,
             "severity_score": req.severity_hint,
             "reversible": len(req.canaries) > 0,
-            "prompt": f"⚠️ [HITL REQUIRED] Tool: {req.tool_name} ({opsec_noise.value}) against {req.target.raw_target}\nReply: /go {req.request_id} or /hold {req.request_id}",
+            "prompt": (
+                f"⚠️ [HITL APPROVAL GATE]\n"
+                f"Target: {req.target.raw_target}\n"
+                f"Tool: {req.tool_name} (Noise: {opsec_noise.value})\n"
+                f"Technique: {req.technique}\n"
+                f"Command: {req.command_template}\n"
+                f"Action: [ APPROVE ] or [ DENY ]\n"
+                f"Reply: approve {req.request_id}\n"
+                f"       deny {req.request_id}"
+            ),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -725,8 +734,23 @@ class ExecutionPolicyGateway:
 
 
 # ============================================================================
-# Token Management Helpers (/go and /hold)
+# Token Management Helpers (Approve / Deny, /go and /hold)
 # ============================================================================
+
+def approve_request(
+    state: EngagementState,
+    request_id: str,
+    operator_id: str = "operator",
+    ttl_seconds: int = 300,
+) -> HitlApprovalToken:
+    """Approves a pending HITL request, minting a cryptographic 5-D execution token."""
+    return issue_approval_token(state, request_id, operator_id, ttl_seconds)
+
+
+def deny_request(state: EngagementState, request_id: str) -> bool:
+    """Denies/cancels a pending HITL request, preventing active execution."""
+    return hold_request(state, request_id)
+
 
 def issue_approval_token(
     state: EngagementState,

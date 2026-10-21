@@ -48,7 +48,8 @@ Before any specialist agent triggers an external utility (`nmap`, `ffuf`, `sqlma
 3. If the tool is classified as active exploitation or `LOUD`, execution pauses and emits an operator approval alert:
    ```text
    ⚠️ [HITL REQUIRED] Tool: nuclei (severity: high) against target: api.internal.corp
-   Run: /go [REQUEST_ID] or /hold [REQUEST_ID]
+   Action: [ APPROVE ] or [ DENY ]
+   Run: approve [REQUEST_ID] or deny [REQUEST_ID]
    ```
 4. Upon approval, command runs inside an isolated container sandbox.
 
