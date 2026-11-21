@@ -59,7 +59,7 @@ If a request matches **more than one** capability entry (e.g., `tls_endpoint` ma
 4. **Workflow Specialization**: Domain-specific workflows win over generic ones (`api-assessment` beats `standard-pentest`).
 5. **Ambiguity Emission (`ROUTING_AMBIGUOUS`)**: If target is bare and intent is unstated, halt and request operator clarification with candidate capability IDs.
 
-See [`integration/capability-router.md §Step 3`](capability-router.md#step-3--match-against-capabilities) for the complete executable algorithm.
+See [`integration/capability-router.md §Step 3`](capability-router.md#step-3-match-against-capabilities) for the complete executable algorithm.
 
 ---
 

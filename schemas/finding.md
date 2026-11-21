@@ -278,7 +278,7 @@ finding:
     references:
       - "https://owasp.org/www-community/attacks/Path_Traversal"
 
-  validated_by_blue_skill: "skills/remediation/detection-engineering.md"
+  validated_by_blue_skill: "skills/detection-engineering/SKILL.md"
   detection_status: "detection"
   detection_rule:
     sigma_id: "proc_creation_win_webshell_traversal"

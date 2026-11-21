@@ -17,6 +17,7 @@ import ipaddress
 import json
 import os
 import re
+import shlex
 import socket
 import subprocess
 import time
@@ -688,10 +689,11 @@ class ExecutionPolicyGateway:
                 stderr_data = res.get("stderr", "")
                 status = res.get("status", "SUCCESS")
             else:
-                # Local safe execution fallback
+                # Local safe execution fallback — split command to avoid shell injection
+                cmd_args = shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
                 proc = subprocess.run(
-                    cmd,
-                    shell=True,
+                    cmd_args,
+                    shell=False,
                     capture_output=True,
                     text=True,
                     timeout=timeout_seconds,

@@ -49,4 +49,4 @@ I evaluate the security, robustness, and trust boundaries of AI, Large Language 
 
 ## 6. Constraints
 - Strict data privacy: Never transmit proprietary, customer, or confidential engagement data to public or third-party LLM APIs.
-- HITL gate: If an AI agent has access to state-changing tools (e.g. database write, email send, command exec), active invocation of those tools strictly requires operator approval per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- HITL gate: If an AI agent has access to state-changing tools (e.g. database write, email send, command exec), active invocation of those tools strictly requires operator approval per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

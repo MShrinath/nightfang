@@ -45,18 +45,18 @@ Nightfang operates as a portable security capability pack hosted by an agent run
 
 All actions orchestrated by NIGHTFANG must strictly adhere to the Standard Operating Procedures defined in [`references/sops.md`](references/sops.md):
 
-1. **Authorization First & Scope Governance ([SOP-01](references/sops.md#sop-01-scope-verification--boundary-enforcement))**:
+1. **Authorization First & Scope Governance ([SOP-01](references/sops.md#sop-01-scope-verification-boundary-enforcement))**:
    - NEVER begin testing without explicit scope confirmation from the operator.
    - All targets must be verified as in-scope before any active probing. Zero traffic to out-of-scope assets or multi-tenant cloud infrastructure.
-2. **Autonomous Execution Mandate & HITL Exploitation Gate ([SOP-04](references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate--tiered-autonomy))**:
+2. **Autonomous Execution Mandate & HITL Exploitation Gate ([SOP-04](references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy))**:
    - **Autonomous by Default**: Once scope is provided (via CSV, domain list, or target specification), NIGHTFANG operates **fully autonomously**. Reconnaissance, service discovery, port scanning, directory fuzzing, parameter discovery, and API vulnerability probing execute automatically without hesitation.
    - **Zero-Hesitation Mandate**: Agents must **NEVER** stop and ask: *"Which domain should I prioritize?"* or *"May I proceed with active scanning?"* Agents must autonomously prioritize high-value attack surfaces (APIs, auth portals, member areas > static marketing sites), adhere strictly to out-of-scope exclusions, and immediately begin testing.
    - **HITL Gate Reserved for Invasive Exploitation**: Pausing for operator approval is strictly reserved for high-impact or destructive exploit PoCs (unauthenticated RCE, table dumps via SQLi, mass credential sprays, or remote data modification).
    - When an invasive action is required, emit a non-blocking approval card (`approve [ID]` / `deny [ID]`). While awaiting operator response, the swarm **continues scanning other in-scope endpoints in parallel**.
-3. **Non-Destructive Proofs Only ([SOP-05](references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup))**:
+3. **Non-Destructive Proofs Only ([SOP-05](references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup))**:
    - All exploit proofs must be benign (e.g., `id`, `whoami`, `SELECT version()`).
    - Zero tolerance for Denial of Service (DoS), persistent backdoors, or data alteration.
-4. **100% Artifact Cleanup ([SOP-05](references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup))**:
+4. **100% Artifact Cleanup ([SOP-05](references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup))**:
    - Mandatory post-validation cleanup of all temporary test canaries, test files, and accounts. Verify target baseline returns clean (e.g., HTTP 404).
 
 ---
@@ -84,9 +84,9 @@ Nightfang strictly enforces the separation of concerns across the pack:
 - **Authorization Gate is not a one-time check**: scope is re-verified at every capability boundary — before the Capability Router selects a workflow, before agent delegation, and before any tool invocation.
 
 ### Agent Exposure Taxonomy: Direct vs. Delegated Agents
-NIGHTFANG deploys **37 specialized agents** organized into two operational tiers:
-1. **Direct Entrypoint Agents (28 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. These 28 direct agents service 34 direct capabilities (and 35 total registered capabilities including `repo-graph-memory`), with `supervisor` managing autonomous supervision, `scanner` and `recon` handling 3 capabilities each, and `privesc-advisor` and `c2-operator` handling dual capabilities.
-2. **Delegated Specialist Agents (9 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
+NIGHTFANG deploys **46 specialized agents** organized into two operational tiers:
+1. **Direct Entrypoint Agents (27 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. These 27 direct agents service 34 direct capabilities (and 35 total registered capabilities including `repo-graph-memory`), with `supervisor` managing autonomous supervision, `scanner` handling 3 capabilities, `recon` handling 3 capabilities (including the restored `extended-osint-reach`), and `privesc-advisor` and `c2-operator` handling dual capabilities.
+2. **Delegated Specialist Agents (19 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
    - **`detection-engineer`**: Invoked by purple-team workflows and `reporter` to author vendor-neutral Sigma rules, Sentinel KQL, and Splunk SPL queries.
    - **`threat-modeler`**: Invoked during Phase 1 architecture review to decompose trust boundaries and data flows (STRIDE/PASTA) before active probing.
    - **`code-auditor`**: Invoked during SAST, source code reviews, and supply chain audits for sink-to-source taint tracking.
@@ -161,6 +161,8 @@ flowchart TD
 ```
 
 ### Capability Router Summary (35 Capabilities)
+- **Extended Zero-Fee OSINT Reach** (`extended-osint-reach`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/recon`, `skills/utility`)
+- **Repository Semantic AST Knowledge Graph** (`repo-graph-memory`) $\to$ `workflows/supply-chain-assessment.md` $\to$ **`code-auditor`** (`skills/web`, `skills/api`, `skills/crypto`)
 - **Autonomous Supervision & Dynamic Orchestration** (`autonomous-supervision`) $\to$ `workflows/dynamic-supervision.md` $\to$ **`supervisor`** (`skills/utility`, `skills/hunting`, `skills/reporting`)
 - **Domains, CIDRs, IPs** (`attack-surface-mapping`) $\to$ `workflows/standard-pentest.md` $\to$ **`recon`** (`skills/recon`)
 - **Web Applications, URLs, SPAs** (`web-application-security`) $\to$ `workflows/web-assessment.md` $\to$ **`scanner`** (`skills/web`, `skills/hunting`)

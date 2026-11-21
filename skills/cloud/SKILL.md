@@ -46,3 +46,19 @@ Offensive assessment and security posture evaluation across public cloud platfor
 ## Output
 - Cloud resource inventory and public exposure matrix.
 - Structured findings formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Cloud agents SHOULD use `AgentPayloadResolver` for safe IMDS SSRF probes and IAM policy enumeration payloads:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+imds_safe = resolver.get_safe_payloads("IMDS SSRF Probe")    # cloud metadata endpoint probes
+iam_safe = resolver.get_safe_payloads("IAM Policy Abuse")    # read-only permission checks
+s3_safe = resolver.get_safe_payloads("S3 Bucket Enumeration") # bucket listing probes
+```
+CLI quick-reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-918 --safe-only   # SSRF
+python scripts/payload_lookup.py --cwe CWE-269 --safe-only   # Improper Privilege Management
+python scripts/payload_lookup.py --owasp A04:2021            # Insecure Design
+```

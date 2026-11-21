@@ -1,0 +1,40 @@
+{
+    "id": "NF-0004",
+    "title": "CVSS v4.0 Empty Vector (SOP-04)",
+    "target": "test.example.com",
+    "category": "auth_bypass",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "burp",
+    "confidence": {"score": 8, "rationale": "valid"},
+    "severity": {"score": 9, "level": "critical", "rationale": "valid"},
+    "evidence_grounding": {"score": 0.95, "bucket": "CERTAIN", "rationale": "valid"},
+    "evidence": [
+        {"type": "http_response", "data": "HTTP/1.1 200 OK"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "curl http://test"}
+    ],
+    "impact": {"technical": "Auth bypass", "business": "unauthorized access"},
+    "remediation": {"guidance": "Fix auth", "mitre_d3fend": []},
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2",
+        "q1_in_scope": {"result": true},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-004"},
+        "q3_reachable": {"result": true},
+        "q4_controllable": {"result": true},
+        "q5_impactful": {"result": true},
+        "q6_default_vs_custom": {"result": "DEFAULT"},
+        "q7_severity_honest": {"result": true},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "pass"}
+    },
+    "classifications": {
+        "cvss_v40": {
+            "vector": "",
+            "base_score": 9.8
+        }
+    },
+    "detection_status": "prevention"
+}

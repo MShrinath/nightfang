@@ -13,7 +13,7 @@ d3fend_techniques: [D3-CAD, D3-EAA, D3-PSA, D3-CAA]
 
 Methodology for assessing identity store security, auditing local host credential protection mechanisms, evaluating EDR alerting on memory inspection, and testing token theft resistance.
 
-> **SAFETY & HITL GOVERNANCE**: Active extraction of memory dumps, accessing local credential vaults, or reading sensitive process tokens strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate). Zero production credentials may be altered, cracked, or exfiltrated per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+> **SAFETY & HITL GOVERNANCE**: Active extraction of memory dumps, accessing local credential vaults, or reading sensitive process tokens strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy). Zero production credentials may be altered, cracked, or exfiltrated per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).
 
 ---
 
@@ -86,3 +86,17 @@ Assess identity token isolation and theft resistance:
 
 - Credential Access Exposure Report detailing memory protection posture, LSA protection status, and vault security.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Credential access agents MUST use `AgentPayloadResolver` for safe memory/store enumeration payloads:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+cred_safe = resolver.get_safe_payloads("Credential Dump Audit")    # read-only policy checks
+vault_safe = resolver.get_safe_payloads("Vault Enumeration")        # harmless store listing
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-522 --safe-only     # Insufficiently Protected Credentials
+python scripts/payload_lookup.py --cwe CWE-259 --safe-only     # Hard-coded Password
+```

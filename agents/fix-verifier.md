@@ -36,4 +36,4 @@ I perform targeted re-testing of remediated endpoints to verify that patches are
 ---
 
 ## 5. Constraints
-- Strict benign validation: Re-test strictly using non-destructive reproduction steps per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+- Strict benign validation: Re-test strictly using non-destructive reproduction steps per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).

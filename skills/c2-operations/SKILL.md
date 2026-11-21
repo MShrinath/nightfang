@@ -13,7 +13,7 @@ d3fend_techniques: [D3-NTF, D3-NTA, D3-DNSA, D3-PA]
 
 Methodology for assessing network perimeter detection capabilities, evaluating covert communication channel resilience, analyzing proxy egress controls, and measuring detection telemetry for adversary infrastructure.
 
-> **SAFETY & HITL GOVERNANCE**: Active deployment of network listener beacons, tunneling mechanisms, or simulated C2 traffic across production networks strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate). Only benign canary traffic with verifiable non-destructive payloads may be transmitted per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+> **SAFETY & HITL GOVERNANCE**: Active deployment of network listener beacons, tunneling mechanisms, or simulated C2 traffic across production networks strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy). Only benign canary traffic with verifiable non-destructive payloads may be transmitted per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).
 
 ---
 
@@ -76,3 +76,17 @@ Evaluate outbound perimeter firewall enforcement and deep inspection controls:
 
 - C2 Resilience & Egress Gap Analysis Report detailing perimeter filtering efficacy and MTTD.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+C2 operations agents SHOULD use `AgentPayloadResolver` for safe egress verification and DNS beaconing tests:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+beacon_safe = resolver.get_safe_payloads("DNS Beaconing Test")      # benign canary domain queries
+egress_safe = resolver.get_safe_payloads("Outbound Egress Probe")   # HTTP/S connection to safe sink
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-200 --safe-only     # Information Exposure
+python scripts/payload_lookup.py --owasp A09:2021             # Security Logging and Monitoring Failures
+```

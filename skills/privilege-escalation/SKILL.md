@@ -43,3 +43,18 @@ Methodology for identifying local configuration flaws, kernel weaknesses, and pe
 ## Output
 - Local privilege escalation vector inventory and proof of configuration flaw.
 - Structured findings formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Privilege escalation agents MUST use `AgentPayloadResolver` for safe misconfiguration audits:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+sudo_safe = resolver.get_safe_payloads("Sudoers Audit Probe")      # sudo -l read-only check
+suid_safe = resolver.get_safe_payloads("SUID Binary Audit")       # find / -perm -4000 listing
+path_safe = resolver.get_safe_payloads("Unquoted Path Audit")      # wmic service search
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-250 --safe-only     # Execution with Elevated Permissions
+python scripts/payload_lookup.py --cwe CWE-732 --safe-only     # Incorrect Permission Assignment
+```

@@ -32,6 +32,7 @@ capabilities:
     agent: agents/recon.md
     skills:
       - skills/recon
+      - skills/osint
 
   - id: web-application-security
     description: "OWASP Top 10, injection flaws, access control, and SPA assessment"
@@ -372,6 +373,15 @@ agents:
   - agents/traffic-analyzer.md
   - agents/social-engineer.md
   - agents/opsec-anonymizer.md
+  - agents/protocol-pentester.md
+  - agents/bug-bounty-agent.md
+  - agents/blue-team-agent.md
+  - agents/deception-agent.md
+  - agents/api-fuzzer.md
+  - agents/firmware-analyst.md
+  - agents/webshell-detector.md
+  - agents/zero-day-analyzer.md
+  - agents/config-drift-agent.md
 
 agent_taxonomy:
   direct:
@@ -501,6 +511,42 @@ agent_taxonomy:
         path: agents/opsec-anonymizer.md
         invoked_by: [workflows/red-team.md, workflows/standard-pentest.md, workflows/social-engineering.md]
         purpose: "Operator anonymity verification, egress profiling, and network deconfliction"
+      - id: protocol-pentester
+        path: agents/protocol-pentester.md
+        invoked_by: [workflows/iot-ics-assessment.md, workflows/wireless-assessment.md, workflows/reverse-engineering.md]
+        purpose: "Custom binary protocol fuzzing, proprietary IoT protocol reverse engineering, and protocol-level vulnerability discovery"
+      - id: bug-bounty-agent
+        path: agents/bug-bounty-agent.md
+        invoked_by: [workflows/bug-bounty.md, workflows/standard-pentest.md]
+        purpose: "Automated bug bounty orchestration, finding triage, and platform submission workflow"
+      - id: blue-team-agent
+        path: agents/blue-team-agent.md
+        invoked_by: [workflows/purple-team.md, workflows/standard-pentest.md]
+        purpose: "Defensive operations, detection engineering, and incident response simulation"
+      - id: deception-agent
+        path: agents/deception-agent.md
+        invoked_by: [workflows/purple-team.md, workflows/red-team.md]
+        purpose: "Honeypot management, decoy infrastructure deployment, and attacker behavioral analysis"
+      - id: api-fuzzer
+        path: agents/api-fuzzer.md
+        invoked_by: [workflows/api-assessment.md, workflows/web-assessment.md]
+        purpose: "API contract validation, edge case discovery, and parameter space enumeration"
+      - id: firmware-analyst
+        path: agents/firmware-analyst.md
+        invoked_by: [workflows/iot-ics-assessment.md, workflows/reverse-engineering.md]
+        purpose: "IoT firmware extraction, static analysis, and embedded system security assessment"
+      - id: webshell-detector
+        path: agents/webshell-detector.md
+        invoked_by: [workflows/post-exploitation.md, workflows/standard-pentest.md]
+        purpose: "Post-intrusion webshell discovery, classification, and cleanup verification"
+      - id: zero-day-analyzer
+        path: agents/zero-day-analyzer.md
+        invoked_by: [workflows/standard-pentest.md, workflows/reverse-engineering.md]
+        purpose: "Novel vulnerability research and proof-of-concept synthesis"
+      - id: config-drift-agent
+        path: agents/config-drift-agent.md
+        invoked_by: [workflows/standard-pentest.md, workflows/cloud-assessment.md]
+        purpose: "Security posture monitoring, baseline comparison, and configuration drift detection"
 
 skills:
   - skills/recon
@@ -533,6 +579,17 @@ skills:
   - skills/c2-operations
   - skills/initial-access
   - skills/credential-access
+  - skills/mqtt
+  - skills/coap
+  - skills/bluetooth
+  - skills/fuzzing-engine
+  - skills/threat-emulation
+  - skills/supply-chain-registry
+  - skills/detection-engineering
+  - skills/osint
+  - skills/phishing
+  - skills/threat-modeling
+  - skills/secure-code-review
   - skills/reverse-engineering
 
 workflows:
@@ -561,6 +618,8 @@ schemas:
 tools:
   - tools/gateway.py
   - tools/sandbox.py
+  - tools/threat_emulator.py
+  - scripts/fuzzing_engine.py
 
 references:
   - references/sops.md

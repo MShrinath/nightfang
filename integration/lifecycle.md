@@ -67,7 +67,7 @@ Hermes Request
 - Confirmed target list
 - Active scope boundary for this engagement turn
 
-**References:** [SOP-01](../references/sops.md#sop-01-scope-verification--boundary-enforcement)
+**References:** [SOP-01](../references/sops.md#sop-01-scope-verification-boundary-enforcement)
 
 ---
 
@@ -141,7 +141,7 @@ Hermes Request
 - Raw evidence (HTTP requests/responses, command output, timing data)
 - Initial finding candidates
 
-**References:** [SOP-02](../references/sops.md#sop-02-rate-limiting--stealth-management), [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate), [`integration/execution-policy-gateway.md`](execution-policy-gateway.md), [`integration/routing.md §5`](routing.md#5-skill-loading)
+**References:** [SOP-02](../references/sops.md#sop-02-rate-limiting-stealth-management), [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy), [`integration/execution-policy-gateway.md`](execution-policy-gateway.md), [`integration/routing.md §5`](routing.md#5-skill-loading)
 
 ---
 
@@ -191,7 +191,7 @@ Is the proposed next action active / invasive?
 
 Severity is included in the HITL_REQUEST for operator urgency context but does not determine whether the gate fires.
 
-**References:** [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate), [`integration/hermes.md §2.4`](hermes.md#24-hitl-approval-requests)
+**References:** [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy), [`integration/hermes.md §2.4`](hermes.md#4-operator-commands-in-hermes)
 
 ---
 
@@ -209,7 +209,7 @@ Severity is included in the HITL_REQUEST for operator urgency context but does n
 5. Populate `classifications.cvss_v31` vector string and base score
 6. Update `severity.score` if validation reveals higher or lower impact than initially assessed
 
-**References:** [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup)
+**References:** [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup)
 
 ---
 
@@ -222,7 +222,7 @@ Severity is included in the HITL_REQUEST for operator urgency context but does n
 2. Verify target baseline returns to clean state (expected HTTP 404, pre-test state)
 3. Log cleanup confirmation to engagement memory
 
-**References:** [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup)
+**References:** [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup)
 
 ---
 

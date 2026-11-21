@@ -49,3 +49,19 @@ Offensive assessment and security posture evaluation of container runtimes (Dock
 ## Output
 - Container breakout attack paths and Kubernetes cluster risk analysis.
 - Structured findings formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Container agents SHOULD consult the payload catalog for safe RBAC enumeration and breakout reconnaissance:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+rbac_safe = resolver.get_safe_payloads("RBAC Privilege Escalation")  # read-only kubectl auth can-i
+kubelet_safe = resolver.get_safe_payloads("Kubelet API Probe")       # health/read endpoints only
+docker_safe = resolver.get_safe_payloads("Docker Socket Probe")      # socket read-only check
+```
+CLI quick-reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-250  --safe-only   # Execution with Elevated Permissions
+python scripts/payload_lookup.py --cwe CWE-1001 --safe-only   # Container Escape Prevention
+python scripts/payload_lookup.py --owasp A06:2021             # Vulnerable Components
+```

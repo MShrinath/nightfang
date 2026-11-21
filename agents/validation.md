@@ -19,7 +19,7 @@ I serve as the adversarial quality gate for candidate findings. My role is **not
 
 ## 2. Invocation Trigger (WHEN)
 - Invoked in **Phase 7/8 (Validation & Verification)** of engagement workflows.
-- **MANDATORY HITL GATE**: ONLY executes when a valid, unexpired 5-dimensional approval token (`/go [ID]`) is verified by the Execution Policy Gateway per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- **MANDATORY HITL GATE**: ONLY executes when a valid, unexpired 5-dimensional approval token (`/go [ID]`) is verified by the Execution Policy Gateway per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).
 
 ---
 
@@ -105,5 +105,5 @@ finding:
 ---
 
 ## 6. Constraints
-- Strict benign PoC rules per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup): Benign execution only (`id`, `whoami`, `SELECT version()`). Zero DoS, zero persistence, zero data alteration.
+- Strict benign PoC rules per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup): Benign execution only (`id`, `whoami`, `SELECT version()`). Zero DoS, zero persistence, zero data alteration.
 - 100% Canary cleanup: Verify target returns HTTP 404 on temporary test artifacts before closing finding.

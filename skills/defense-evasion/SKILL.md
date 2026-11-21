@@ -13,7 +13,7 @@ d3fend_techniques: [D3-EDR, D3-PSA, D3-EAA, D3-SFA]
 
 Methodology for assessing endpoint visibility, evaluating EDR telemetry gaps, testing security control bypass resistance, and hardening environments against evasion tradecraft.
 
-> **SAFETY & HITL GOVERNANCE**: Active testing of process injection, telemetry modification, or security software evasion strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate). All validation proofs must be non-destructive (e.g. benign API telemetry verification, clean process termination) per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+> **SAFETY & HITL GOVERNANCE**: Active testing of process injection, telemetry modification, or security software evasion strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy). All validation proofs must be non-destructive (e.g. benign API telemetry verification, clean process termination) per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).
 
 ---
 
@@ -74,3 +74,17 @@ Evaluate endpoint detection and prevention controls against standard process inj
 
 - Defense Evasion Assessment Report identifying endpoint detection blindspots and telemetry gaps.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md) with CVSS, MITRE ATT&CK, D3FEND, and Sigma detection rules.
+
+## Payload Integration (scripts/agent_payloads.py)
+Defense evasion agents MUST use `AgentPayloadResolver` for benign telemetry validation payloads:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+obfus_safe = resolver.get_safe_payloads("Obfuscation Detection")    # benign encoded strings
+amsi_safe = resolver.get_safe_payloads("AMSI Probe")                # non-malicious script test strings
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-1027 --safe-only    # Obfuscated Files or Information
+python scripts/payload_lookup.py --owasp A04:2021             # Insecure Design
+```

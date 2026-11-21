@@ -44,5 +44,5 @@ I synthesize safe, verifiable, and strictly benign Proof-of-Concept (PoC) payloa
 ---
 
 ## 6. Constraints
-- Strict adherence to [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup): Absolutely zero destructive payloads (no disk wiping, no denial of service, no persistent implants).
+- Strict adherence to [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup): Absolutely zero destructive payloads (no disk wiping, no denial of service, no persistent implants).
 - All payloads must be pre-registered with the Execution Policy Gateway before transmission.

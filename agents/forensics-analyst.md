@@ -39,4 +39,4 @@ I analyze compromised system artifacts, memory images, and incident evidence:
 ---
 
 ## 5. Constraints
-- Strict evidence preservation: All analysis must operate on read-only copies of evidence; calculate SHA-256 hashes immediately per [SOP-06](../references/sops.md#sop-06-evidence-hashing--chain-of-custody).
+- Strict evidence preservation: All analysis must operate on read-only copies of evidence; calculate SHA-256 hashes immediately per [SOP-06](../references/sops.md#sop-06-evidence-hashing-chain-of-custody).

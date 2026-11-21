@@ -1,0 +1,40 @@
+{
+    "id": "NF-0008",
+    "title": "CVSS v3.1 Base Score Out of Range",
+    "target": "test.example.com",
+    "category": "idor",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "burp",
+    "confidence": {"score": 6, "rationale": "valid"},
+    "severity": {"score": 5, "level": "medium", "rationale": "valid"},
+    "evidence_grounding": {"score": 0.75, "bucket": "PROBABLE", "rationale": "valid"},
+    "evidence": [
+        {"type": "http_response", "data": "HTTP 200 OK with data"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "burp request"}
+    ],
+    "impact": {"technical": "IDOR", "business": "data breach"},
+    "remediation": {"guidance": "Add access checks", "mitre_d3fend": []},
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3",
+        "q1_in_scope": {"result": true},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-008"},
+        "q3_reachable": {"result": true},
+        "q4_controllable": {"result": true},
+        "q5_impactful": {"result": true},
+        "q6_default_vs_custom": {"result": "CUSTOM"},
+        "q7_severity_honest": {"result": true},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "pass"}
+    },
+    "classifications": {
+        "cvss_v31": {
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+            "base_score": 15.0
+        }
+    },
+    "detection_status": "prevention"
+}

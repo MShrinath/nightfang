@@ -1,0 +1,37 @@
+{
+    "id": "NF-0011",
+    "title": "Missing Evidence Grounding Bucket",
+    "target": "test.example.com",
+    "category": "ssrf",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "curl",
+    "confidence": {"score": 5, "rationale": "valid"},
+    "severity": {"score": 6, "level": "medium", "rationale": "valid"},
+    "evidence_grounding": {
+        "score": 0.55
+    },
+    "evidence": [
+        {"type": "http_request", "data": "SSRF payload"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "curl http://internal.api"}
+    ],
+    "impact": {"technical": "SSRF", "business": "internal network access"},
+    "remediation": {"guidance": "Validate URLs", "mitre_d3fend": []},
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+        "q1_in_scope": {"result": true},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-011"},
+        "q3_reachable": {"result": true},
+        "q4_controllable": {"result": true},
+        "q5_impactful": {"result": true},
+        "q6_default_vs_custom": {"result": "DEFAULT"},
+        "q7_severity_honest": {"result": true},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "pass"}
+    },
+    "classifications": {},
+    "detection_status": "none"
+}

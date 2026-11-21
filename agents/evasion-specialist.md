@@ -39,5 +39,5 @@ I delegate technical procedures to specialized domain skills:
 ---
 
 ## 5. Constraints
-- **Strict Non-Destructive Testing**: Zero modification of system stability or permanent suppression of security monitoring per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup). Only benign telemetry canaries may be used.
-- **MANDATORY HITL GATE**: Active evaluation of process injection, unhooking primitives, or memory manipulation requires explicit 5-dimensional token approval (`/go [ID]`) per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- **Strict Non-Destructive Testing**: Zero modification of system stability or permanent suppression of security monitoring per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup). Only benign telemetry canaries may be used.
+- **MANDATORY HITL GATE**: Active evaluation of process injection, unhooking primitives, or memory manipulation requires explicit 5-dimensional token approval (`/go [ID]`) per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

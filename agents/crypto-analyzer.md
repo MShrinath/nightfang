@@ -36,4 +36,4 @@ I audit cryptographic configurations, algorithms, and key management implementat
 ---
 
 ## 5. Constraints
-- Non-destructive analysis: Do not exhaust server resources during padding oracle testing; rate limit per [SOP-02](../references/sops.md#sop-02-rate-limiting--stealth-management).
+- Non-destructive analysis: Do not exhaust server resources during padding oracle testing; rate limit per [SOP-02](../references/sops.md#sop-02-rate-limiting-stealth-management).

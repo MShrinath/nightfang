@@ -52,3 +52,18 @@ Methodologies for infrastructure and network-level vulnerability assessment and 
 - Network service inventory with identified versions.
 - SSL/TLS cryptographic posture scorecard.
 - Standardized findings recorded per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Network agents SHOULD use `AgentPayloadResolver` for safe SNMP community strings, SMB null-session probes, and SSL fingerprint payloads:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+snmp_safe = resolver.get_safe_payloads("SNMP Enumeration")     # default communities
+smb_safe = resolver.get_safe_payloads("SMB Null Session Probe")  # read-only share listing
+ssl_ciphers = resolver.get_safe_payloads("SSL/TLS downgrade probe")  # TLS version probing
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-287 --safe-only    # weak auth probes
+python scripts/payload_lookup.py --owasp A09:2021             # Using Components with Known Vulnerabilities
+```

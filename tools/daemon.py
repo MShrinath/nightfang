@@ -195,6 +195,71 @@ class PriorityDAGQueue:
     def completed_count(self) -> int:
         return len(self._completed)
 
+    def load_state(self) -> None:
+        """Load previously saved queue state from storage_path."""
+        if not self.storage_path or not os.path.exists(self.storage_path):
+            return
+        try:
+            with open(self.storage_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            return
+
+        # Reconstruct pending tasks
+        for d in data.get("pending", []):
+            t = self._dict_to_task(d)
+            if t and t.task_id not in self._task_index:
+                heapq.heappush(self._heap, t)
+                self._task_index[t.task_id] = t
+
+        # Reconstruct paused HITL tasks
+        for d in data.get("paused_hitl", []):
+            t = self._dict_to_task(d)
+            if t:
+                t.status = TaskStatus.PAUSED_FOR_APPROVAL
+                self._paused_hitl[t.task_id] = t
+
+        # Reconstruct completed tasks
+        for d in data.get("completed", []):
+            t = self._dict_to_task(d)
+            if t:
+                self._completed.append(t)
+
+    @staticmethod
+    def _dict_to_task(d: Dict[str, Any]) -> Optional[HunterTask]:
+        """Reconstruct a HunterTask from its serialized dict form."""
+        try:
+            # Convert enum strings back to enum values
+            noise = d.get("noise_profile")
+            if isinstance(noise, str):
+                noise = NoiseProfile(noise)
+            action = d.get("action_type")
+            if isinstance(action, str):
+                action = ActionType(action)
+            status = d.get("status")
+            if isinstance(status, str):
+                status = TaskStatus(status)
+            return HunterTask(
+                priority_num=d.get("priority_num", 3),
+                task_id=d.get("task_id", ""),
+                target_str=d.get("target_str", ""),
+                capability_id=d.get("capability_id", ""),
+                agent_id=d.get("agent_id", ""),
+                tool_name=d.get("tool_name", ""),
+                command_template=d.get("command_template", ""),
+                noise_profile=noise if noise is not None else NoiseProfile.MODERATE,
+                action_type=action if action is not None else ActionType.ACTIVE_PROBE,
+                technique=d.get("technique", ""),
+                finding_id=d.get("finding_id", ""),
+                status=status if status is not None else TaskStatus.PENDING,
+                created_at=d.get("created_at", time.time()),
+                retry_count=d.get("retry_count", 0),
+                result_summary=d.get("result_summary", ""),
+                evidence_tag=d.get("evidence_tag", ""),
+            )
+        except Exception:
+            return None
+
     def save_state(self) -> None:
         if not self.storage_path:
             return
@@ -254,8 +319,13 @@ class AutonomousHunterDaemon:
         )
         self.queue.push(t1)
 
-    def execute_next_task(self) -> Optional[Dict[str, Any]]:
-        """Processes the next eligible task from the priority queue."""
+    def execute_next_task(self, dry_run: bool = False) -> Optional[Dict[str, Any]]:
+        """Processes the next eligible task from the priority queue.
+
+        Args:
+            dry_run: If True, evaluate policy and log decisions without
+                     dispatching tool execution.
+        """
         task = self.queue.pop()
         if not task:
             return None
@@ -302,6 +372,15 @@ class AutonomousHunterDaemon:
             }
 
         # 2. Approved or Auto-Passed: Dispatch tool execution
+        if dry_run:
+            return {
+                "task_id": task.task_id,
+                "status": "DRY_RUN",
+                "command_template": task.command_template,
+                "target": task.target_str,
+                "note": "Dry-run: no tool execution performed",
+            }
+
         res = self.gateway.execute_and_wrap(req, disp, sandbox_runner=self.sandbox)
         evd_tag = f"[EVD-{res.stdout_sha256[:8]}]" if res.stdout_sha256 else ""
 
@@ -379,8 +458,10 @@ class AutonomousHunterDaemon:
                 )
                 self.queue.push(next_task)
 
-    def approve_hitl_task(self, request_id: str, operator_id: str = "operator") -> bool:
+    def approve_hitl_task(self, request_id: str, operator_id: str = None) -> bool:
         """Approves a paused task, mints an approval token, and resumes it at CRITICAL priority."""
+        if operator_id is None:
+            operator_id = self.config.authorized_operator
         try:
             token = approve_request(self.state, request_id, operator_id=operator_id)
             resumed = self.queue.resume_approved(request_id)
@@ -428,9 +509,16 @@ class AutonomousHunterDaemon:
         except Exception:
             pass
 
-    def run_continuous(self, max_cycles: int = 100, poll_interval: float = 0.5) -> None:
-        """Runs the autonomous daemon loop continuously."""
-        print(f"[*] Starting NIGHTFANG Autonomous Hunter Daemon [Tier: {self.config.autonomy_tier.value}]")
+    def run_continuous(self, max_cycles: int = 100, poll_interval: float = 0.5, dry_run: bool = False) -> None:
+        """Runs the autonomous daemon loop continuously.
+        
+        Args:
+            max_cycles: Maximum execution cycles before stopping.
+            poll_interval: Seconds to sleep between cycles.
+            dry_run: If True, log decisions without executing tool commands.
+        """
+        mode_str = " [DRY-RUN]" if dry_run else ""
+        print(f"[*] Starting NIGHTFANG Autonomous Hunter Daemon [Tier: {self.config.autonomy_tier.value}]{mode_str}")
         self.is_running = True
         cycle = 0
 
@@ -446,7 +534,7 @@ class AutonomousHunterDaemon:
                     time.sleep(poll_interval * 2)
                     continue
 
-                res = self.execute_next_task()
+                res = self.execute_next_task(dry_run=dry_run)
                 if res:
                     st = res["status"]
                     tid = res["task_id"]
@@ -456,6 +544,8 @@ class AutonomousHunterDaemon:
                         print(f"  [⚠️] {tid} PAUSED FOR HITL APPROVAL | Non-blocking: daemon continues background hunting")
                     elif st == "FAILED":
                         print(f"  [✗] {tid} FAILED")
+                    elif st == "DRY_RUN":
+                        print(f"  [🔍] {tid} DRY-RUN (no execution)")
                 time.sleep(poll_interval)
         except KeyboardInterrupt:
             print("\n[*] Autonomous Hunter Daemon stopped by operator.")
@@ -560,6 +650,7 @@ if __name__ == "__main__":
     parser.add_argument("--tier", type=str, default="SEMI_AUTONOMOUS", choices=["REACTIVE", "SEMI_AUTONOMOUS", "FULL_AUTONOMOUS"], help="Autonomy tier")
     parser.add_argument("--continuous", action="store_true", help="Run continuous hunting loop")
     parser.add_argument("--max-cycles", type=int, default=50, help="Maximum execution cycles")
+    parser.add_argument("--dry-run", action="store_true", help="Evaluate policy and log decisions without executing tool commands")
     args = parser.parse_args()
 
     if args.test:
@@ -581,4 +672,4 @@ if __name__ == "__main__":
     )
     daemon = AutonomousHunterDaemon(cfg)
     daemon.seed_target(args.target)
-    daemon.run_continuous(max_cycles=args.max_cycles)
+    daemon.run_continuous(max_cycles=args.max_cycles, dry_run=args.dry_run)

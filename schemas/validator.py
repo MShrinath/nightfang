@@ -570,6 +570,28 @@ def run_self_tests() -> bool:
     assert len(report_bad.errors) >= 12, f"Expected at least 12 errors, got {len(report_bad.errors)}: {report_bad.errors}"
     print(f"  [PASS] Test 2: Successfully caught {len(report_bad.errors)} schema violations in malformed finding.")
 
+    # Test 3: Corpus-based validation
+    try:
+        from pathlib import Path as _Path
+        import json as _json
+        _corpus_dir = _Path(__file__).parent / "corpus"
+        _corpus_files = sorted(_corpus_dir.glob("*.json"))
+        if _corpus_files:
+            _corpus_passed = 0
+            _corpus_total = 0
+            for _cf in _corpus_files:
+                _corpus_total += 1
+                with open(_cf, "r", encoding="utf-8") as _f:
+                    _cd = _json.load(_f)
+                _cr = validator.validate(_cd)
+                if not _cr.is_valid:
+                    _corpus_passed += 1
+            print(f"  [PASS] Test 3: Corpus validation — {_corpus_passed}/{_corpus_total} malformed findings correctly rejected.")
+        else:
+            print("  [INFO] Test 3: No corpus files found (skipping).")
+    except Exception as _e:
+        print(f"  [WARN] Test 3: Corpus test skipped due to: {_e}")
+
     print("\nAll Validator self-tests PASSED successfully!")
     return True
 

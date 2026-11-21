@@ -49,3 +49,21 @@ Comprehensive discovery methodologies covering passive intelligence gathering an
 ## Output
 - Normalized target inventory (IPs, hostnames, open ports, detected technologies).
 - Immediate findings for exposed low-hanging files (`.git`, `.env`, backup archives) per `schemas/finding.md`.
+
+## Payload Integration (scripts/agent_payloads.py)
+Recon agents SHOULD use `AgentPayloadResolver` to retrieve safe, non-destructive payloads for discovered technologies:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+# Get safe payloads for directory traversal on discovered file servers
+safe_traversal = resolver.get_safe_payloads("Directory Traversal")
+# Get XSS payloads for web apps without WAF
+xss_payloads = resolver.get_safe_payloads("XSS Injection")
+# Get SSRF payloads for internal endpoint testing
+ssrf_payloads = resolver.get_by_owasp("A10:2021")
+```
+CLI equivalent for ad-hoc use:
+```bash
+python scripts/payload_lookup.py --class "Directory Traversal" --safe-only
+python scripts/payload_lookup.py --cwe CWE-79 --safe-only
+```

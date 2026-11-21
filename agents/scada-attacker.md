@@ -36,4 +36,4 @@ I conduct passive-first, safety-governed assessments of industrial control syste
 ---
 
 ## 5. Constraints
-- **CRITICAL ZERO-DISRUPTION MANDATE**: Industrial processes cannot tolerate active fuzzing, malformed packets, or high packet rates. All queries must be read-only and pre-approved by the OT plant operator per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- **CRITICAL ZERO-DISRUPTION MANDATE**: Industrial processes cannot tolerate active fuzzing, malformed packets, or high packet rates. All queries must be read-only and pre-approved by the OT plant operator per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

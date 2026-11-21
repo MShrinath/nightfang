@@ -38,5 +38,5 @@ I delegate technical procedures to domain skills:
 ---
 
 ## 5. Constraints
-- Zero account lockouts: Adhere to domain account lockout thresholds per [SOP-01](../references/sops.md#sop-01-scope-verification--boundary-enforcement).
-- HITL gate mandatory: Querying sensitive TGS tickets or requesting certificates under elevated templates requires operator approval per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- Zero account lockouts: Adhere to domain account lockout thresholds per [SOP-01](../references/sops.md#sop-01-scope-verification-boundary-enforcement).
+- HITL gate mandatory: Querying sensitive TGS tickets or requesting certificates under elevated templates requires operator approval per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

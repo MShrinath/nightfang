@@ -36,4 +36,4 @@ I audit local host configurations to uncover privilege escalation paths on Linux
 ---
 
 ## 5. Constraints
-- Strict benign PoC rules per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup): Verify privilege leap with `id`, `whoami`, or reading a non-sensitive canary file; never modify `/etc/passwd`, drop permanent backdoors, or alter user accounts.
+- Strict benign PoC rules per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup): Verify privilege leap with `id`, `whoami`, or reading a non-sensitive canary file; never modify `/etc/passwd`, drop permanent backdoors, or alter user accounts.

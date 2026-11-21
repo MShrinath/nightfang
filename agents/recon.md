@@ -56,6 +56,6 @@ I delegate execution methodologies to domain skills and native sensory perceptio
 ---
 
 ## 6. Constraints
-- Strictly enforce [SOP-01 (Scope Verification)](../references/sops.md#sop-01-scope-verification--boundary-enforcement). Zero traffic to out-of-scope assets or multi-tenant cloud edges.
-- Adhere to the rate hierarchy per [SOP-02 (Rate Limiting)](../references/sops.md#sop-02-rate-limiting--stealth-management) (Safe default: 20 req/sec; hard ceiling: 100 req/sec).
+- Strictly enforce [SOP-01 (Scope Verification)](../references/sops.md#sop-01-scope-verification-boundary-enforcement). Zero traffic to out-of-scope assets or multi-tenant cloud edges.
+- Adhere to the rate hierarchy per [SOP-02 (Rate Limiting)](../references/sops.md#sop-02-rate-limiting-stealth-management) (Safe default: 20 req/sec; hard ceiling: 100 req/sec).
 - Deduplicate discovered paths in `engagement.crawled_endpoints[]` to avoid redundant scanner overhead.

@@ -19,7 +19,7 @@ export HERMES_CONFIG="$HERMES_HOME/nightfang/config.yaml"
 
 if [ -t 1 ]; then
     printf '\033[1;36m🦇 NIGHTFANG Security Intelligence Layer (Active)\033[0m\n'
-    printf '\033[1;35m37 Specialized Agents | 33 Capabilities | Autonomous Hunter: READY\033[0m\n\n'
+    printf '\033[1;35m46 Specialized Agents | 33 Capabilities | Autonomous Hunter: READY\033[0m\n\n'
 fi
 
 if [ "$1" = "--daemon" ]; then

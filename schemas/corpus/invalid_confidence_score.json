@@ -1,0 +1,49 @@
+{
+    "id": "NF-0001",
+    "title": "Invalid Confidence Score",
+    "target": "test.example.com",
+    "category": "recon",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "nmap",
+    "confidence": {
+        "score": 15,
+        "rationale": "Score exceeds valid range"
+    },
+    "severity": {
+        "score": 8,
+        "level": "high",
+        "rationale": "Valid severity"
+    },
+    "evidence_grounding": {
+        "score": 0.75,
+        "bucket": "PROBABLE",
+        "rationale": "Valid grounding"
+    },
+    "evidence": [
+        {"type": "command_output", "data": "test"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "echo test"}
+    ],
+    "impact": {"technical": "test", "business": "test"},
+    "remediation": {
+        "guidance": "Fix it",
+        "mitre_d3fend": [{"id": "D3-UVI", "name": "Test"}]
+    },
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "q1_in_scope": {"result": true, "notes": "in scope"},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-001", "notes": "verified"},
+        "q3_reachable": {"result": true, "notes": "reachable"},
+        "q4_controllable": {"result": true, "notes": "controllable"},
+        "q5_impactful": {"result": true, "notes": "impactful"},
+        "q6_default_vs_custom": {"result": "DEFAULT", "notes": "default"},
+        "q7_severity_honest": {"result": true, "notes": "honest"},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "All gates pass"}
+    },
+    "classifications": {},
+    "detection_status": "none"
+}

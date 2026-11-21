@@ -46,5 +46,5 @@ I synthesize all findings across the swarm into executive deliverables, technica
 ---
 
 ## 5. Constraints
-- Strict evidentiary fidelity: Never sanitize, truncate, or omit raw evidence streams or cryptographic SHA-256 digests per [SOP-06](../references/sops.md#sop-06-evidence-hashing--chain-of-custody).
+- Strict evidentiary fidelity: Never sanitize, truncate, or omit raw evidence streams or cryptographic SHA-256 digests per [SOP-06](../references/sops.md#sop-06-evidence-hashing-chain-of-custody).
 - Strict scoring separation: Display Nightfang Severity, Nightfang Confidence, CVSS v3.1/v4.0, and EPSS independently without conflation.

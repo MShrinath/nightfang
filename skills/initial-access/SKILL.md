@@ -13,7 +13,7 @@ d3fend_techniques: [D3-MTA, D3-EAA, D3-FCI, D3-EI]
 
 Methodology for assessing external perimeter resilience, evaluating payload delivery filter efficacy, analyzing client-side execution boundaries, and auditing application search order hijacking vectors.
 
-> **SAFETY & HITL GOVERNANCE**: Active testing against external gateways or staging simulated payload delivery mechanisms strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate). Zero unauthorized credential stuffing or destructive execution permitted per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+> **SAFETY & HITL GOVERNANCE**: Active testing against external gateways or staging simulated payload delivery mechanisms strictly requires explicit Human-in-the-Loop authorization per [SOP-04](../../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy). Zero unauthorized credential stuffing or destructive execution permitted per [SOP-05](../../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).
 
 ---
 
@@ -78,3 +78,17 @@ Evaluate local host software deployments for unsafe library resolution:
 
 - Initial Access Vulnerability Assessment Report detailing perimeter exposure and delivery filtering efficacy.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Initial access agents MUST use `AgentPayloadResolver` for safe perimeter and delivery mechanism probes:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+phish_safe = resolver.get_safe_payloads("Phishing Attachment Audit")   # harmless text headers
+service_safe = resolver.get_safe_payloads("Exposed Service Probe")     # standard HTTP/SSH GET/banner
+```
+CLI reference:
+```bash
+python scripts/payload_lookup.py --cwe CWE-1190 --safe-only    # Exploit Public-Facing Application
+python scripts/payload_lookup.py --owasp A06:2021             # Vulnerable and Outdated Components
+```

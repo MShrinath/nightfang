@@ -50,4 +50,4 @@ I invoke domain skills depending on the target technology:
 ## 6. Constraints
 - All external tool invocations MUST route through the **Execution Policy Gateway** ([`integration/execution-policy-gateway.md`](../integration/execution-policy-gateway.md)).
 - Non-destructive testing only. Zero persistent backdoors, data modification, or table drops.
-- Raise a HITL request to the operator before attempting any active or invasive validation action, regardless of severity score, per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- Raise a HITL request to the operator before attempting any active or invasive validation action, regardless of severity score, per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

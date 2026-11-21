@@ -64,3 +64,19 @@ Manual, creative vulnerability hunting that goes beyond automated scanner templa
 ## Output
 - Detailed logic flaw reproduction walkthroughs and behavioral hunt hypotheses.
 - Findings formatted per [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Hunting agents MUST use `AgentPayloadResolver` for logic-flaw and race-condition proof-of-concept generation:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+race_safe = resolver.get_safe_payloads("Race Condition Testing")  # timing delta probes
+logic_safe = resolver.get_safe_payloads("Logic Flaw Discovery")   # benign input manipulation
+smuggling_safe = resolver.get_safe_payloads("HTTP Request Smuggling")  # dual-content-length detection
+```
+CLI quick-reference:
+```bash
+python scripts/payload_lookup.py --class "Race Condition" --safe-only
+python scripts/payload_lookup.py --cwe CWE-367  --safe-only   # TOCTOU Race Condition
+python scripts/payload_lookup.py --owasp A04:2023             # Broken Access Control
+```

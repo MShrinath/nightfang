@@ -36,4 +36,4 @@ I initialize engagements, coordinate target scoping, and supervise workflow life
 ---
 
 ## 5. Constraints
-- Strict gatekeeper: Reject any engagement where scope is ambiguous or unauthorized per [SOP-01](../references/sops.md#sop-01-scope-verification--boundary-enforcement).
+- Strict gatekeeper: Reject any engagement where scope is ambiguous or unauthorized per [SOP-01](../references/sops.md#sop-01-scope-verification-boundary-enforcement).

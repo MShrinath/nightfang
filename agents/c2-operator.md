@@ -39,5 +39,5 @@ I delegate technical procedures to specialized domain skills:
 ---
 
 ## 5. Constraints
-- **Controlled Egress Canaries**: All beacon and tunneling simulation traffic must be benign, non-persistent, and clearly identified per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
-- **MANDATORY HITL GATE**: Establishing active external tunnels or transmitting simulated beacon traffic across production boundaries requires explicit operator approval (`/go [ID]`) per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- **Controlled Egress Canaries**: All beacon and tunneling simulation traffic must be benign, non-persistent, and clearly identified per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).
+- **MANDATORY HITL GATE**: Establishing active external tunnels or transmitting simulated beacon traffic across production boundaries requires explicit operator approval (`/go [ID]`) per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

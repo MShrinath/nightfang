@@ -169,7 +169,7 @@ Response / Standard Output:
 
 Every validated finding must include defensive countermeasures and detection logic authored by the [`detection-engineer`](../agents/detection-engineer.md):
 
-- **Verified by Blue Skill:** `[skills/remediation/detection-engineering.md]`
+- **Verified by Blue Skill:** `[skills/detection-engineering/SKILL.md]`
 - **DeTT&CT Detection Level:** `[none | telemetry | detection | prevention]`
 
 ##### Vendor-Neutral Sigma Rule

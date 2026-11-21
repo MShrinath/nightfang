@@ -27,3 +27,24 @@ This skill provides modular testing procedures for web applications. Load specif
 
 ## Finding Generation
 All vulnerabilities discovered across web modules must be recorded adhering to [`schemas/finding.md`](../../schemas/finding.md).
+
+## Payload Integration (scripts/agent_payloads.py)
+Web agents MUST use `AgentPayloadResolver` to retrieve safe payloads before attempting any injection:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+# Safe discovery payloads for initial probing
+xss_discovery = resolver.get_safe_payloads("XSS Injection")
+sqli_safe = resolver.get_safe_payloads("SQL Injection")   # empty — all SQLi are HITL
+ssrf_safe = resolver.get_safe_payloads("Server Side Request Forgery")
+# Destructive payloads require explicit HITL approval
+sqli_full = resolver.get_by_class("SQL Injection")       # full catalog (HITL only)
+rsti_safe = resolver.get_safe_payloads("Server Side Template Injection")
+```
+CLI equivalent:
+```bash
+python scripts/payload_lookup.py --class "XSS Injection" --safe-only
+python scripts/payload_lookup.py --cwe CWE-89 2>&1 || echo "Requires HITL"
+python scripts/payload_lookup.py --owasp A05:2021    # Broken Access Control
+python scripts/payload_lookup.py --cwe CWE-918        # Server-Side Request Forgery
+```

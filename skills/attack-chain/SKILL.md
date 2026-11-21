@@ -53,3 +53,27 @@ graph LR
 ## Output
 - Compound attack chain objects.
 - Visual Mermaid diagrams ready for final reporting.
+
+## Payload Integration (scripts/agent_payloads.py)
+Attack-chain agents SHOULD use `AgentPayloadResolver` to enrich chain steps with validated payloads:
+```python
+from scripts.agent_payloads import AgentPayloadResolver
+resolver = AgentPayloadResolver()
+
+# For each finding in a chain, map CWE/OWASP to available payloads
+# Example: Chain step shows CWE-89 (SQLi) -> pull actual payloads for verification
+sql_payloads = resolver.get_by_cwe("CWE-89")
+
+# For destructive steps requiring HITL approval, fetch full payload catalog
+rce_payloads = resolver.get_destructive_payloads("Command Injection")
+deserial_payloads = resolver.get_destructive_payloads("Insecure Deserialization")
+
+# Safe validation payloads for non-destructive proof
+ssti_payloads = resolver.get_safe_payloads("Server Side Template Injection")
+```
+CLI for operator review:
+```bash
+python scripts/payload_lookup.py --cwe CWE-89           # All SQLi payloads (destructive)
+python scripts/payload_lookup.py --cwe CWE-94 --safe-only  # Safe SSTI only
+python scripts/payload_lookup.py --owasp A03:2021       # All injection-class payloads
+```

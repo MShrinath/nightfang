@@ -37,4 +37,4 @@ I audit public cloud infrastructure (AWS, Azure, Google Cloud Platform):
 ---
 
 ## 5. Constraints
-- Strict multi-tenant cloud guardrail: Never probe shared cloud provider control planes or infrastructure outside customer tenant boundary per [SOP-01](../references/sops.md#sop-01-scope-verification--boundary-enforcement).
+- Strict multi-tenant cloud guardrail: Never probe shared cloud provider control planes or infrastructure outside customer tenant boundary per [SOP-01](../references/sops.md#sop-01-scope-verification-boundary-enforcement).

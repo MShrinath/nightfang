@@ -1,0 +1,36 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Hermes cache (local scratch)
+.cache/
+.hermes/
+.venv/
+venv/
+env/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables / secrets
+.env
+.local.env
+
+# Generated docs/references (keep source, not built outputs)
+references/payloads/index.json~
+
+# Local development plans (not for repo)
+REVIEW-REMEDIATION-PLAN.md

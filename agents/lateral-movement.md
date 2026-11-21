@@ -37,4 +37,4 @@ I assess internal network segmentation, credential reuse, and lateral traversal 
 ---
 
 ## 5. Constraints
-- **MANDATORY HITL GATE**: Executing remote commands or authenticating to secondary internal hosts strictly requires operator authorization per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- **MANDATORY HITL GATE**: Executing remote commands or authenticating to secondary internal hosts strictly requires operator authorization per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

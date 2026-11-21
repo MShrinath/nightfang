@@ -1,0 +1,39 @@
+{
+    "id": "NF-0007",
+    "title": "Invalid MITRE ATT&CK ID",
+    "target": "test.example.com",
+    "category": "privilege_escalation",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "linpeas",
+    "confidence": {"score": 7, "rationale": "valid"},
+    "severity": {"score": 8, "level": "high", "rationale": "valid"},
+    "evidence_grounding": {"score": 0.85, "bucket": "STRONG", "rationale": "valid"},
+    "evidence": [
+        {"type": "log", "data": "priv esc attempt"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "linux privesc"}
+    ],
+    "impact": {"technical": "Priv esc", "business": "admin access"},
+    "remediation": {"guidance": "Patch kernel", "mitre_d3fend": []},
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2",
+        "q1_in_scope": {"result": true},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-007"},
+        "q3_reachable": {"result": true},
+        "q4_controllable": {"result": true},
+        "q5_impactful": {"result": true},
+        "q6_default_vs_custom": {"result": "DEFAULT"},
+        "q7_severity_honest": {"result": true},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "pass"}
+    },
+    "classifications": {
+        "mitre_attack": [
+            {"id": "INVALID_ID", "name": "Invalid technique"}
+        ]
+    },
+    "detection_status": "detection"
+}

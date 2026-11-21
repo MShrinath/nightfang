@@ -2,7 +2,7 @@
 
 NIGHTFANG is a modular, autonomous security capability pack that transforms the **Hermes** host runtime into an advanced, continuous penetration testing and vulnerability hunting engine.
 
-When installed into Hermes, NIGHTFANG infuses Hermes with its security persona, 37 specialized agents, 33 registered capabilities, 17 workflows, 31 skills, the 6-stage Execution Policy Gateway, and the background Autonomous Hunter Daemon. Whether interacting via **Telegram, Discord, Web UI, or CLI**, the operator communicates directly with NIGHTFANG.
+When installed into Hermes, NIGHTFANG infuses Hermes with its security persona, **46 specialized agents**, 35 registered capabilities, 26 workflows, **42 skills**, the 6-stage Execution Policy Gateway, and the background Autonomous Hunter Daemon. Whether interacting via **Telegram, Discord, Web UI, or CLI**, the operator communicates directly with NIGHTFANG.
 
 ---
 
@@ -23,7 +23,7 @@ When installed into Hermes, NIGHTFANG infuses Hermes with its security persona, 
 │                       Security Orchestration Layer                     │
 ├───────────────────┬───────────────────┬────────────────────────────────┤
 │      Agents       │      Skills       │           Workflows            │
-│    (37 Agents)    │    (31 Skills)    │         (17 Workflows)         │
+│    (46 Agents)    │    (42 Skills)    │         (17 Workflows)         │
 ├───────────────────┴───────────────────┴────────────────────────────────┤
 │                   Autonomous Hunter Engine Daemon                      │
 │            PriorityDAG Task Queue • Recursive Lead Expansion           │
@@ -125,12 +125,12 @@ powershell -ExecutionPolicy Bypass -File install\status.ps1
 
 ---
 
-## 37 Specialized Agents (Taxonomy)
+## 46 Specialized Agents (Taxonomy)
 
-NIGHTFANG deploys **37 specialized agents** across two operational tiers:
+NIGHTFANG deploys **46 specialized agents** across two operational tiers:
 
-### 1. Direct Entrypoint Agents (28 Agents)
-Cover all 33 registered capabilities from `manifest.yaml`:
+### 1. Direct Entrypoint Agents (27 Agents)
+Cover all 35 registered capabilities from `manifest.yaml`:
 - **`supervisor`**: Dynamic orchestration, recursive decomposition, task replanning, and loop prevention.
 - **`recon`**: Domain enumeration, WHOIS/DNS OSINT, attack surface mapping, and initial access delivery staging.
 - **`scanner`**: Web vulnerability analysis, API discovery, and network port/service scanning.
@@ -160,7 +160,7 @@ Cover all 33 registered capabilities from `manifest.yaml`:
 - **`database-attacker`**: Relational and NoSQL database security, privilege escalation, and injection auditing.
 - **`social-engineer`**: Authorized phishing template design, credential harvest simulation, and awareness testing.
 
-### 2. Delegated Specialist Agents (9 Agents)
+### 2. Delegated Specialist Agents (19 Agents)
 Invoked downstream by workflows or primary agents for specialized lifecycle sub-tasks:
 - **`detection-engineer`**: Authors machine-readable Sigma rules, Sentinel KQL queries, and Splunk SPL logic.
 - **`threat-modeler`**: STRIDE/PASTA architectural threat modeling prior to active testing.
@@ -171,20 +171,29 @@ Invoked downstream by workflows or primary agents for specialized lifecycle sub-
 - **`payload-crafter`**: Synthesizes benign, non-destructive proof-of-concept verification payloads.
 - **`traffic-analyzer`**: PCAP network traffic dissection and covert beaconing detection.
 - **`opsec-anonymizer`**: Egress proxy validation, multi-hop routing, and network deconfliction.
+- **`protocol-pentester`**: Custom binary protocol fuzzing, proprietary IoT protocol reverse engineering, and protocol-level vulnerability discovery.
+- **`bug-bounty-agent`**: Automated bug bounty orchestration, finding triage, and platform submission workflow.
+- **`blue-team-agent`**: Defensive operations, detection engineering, and incident response simulation.
+- **`deception-agent`**: Honeypot management, decoy infrastructure deployment, and attacker behavioral analysis.
+- **`api-fuzzer`**: API contract validation, edge case discovery, and parameter space enumeration.
+- **`firmware-analyst`**: IoT firmware extraction, static analysis, and embedded system security assessment.
+- **`webshell-detector`**: Post-intrusion webshell discovery, classification, and cleanup verification.
+- **`zero-day-analyzer`**: Novel vulnerability research and proof-of-concept synthesis.
+- **`config-drift-agent`**: Security posture monitoring, baseline comparison, and configuration drift detection.
 
 ---
 
-## 31 Security Skills
+## 42 Security Skills
 
 Located in `skills/`, loaded on-demand:
 `recon`, `web`, `api`, `network`, `cloud`, `container`, `cicd`, `active-directory`, `wireless`, `mobile`, `iot`, `ot-ics`, `crypto`, `forensics`, `supply-chain`, `grc`, `cti`, `purple-team`, `privilege-escalation`, `post-exploitation`, `ai-security`, `hunting`, `attack-chain`, `remediation`, `reporting`, `utility`, `defense-evasion`, `c2-operations`, `initial-access`, `credential-access`, `reverse-engineering`.
 
 ---
 
-## 17 Execution Workflows
+## 26 Execution Workflows
 
 Located in `workflows/`:
-1. `dynamic-supervision.md`: Autonomous dynamic 4-step loop (Decompose $\to$ Dispatch $\to$ Execute $\to$ Reflect).
+1. `dynamic-supervision.md`: Autonomous dynamic 4-step loop (Decompose → Dispatch → Execute → Reflect).
 2. `standard-pentest.md`: Full 10-phase enterprise penetration test.
 3. `web-assessment.md`: Dedicated web application assessment.
 4. `api-assessment.md`: REST, GraphQL, and gRPC security audit.
@@ -201,6 +210,15 @@ Located in `workflows/`:
 15. `red-team.md`: Full-scope multi-stage adversary simulation and covert egress testing.
 16. `reverse-engineering.md`: Binary analysis, protocol reverse engineering, and disassembly.
 17. `social-engineering.md`: Authorized phishing, payload delivery simulation, and awareness assessment.
+18. `blockchain-assessment.md`: Smart contract, DeFi, and blockchain protocol security review.
+19. `configuration-review.md`: Hardening baseline validation against CIS benchmarks and security best practices.
+20. `devsecops-pipeline-review.md`: Secure development lifecycle gate review and policy enforcement.
+21. `firewall-assessment.md`: Firewall rule audit, zone boundary validation, and ingress/egress policy review.
+22. `forensic-investigation.md`: Incident response digital forensics and evidence preservation workflow.
+23. `osint-collection.md`: Open-source intelligence gathering and public attribution analysis.
+24. `secure-code-review.md`: Manual and automated source code security review methodology.
+25. `thick-client-assessment.md`: Native desktop and thick-client application security assessment.
+26. `threat-modeling.md`: STRIDE/PASTA threat modeling and attack surface decomposition methodology.
 
 ---
 

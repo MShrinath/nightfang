@@ -36,4 +36,4 @@ I audit containerized environments, host isolation, and Kubernetes clusters:
 ---
 
 ## 5. Constraints
-- Non-destructive proofs only: Do not execute host kernel panics, container termination, or persistent node modification per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety--artifact-cleanup).
+- Non-destructive proofs only: Do not execute host kernel panics, container termination, or persistent node modification per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup).

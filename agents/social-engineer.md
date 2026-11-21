@@ -46,4 +46,4 @@ I design and evaluate authorized human-layer security assessments and training s
 ## 6. Constraints
 - Absolute adherence to Rules of Engagement (ROE): NEVER target non-consenting individuals, healthcare staff, or unauthorized emergency contacts.
 - Zero credential retention: Simulated credential harvesting forms must hash or discard user-entered passwords immediately without persistence.
-- Dispatch requires explicit Human-in-the-Loop operator signoff per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate).
+- Dispatch requires explicit Human-in-the-Loop operator signoff per [SOP-04](../references/sops.md#sop-04-human-in-the-loop-hitl-exploitation-gate-tiered-autonomy).

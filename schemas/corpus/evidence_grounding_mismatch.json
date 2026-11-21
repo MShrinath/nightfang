@@ -1,0 +1,39 @@
+{
+    "id": "NF-0003",
+    "title": "Evidence Grounding Bucket Mismatch",
+    "target": "test.example.com",
+    "category": "xss",
+    "timestamp": "2026-01-01T00:00:00Z",
+    "tool_used": "ffuf",
+    "confidence": {"score": 6, "rationale": "valid"},
+    "severity": {"score": 5, "level": "medium", "rationale": "valid"},
+    "evidence_grounding": {
+        "score": 0.95,
+        "bucket": "WEAK",
+        "rationale": "Bucket should be CERTAIN for score 0.95"
+    },
+    "evidence": [
+        {"type": "screenshot", "data": "base64data"}
+    ],
+    "reproduction": [
+        {"step": 1, "action": "test", "command": "echo xss"}
+    ],
+    "impact": {"technical": "XSS", "business": "data theft"},
+    "remediation": {"guidance": "Sanitize input", "mitre_d3fend": []},
+    "validation_gate": {
+        "status": "PASS",
+        "evaluator": "agents/validation.md",
+        "timestamp": "2026-01-01T00:00:00Z",
+        "provenance_hash": "b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2",
+        "q1_in_scope": {"result": true},
+        "q2_grounded": {"result": true, "evidence_ref": "EVD-003"},
+        "q3_reachable": {"result": true},
+        "q4_controllable": {"result": true},
+        "q5_impactful": {"result": true},
+        "q6_default_vs_custom": {"result": "CUSTOM"},
+        "q7_severity_honest": {"result": true},
+        "verdict": {"status": "PASS", "failed_gate": null, "reason": "all pass"}
+    },
+    "classifications": {},
+    "detection_status": "telemetry"
+}
