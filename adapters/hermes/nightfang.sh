@@ -31,6 +31,8 @@ elif [ "$1" = "--hunt" ]; then
 elif [ "$1" = "--test" ]; then
     python3 "$NIGHTFANG_ROOT/tools/daemon.py" --test
     python3 "$NIGHTFANG_ROOT/tools/gateway.py"
+    python3 "$NIGHTFANG_ROOT/tools/sandbox.py"
+    python3 "$NIGHTFANG_ROOT/schemas/validator.py" --test
     exit 0
 fi
 

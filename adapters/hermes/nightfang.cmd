@@ -24,6 +24,8 @@ if "%~1"=="--hunt" goto :run_hunt
 if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test
     python "%NIGHTFANG_ROOT%\tools\gateway.py"
+    python "%NIGHTFANG_ROOT%\tools\sandbox.py"
+    python "%NIGHTFANG_ROOT%\schemas\validator.py" --test
     goto :eof
 )
 
