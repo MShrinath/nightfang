@@ -8,7 +8,7 @@ if exist "%~dp0tools\gateway.py" (
 ) else if exist "%~dp0..\..\tools\gateway.py" (
     set "NIGHTFANG_ROOT=%~dp0..\.."
 ) else (
-    set "NIGHTFANG_ROOT=C:\Users\shrin\Music\nightfang"
+    set "NIGHTFANG_ROOT=%~dp0..\.."
 )
 for %%I in ("%NIGHTFANG_ROOT%") do set "NIGHTFANG_ROOT=%%~fI"
 
