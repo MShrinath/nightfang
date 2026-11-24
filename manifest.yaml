@@ -24,6 +24,7 @@ capabilities:
       - skills/utility
       - skills/hunting
       - skills/reporting
+      - skills/threat-modeling
 
   - id: attack-surface-mapping
     description: "Passive intelligence gathering and active network/service discovery"
@@ -51,6 +52,7 @@ capabilities:
     skills:
       - skills/api
       - skills/hunting
+      - skills/fuzzing-engine
 
   - id: network-infrastructure-security
     description: "Network services, open ports, SMB/SNMP, known CVEs, and SSL/TLS ciphers"
@@ -104,6 +106,7 @@ capabilities:
     skills:
       - skills/wireless
       - skills/iot
+      - skills/bluetooth
 
   - id: mobile-security
     description: "Android (APK) and iOS (IPA) application security per OWASP MASVS v2.0"
@@ -123,6 +126,8 @@ capabilities:
     skills:
       - skills/iot
       - skills/wireless
+      - skills/mqtt
+      - skills/coap
 
   - id: ot-ics-security
     description: "Purdue model, industrial protocols (Modbus, S7comm, DNP3), and IEC 62443"
@@ -162,7 +167,7 @@ capabilities:
   - id: forensics-incident-response
     description: "Memory forensics (Volatility), timeline reconstruction, disk artifacts, and YARA"
     target_types: [memory_dump, disk_image, log_archive, malware_sample, pcap]
-    workflow: workflows/standard-pentest.md
+    workflow: workflows/forensic-investigation.md
     agent: agents/forensics-analyst.md
     skills:
       - skills/forensics
@@ -203,6 +208,8 @@ capabilities:
       - skills/purple-team
       - skills/remediation
       - skills/cti
+      - skills/detection-engineering
+      - skills/threat-emulation
 
   - id: ai-llm-security
     description: "Adversarial prompt injection, agentic tool abuse, and MCP server audits"
@@ -304,6 +311,7 @@ capabilities:
       - skills/initial-access
       - skills/recon
       - skills/utility
+      - skills/phishing
 
   - id: red-team-operations
     description: "Full cyber kill chain adversary simulation, resilient C2 staging, evasion, and objective verification"
@@ -318,11 +326,12 @@ capabilities:
   - id: extended-osint-reach
     description: "Zero-fee multi-platform intelligence gathering across X, Reddit, YouTube transcripts, and GitHub with token-efficient Markdown extraction"
     target_types: [social_profile, x_account, reddit_thread, youtube_channel, code_repo, developer_handle]
-    workflow: workflows/standard-pentest.md
+    workflow: workflows/osint-collection.md
     agent: agents/recon.md
     skills:
       - skills/recon
       - skills/utility
+      - skills/osint
 
   - id: repo-graph-memory
     description: "Persistent AST semantic knowledge graph analysis, cross-file taint tracking, and caller-callee hierarchy auditing"
@@ -333,6 +342,53 @@ capabilities:
       - skills/web
       - skills/api
       - skills/crypto
+      - skills/secure-code-review
+
+  - id: configuration-review
+    description: "System and infrastructure baseline hardening, CIS benchmark compliance, and configuration drift detection"
+    target_types: [system_configuration, kernel_parameters, baseline_hardening, cis_benchmark]
+    workflow: workflows/configuration-review.md
+    agent: agents/config-drift-agent.md
+    skills:
+      - skills/grc
+      - skills/utility
+
+  - id: devsecops-pipeline-review
+    description: "DevSecOps pipeline security, CI/CD automated gates, SAST/DAST integration, and runner isolation"
+    target_types: [devsecops_pipeline, build_pipeline, ci_runner, deployment_target]
+    workflow: workflows/devsecops-pipeline-review.md
+    agent: agents/cicd-redteam.md
+    skills:
+      - skills/cicd
+      - skills/supply-chain
+
+  - id: firewall-assessment
+    description: "Hardware and software firewall ruleset evaluation, WAF inspection, and egress filtering verification"
+    target_types: [firewall_appliance, firewall_ruleset, waf_ruleset, security_group]
+    workflow: workflows/firewall-assessment.md
+    agent: agents/scanner.md
+    skills:
+      - skills/network
+
+  - id: thick-client-assessment
+    description: "Thick client binary analysis (.exe, .jar, .app), IPC endpoint testing, and local credential extraction"
+    target_types: [thick_client, desktop_app, windows_exe, java_jar, native_client]
+    workflow: workflows/thick-client-assessment.md
+    agent: agents/reverse-engineer.md
+    skills:
+      - skills/reverse-engineering
+      - skills/crypto
+      - skills/fuzzing-engine
+
+  - id: bug-bounty
+    description: "Targeted vulnerability hunting workflow optimized for web applications, APIs, and microservices in defined bounty scope"
+    target_types: [bug_bounty_target, bounty_scope, web_endpoint, api_endpoint]
+    workflow: workflows/bug-bounty.md
+    agent: agents/bug-bounty-agent.md
+    skills:
+      - skills/recon
+      - skills/web
+      - skills/hunting
 
 
 agents:
@@ -584,7 +640,6 @@ skills:
   - skills/bluetooth
   - skills/fuzzing-engine
   - skills/threat-emulation
-  - skills/supply-chain-registry
   - skills/detection-engineering
   - skills/osint
   - skills/phishing
