@@ -51,6 +51,9 @@ try:
     from tools.sandbox import SandboxRunner
     from tools.ingest import FindingIngestor
     from schemas.validator import FindingValidator
+    from tools.channel_card import ChannelCardFormatter
+    from tools.finding_sync import FindingSyncManager
+    from tools.verifier import AdversarialVerifier
 except ImportError:
     sys.path.insert(0, os.path.join(repo_root, "tools"))
     from gateway import (
@@ -76,6 +79,9 @@ except ImportError:
     from sandbox import SandboxRunner
     from ingest import FindingIngestor
     from schemas.validator import FindingValidator
+    from channel_card import ChannelCardFormatter
+    from finding_sync import FindingSyncManager
+    from verifier import AdversarialVerifier
 
 
 class EngagementSimulator:
@@ -289,15 +295,66 @@ class EngagementSimulator:
         self.log("Phase 7 Complete: Master report generated successfully.")
         return report
 
+    def phase8_channel_cards_and_sync_verification(self, finding: Dict[str, Any], req: Any, req_id: str) -> None:
+        """Phase 8: Verify Telegram channel cards formatting, finding sync & knowledge graph emission."""
+        formatter = ChannelCardFormatter()
+        state = {
+            "engagement_id": self.engagement_id,
+            "target_scope": [self.target_domain],
+            "autonomy_tier": "SEMI_AUTONOMOUS",
+            "status": "ACTIVE",
+            "progress": 100.0,
+            "queue_counts": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+            "active_tasks": [],
+            "rate_backoffs": {},
+            "pending_hitl": [],
+        }
+        status_card = formatter.format_status_card(state)
+        assert "NIGHTFANG HUNT STATUS" in status_card
+        assert "[██████████] 100%" in status_card
+
+        hitl_dict = {
+            "token": req_id,
+            "target": req.target.hostname or req.target.raw_target,
+            "tool": req.tool_name,
+            "noise_profile": req.opsec.noise.value if hasattr(req.opsec.noise, "value") else str(req.opsec.noise),
+            "technique": req.technique,
+            "command": "sqlmap -u 'https://api.target.corp/v1/search' --batch --banner",
+        }
+        hitl_card = formatter.format_hitl_card(hitl_dict)
+        assert f"/go {req_id}" in hitl_card
+        assert f"/hold {req_id}" in hitl_card
+
+        alert_card = formatter.format_finding_alert(finding)
+        assert "NIGHTFANG FINDING ALERT" in alert_card
+
+        # Verify target-partitioned overview
+        overview = formatter.format_findings_overview([finding])
+        assert self.target_domain in overview
+
+        # Verify Adversarial Verifier Gate
+        verifier = AdversarialVerifier()
+        eval_res = verifier.evaluate_finding(finding)
+        assert eval_res.verdict == "CONFIRMED"
+
+        # Verify Canary Registration & Cleanup
+        canary = verifier.register_canary("sim-canary-01", self.target_domain, "test_file", "/tmp/poc_test.txt")
+        clean_ok, _ = verifier.verify_cleanup("sim-canary-01", mock_http_status=404)
+        assert clean_ok
+
+        self.log("Phase 8 Complete: Channel cards, adversarial verification & canary cleanup verified.")
+
     def run_full_simulation(self) -> str:
-        """Execute all 7 phases sequentially and return the completed report."""
+        """Execute all phases sequentially and return the completed report."""
         self.phase1_initialize()
         subs = self.phase2_recon_expansion()
         raw_scan = self.phase3_active_scanning()
         finding = self.phase4_ingest_and_validate(raw_scan)
         req, req_id = self.phase5_hitl_trigger(finding)
         self.phase6_operator_approval_and_execution(req, req_id)
-        return self.phase7_synthesize_master_report()
+        report = self.phase7_synthesize_master_report()
+        self.phase8_channel_cards_and_sync_verification(finding, req, req_id)
+        return report
 
 
 def run_self_tests() -> bool:
@@ -317,8 +374,9 @@ def run_self_tests() -> bool:
     print("  [PASS] Phase 5: Invasive exploit paused by non-blocking HITL gate.")
     print("  [PASS] Phase 6: Operator token issued, authorized, and sandbox PoC verified.")
     print("  [PASS] Phase 7: Master assessment markdown report synthesized.")
+    print("  [PASS] Phase 8: Telegram channel cards, adversarial gate & canary cleanup verified.")
 
-    print("\nAll 7 Engagement Simulation self-tests PASSED successfully!")
+    print("\nAll Engagement Simulation self-tests PASSED successfully!")
     return True
 
 

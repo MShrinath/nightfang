@@ -182,6 +182,48 @@ class HunterHUD:
         return "\n".join(lines)
 
 
+def get_aggregated_state(
+    daemon: Optional[Any] = None,
+    engagement_id: Optional[str] = None,
+    target_scope: Optional[List[str]] = None,
+    autonomy_tier: Optional[str] = None,
+    status: Optional[str] = None,
+    queue_counts: Optional[Dict[str, int]] = None,
+    active_tasks: Optional[List[Dict[str, str]]] = None,
+    rate_backoffs: Optional[Dict[str, float]] = None,
+    discovered_assets: Optional[List[str]] = None,
+    pending_hitl: Optional[List[Dict[str, str]]] = None,
+    progress: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Helper to aggregate daemon state into a standardized dictionary for HUD & channel cards."""
+    if daemon is not None:
+        cfg = getattr(daemon, "config", None)
+        return {
+            "engagement_id": getattr(cfg, "engagement_id", "ENG-SESSION"),
+            "target_scope": list(getattr(cfg, "target_scope", ["localhost"])),
+            "autonomy_tier": getattr(cfg, "autonomy_tier", "SEMI_AUTONOMOUS"),
+            "status": "ACTIVE" if getattr(daemon, "running", False) else "IDLE",
+            "queue_counts": daemon.get_queue_counts() if hasattr(daemon, "get_queue_counts") else {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+            "active_tasks": getattr(daemon, "active_tasks", []),
+            "rate_backoffs": getattr(daemon, "rate_backoffs", {}),
+            "discovered_assets": list(getattr(daemon, "discovered_assets", [])),
+            "pending_hitl": getattr(daemon, "pending_hitl", []),
+            "progress": getattr(daemon, "progress", 0.0),
+        }
+    return {
+        "engagement_id": engagement_id or "ENG-NIGHTFANG",
+        "target_scope": target_scope or ["target.corp"],
+        "autonomy_tier": autonomy_tier or "SEMI_AUTONOMOUS",
+        "status": status or "IDLE",
+        "queue_counts": queue_counts or {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "active_tasks": active_tasks or [],
+        "rate_backoffs": rate_backoffs or {},
+        "discovered_assets": discovered_assets or [],
+        "pending_hitl": pending_hitl or [],
+        "progress": progress if progress is not None else 0.0,
+    }
+
+
 def run_self_tests() -> bool:
     """Run automated verification suite for Autonomous Hunter Terminal HUD."""
     print("Running NIGHTFANG Autonomous Hunter Terminal HUD Self-Tests...")

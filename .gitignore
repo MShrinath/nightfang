@@ -32,5 +32,11 @@ Thumbs.db
 # Generated docs/references (keep source, not built outputs)
 references/payloads/index.json~
 
+# Runtime logs & memory scratch
+memory/cleanup.log
+memory/*.tmp
+.worktrees/
+worktrees/
+
 # Local development plans (not for repo)
 REVIEW-REMEDIATION-PLAN.md

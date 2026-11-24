@@ -112,8 +112,9 @@ When chatting with Hermes (on Telegram, Discord, CLI, or Web), the following com
 | `/autonomy` | `/autonomy [REACTIVE\|SEMI_AUTONOMOUS\|FULL_AUTONOMOUS]` | Displays or switches the active autonomy tier. |
 | `approve` | `approve <REQ_ID>` (or `/go <REQ_ID>`) | Approves a queued exploit action, mints a 5-D token, and resumes execution. |
 | `deny` | `deny <REQ_ID>` (or `/hold <REQ_ID>`) | Denies an exploit action, records finding as candidate, and cancels tool invocation. |
+| `/status` | `/status` | Renders mobile-optimized Telegram status card with ASCII progress bar and queue counts. |
 | `/scope` | `/scope [view\|set <target>]` | Views or updates authorized engagement boundaries and CIDRs. |
-| `/findings` | `/findings` | Summarizes all discovered vulnerabilities with severity and confidence scores. |
+| `/findings` | `/findings` | Summarizes discovered vulnerabilities partitioned cleanly by scope/domain. |
 | `/report` | `/report [full\|executive]` | Compiles formal executive and technical deliverable markdown reports. |
 | `/clean` | `/clean` | Verifies target baseline and deletes all temporary test files/canaries. |
 | `/stop` | `/stop` (or `/halt`) | Immediate emergency stop; kills all running processes and subagents. |

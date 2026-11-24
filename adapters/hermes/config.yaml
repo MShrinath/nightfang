@@ -63,6 +63,9 @@ mcp_servers:
     args: ["-y", "@playwright/mcp@latest", "--headless"]
 
 commands:
+  - name: "/status"
+    description: "Display real-time hunt status, queue metrics, and throttles as Telegram card"
+    usage: "/status"
   - name: "/hunt"
     description: "Launch continuous autonomous hunting against target"
     usage: "/hunt <target> [--tier SEMI_AUTONOMOUS|FULL_AUTONOMOUS]"

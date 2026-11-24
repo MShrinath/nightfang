@@ -29,7 +29,10 @@ $checks = @(
     @{ Name = "MCP Configuration"; Path = "$HermesHome\mcp.json"; Type = "File" },
     @{ Name = "Gateway Wrapper"; Path = "$HermesBinDir\nightfang-gate.cmd"; Type = "File" },
     @{ Name = "Launcher CLI"; Path = "$HermesBinDir\nightfang.cmd"; Type = "File" },
-    @{ Name = "Metadata Record"; Path = "$NfHermesHome\installation.json"; Type = "File" }
+    @{ Name = "Metadata Record"; Path = "$NfHermesHome\installation.json"; Type = "File" },
+    @{ Name = "Channel Card Formatter"; Path = "$NightfangRoot\tools\channel_card.py"; Type = "File" },
+    @{ Name = "Finding Sync Manager"; Path = "$NightfangRoot\tools\finding_sync.py"; Type = "File" },
+    @{ Name = "Adversarial Verifier"; Path = "$NightfangRoot\tools\verifier.py"; Type = "File" }
 )
 
 $allPassed = $true
@@ -69,9 +72,9 @@ if (Test-Path "$HermesHome\config.yaml") {
 
 $launcher = Join-Path $HermesBinDir "nightfang.cmd"
 if (Test-Path $launcher) {
-    & $launcher --test 2>$null | Out-Null
+    & $launcher --test-all 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [OK] NIGHTFANG Self-Tests (Daemon & Gateway PASS)" -ForegroundColor Green
+        Write-Host "  [OK] NIGHTFANG Self-Tests (All 10 Core Engines & E2E Simulation PASS)" -ForegroundColor Green
     } else {
         Write-Host "  [FAIL] NIGHTFANG Self-Tests failed" -ForegroundColor Red
         $allPassed = $false

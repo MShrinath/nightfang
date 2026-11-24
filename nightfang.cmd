@@ -21,6 +21,20 @@ echo.
 
 if "%~1"=="--daemon" goto :run_daemon
 if "%~1"=="--hunt" goto :run_hunt
+if "%~1"=="--status-card" (
+    python "%NIGHTFANG_ROOT%\tools\channel_card.py" %*
+    goto :eof
+)
+if "%~1"=="--sync" (
+    shift
+    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --sync %*
+    goto :eof
+)
+if "%~1"=="--verify" (
+    shift
+    python "%NIGHTFANG_ROOT%\tools\verifier.py" %*
+    goto :eof
+)
 if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\gateway.py" || exit /b 1
@@ -29,8 +43,11 @@ if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\ingest.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\hud.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\channel_card.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\verifier.py" --test || exit /b 1
     echo.
-    echo [*] All tool self-tests passed successfully!
+    echo [*] All 10 tool self-tests passed successfully!
     goto :eof
 )
 if "%~1"=="--test-all" (
@@ -41,9 +58,12 @@ if "%~1"=="--test-all" (
     python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\ingest.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\hud.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\channel_card.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\verifier.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\simulation.py" --test || exit /b 1
     echo.
-    echo [*] All tool self-tests and E2E simulation passed successfully!
+    echo [*] All 10 tool self-tests and E2E simulation passed successfully!
     goto :eof
 )
 
