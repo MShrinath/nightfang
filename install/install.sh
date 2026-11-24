@@ -399,6 +399,19 @@ elif [ "\$1" = "--test" ]; then
     python3 "\$NIGHTFANG_ROOT/tools/gateway.py"
     python3 "\$NIGHTFANG_ROOT/tools/sandbox.py"
     python3 "\$NIGHTFANG_ROOT/schemas/validator.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/ingest.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/hud.py" --test
+    exit 0
+elif [ "\$1" = "--test-all" ]; then
+    python3 "\$NIGHTFANG_ROOT/tools/daemon.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/gateway.py"
+    python3 "\$NIGHTFANG_ROOT/tools/sandbox.py"
+    python3 "\$NIGHTFANG_ROOT/schemas/validator.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/ingest.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/hud.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/simulation.py" --test
     exit 0
 fi
 
@@ -413,7 +426,8 @@ else
         echo "Usage:"
         echo "  nightfang --daemon --target <domain>    Run continuous autonomous hunter"
         echo "  nightfang --hunt <domain>               Launch autonomous attack chain"
-        echo "  nightfang --test                        Run gateway and daemon self-tests"
+        echo "  nightfang --test                        Run tool self-tests"
+        echo "  nightfang --test-all                    Run all self-tests and E2E simulation"
         echo ""
         echo "Starting interactive Autonomous Hunter session..."
         python3 -i -c "import sys; sys.path.insert(0, '\$NIGHTFANG_ROOT/tools'); from daemon import AutonomousHunterDaemon; from gateway import ExecutionPolicyGateway; print('[*] NIGHTFANG Autonomous Hunter and Gateway loaded.')"

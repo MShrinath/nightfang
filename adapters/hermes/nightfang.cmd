@@ -26,6 +26,20 @@ if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\gateway.py"
     python "%NIGHTFANG_ROOT%\tools\sandbox.py"
     python "%NIGHTFANG_ROOT%\schemas\validator.py" --test
+    python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test
+    python "%NIGHTFANG_ROOT%\tools\ingest.py" --test
+    python "%NIGHTFANG_ROOT%\tools\hud.py" --test
+    goto :eof
+)
+if "%~1"=="--test-all" (
+    python "%NIGHTFANG_ROOT%\tools\daemon.py" --test
+    python "%NIGHTFANG_ROOT%\tools\gateway.py"
+    python "%NIGHTFANG_ROOT%\tools\sandbox.py"
+    python "%NIGHTFANG_ROOT%\schemas\validator.py" --test
+    python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test
+    python "%NIGHTFANG_ROOT%\tools\ingest.py" --test
+    python "%NIGHTFANG_ROOT%\tools\hud.py" --test
+    python "%NIGHTFANG_ROOT%\tools\simulation.py" --test
     goto :eof
 )
 
@@ -40,7 +54,8 @@ if %ERRORLEVEL% equ 0 (
         echo Usage:
         echo   nightfang --daemon --target <domain>    Run continuous autonomous hunter
         echo   nightfang --hunt <domain>               Launch autonomous attack chain
-        echo   nightfang --test                        Run gateway and daemon self-tests
+        echo   nightfang --test                        Run tool self-tests
+        echo   nightfang --test-all                    Run all self-tests and E2E simulation
         echo.
         echo Starting interactive Autonomous Hunter session...
         python -i -c "import sys; sys.path.insert(0, r'%NIGHTFANG_ROOT%\tools'); from daemon import AutonomousHunterDaemon; from gateway import ExecutionPolicyGateway; print('[*] NIGHTFANG Autonomous Hunter and Gateway loaded.')"
