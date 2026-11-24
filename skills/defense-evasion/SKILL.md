@@ -74,17 +74,3 @@ Evaluate endpoint detection and prevention controls against standard process inj
 
 - Defense Evasion Assessment Report identifying endpoint detection blindspots and telemetry gaps.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md) with CVSS, MITRE ATT&CK, D3FEND, and Sigma detection rules.
-
-## Payload Integration (scripts/agent_payloads.py)
-Defense evasion agents MUST use `AgentPayloadResolver` for benign telemetry validation payloads:
-```python
-from scripts.agent_payloads import AgentPayloadResolver
-resolver = AgentPayloadResolver()
-obfus_safe = resolver.get_safe_payloads("Obfuscation Detection")    # benign encoded strings
-amsi_safe = resolver.get_safe_payloads("AMSI Probe")                # non-malicious script test strings
-```
-CLI reference:
-```bash
-python scripts/payload_lookup.py --cwe CWE-1027 --safe-only    # Obfuscated Files or Information
-python scripts/payload_lookup.py --owasp A04:2021             # Insecure Design
-```

@@ -29,7 +29,6 @@ I delegate technical procedures to domain skills:
 - **`skills/web`**: JWT forging (`jwt_forge.py`), request desync probes (`desync_probe.py`).
 - **`skills/fuzzing-engine`**: Structured mutation strategies, stateful session fuzzing.
 - **`skills/hunting`**: Race condition discovery via concurrent request flooding, temporal analysis.
-- **`scripts/payload_lookup.py`**: Lookup safe vs destructive payloads for each discovered weakness class.
 
 ---
 

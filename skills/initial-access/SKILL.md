@@ -78,17 +78,3 @@ Evaluate local host software deployments for unsafe library resolution:
 
 - Initial Access Vulnerability Assessment Report detailing perimeter exposure and delivery filtering efficacy.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
-
-## Payload Integration (scripts/agent_payloads.py)
-Initial access agents MUST use `AgentPayloadResolver` for safe perimeter and delivery mechanism probes:
-```python
-from scripts.agent_payloads import AgentPayloadResolver
-resolver = AgentPayloadResolver()
-phish_safe = resolver.get_safe_payloads("Phishing Attachment Audit")   # harmless text headers
-service_safe = resolver.get_safe_payloads("Exposed Service Probe")     # standard HTTP/SSH GET/banner
-```
-CLI reference:
-```bash
-python scripts/payload_lookup.py --cwe CWE-1190 --safe-only    # Exploit Public-Facing Application
-python scripts/payload_lookup.py --owasp A06:2021             # Vulnerable and Outdated Components
-```

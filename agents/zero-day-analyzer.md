@@ -29,7 +29,6 @@ I delegate technical procedures to domain skills:
 - **`skills/reverse-engineering`**: Binary diffing, control-flow analysis, input validation boundary identification.
 - **`skills/hunting`**: Logic flaw discovery, temporal anomaly detection, variant hunting across similar endpoints.
 - **`skills/fuzzing-engine`**: Targeted fuzzing of specific code paths identified through static analysis.
-- **`scripts/payload_lookup.py`**: Check existing payload database for known vectors before investing research effort.
 - **`skills/utility`**: Document generation, patch diff analysis, changelog interpretation.
 
 ---

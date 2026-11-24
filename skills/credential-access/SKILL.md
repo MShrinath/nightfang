@@ -86,17 +86,3 @@ Assess identity token isolation and theft resistance:
 
 - Credential Access Exposure Report detailing memory protection posture, LSA protection status, and vault security.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
-
-## Payload Integration (scripts/agent_payloads.py)
-Credential access agents MUST use `AgentPayloadResolver` for safe memory/store enumeration payloads:
-```python
-from scripts.agent_payloads import AgentPayloadResolver
-resolver = AgentPayloadResolver()
-cred_safe = resolver.get_safe_payloads("Credential Dump Audit")    # read-only policy checks
-vault_safe = resolver.get_safe_payloads("Vault Enumeration")        # harmless store listing
-```
-CLI reference:
-```bash
-python scripts/payload_lookup.py --cwe CWE-522 --safe-only     # Insufficiently Protected Credentials
-python scripts/payload_lookup.py --cwe CWE-259 --safe-only     # Hard-coded Password
-```

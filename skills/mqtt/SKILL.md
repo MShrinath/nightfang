@@ -2,7 +2,6 @@
 
 **Category**: IoT / Protocol Security  
 **Associated Agents**: `protocol-pentester`, `iot-pentester`  
-**Payload Integration**: Use `scripts/agent_payloads.py` — MQ Telemetry Transport maps to CWE-943 ( improper Input Neutralization). Safe payloads available via `resolver.get_safe_payloads("MQTT Injection")`.  
 
 ---
 

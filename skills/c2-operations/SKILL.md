@@ -76,17 +76,3 @@ Evaluate outbound perimeter firewall enforcement and deep inspection controls:
 
 - C2 Resilience & Egress Gap Analysis Report detailing perimeter filtering efficacy and MTTD.
 - Standardized finding records formatted per [`schemas/finding.md`](../../schemas/finding.md).
-
-## Payload Integration (scripts/agent_payloads.py)
-C2 operations agents SHOULD use `AgentPayloadResolver` for safe egress verification and DNS beaconing tests:
-```python
-from scripts.agent_payloads import AgentPayloadResolver
-resolver = AgentPayloadResolver()
-beacon_safe = resolver.get_safe_payloads("DNS Beaconing Test")      # benign canary domain queries
-egress_safe = resolver.get_safe_payloads("Outbound Egress Probe")   # HTTP/S connection to safe sink
-```
-CLI reference:
-```bash
-python scripts/payload_lookup.py --cwe CWE-200 --safe-only     # Information Exposure
-python scripts/payload_lookup.py --owasp A09:2021             # Security Logging and Monitoring Failures
-```
