@@ -66,7 +66,7 @@ Evaluate external package risk independent of source code.
 4. Review build scripts for post-install hooks, bootstrap scripts, and pre-build transforms that could introduce supply chain risk.
 5. Verify lockfile integrity and pinning strategy to prevent uncontrolled dependency resolution.
 
-**Tools**: `skills/supply-chain-registry/scripts/supply_chain_audit.py`, npm audit, pip-audit, dependabot, SCA tools.
+**Tools**: `skills/supply-chain/scripts/supply_chain_audit.py`, npm audit, pip-audit, dependabot, SCA tools.
 
 **Skill Reference**: `skills/supply-chain`, `workflows/supply-chain-assessment.md`
 

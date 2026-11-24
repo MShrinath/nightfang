@@ -183,10 +183,10 @@ Invoked downstream by workflows or primary agents for specialized lifecycle sub-
 
 ---
 
-## 42 Security Skills
+## 41 Security Skills
 
 Located in `skills/`, loaded on-demand:
-`recon`, `web`, `api`, `network`, `cloud`, `container`, `cicd`, `active-directory`, `wireless`, `mobile`, `iot`, `ot-ics`, `crypto`, `forensics`, `supply-chain`, `grc`, `cti`, `purple-team`, `privilege-escalation`, `post-exploitation`, `ai-security`, `hunting`, `attack-chain`, `remediation`, `reporting`, `utility`, `defense-evasion`, `c2-operations`, `initial-access`, `credential-access`, `reverse-engineering`, `mqtt`, `coap`, `bluetooth`, `fuzzing-engine`, `threat-emulation`, `supply-chain-registry`, `detection-engineering`, `osint`, `phishing`, `threat-modeling`, `secure-code-review`.
+`recon`, `web`, `api`, `network`, `cloud`, `container`, `cicd`, `active-directory`, `wireless`, `mobile`, `iot`, `ot-ics`, `crypto`, `forensics`, `supply-chain`, `grc`, `cti`, `purple-team`, `privilege-escalation`, `post-exploitation`, `ai-security`, `hunting`, `attack-chain`, `remediation`, `reporting`, `utility`, `defense-evasion`, `c2-operations`, `initial-access`, `credential-access`, `reverse-engineering`, `mqtt`, `coap`, `bluetooth`, `fuzzing-engine`, `threat-emulation`, `detection-engineering`, `osint`, `phishing`, `threat-modeling`, `secure-code-review`.
 
 ---
 
