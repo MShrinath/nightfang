@@ -29,6 +29,7 @@ I audit source code repositories to identify security vulnerabilities and design
 - **`skills/crypto`**: For cryptographic library usage and cipher security.
 - **Engineering Rigor & Codebase Knowledge Lenses**:
   - `codebase-memory-mcp`: Persistent AST semantic knowledge graph, symbol navigation, and cross-module taint propagation.
+  - `security-scanner-mcp`: AST-level static security scanner detecting OWASP Top 10 flaws, hardcoded secrets, SQL injection, and XSS across codebases.
   - `mattpocock skills`: Verification discipline (`/grill-with-docs`, `/tdd`, `/implement`) for code analysis and patch verification.
   - `addyosmani agent-skills`: Structured lifecycle phases for deep code audits and remediation engineering.
 

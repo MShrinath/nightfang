@@ -147,7 +147,7 @@ if (-not $SkipSkills) {
             }
         }
     }
-    $mcpJsonContent = $mcpConfig | ConvertTo-Json -Depth 5
+    $mcpJsonContent = $mcpConfig | ConvertTo-Json -Depth 10
     $mcpJsonContent | Out-File -FilePath $mcpJson -Encoding utf8
     $mcpJsonContent | Out-File -FilePath $nfMcpJson -Encoding utf8
     Write-Host "[OK] Verified Model Context Protocol (MCP) servers configured in Hermes." -ForegroundColor Green
@@ -170,6 +170,40 @@ if (Test-Path "$HermesHome\config.yaml") {
         $backupTs = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
         Copy-Item "$HermesHome\config.yaml" "$HermesHome\config.yaml.backup.$backupTs" -Force
         Add-Content -Path "$HermesHome\config.yaml" -Value "`n# --- NIGHTFANG Extension Configuration ---`nnightfang:`n  config: `"$NfHermesHome\config.yaml`"`n"
+    }
+    if ($existingConfig -notmatch "(?m)^mcp_servers:") {
+        $mcpYaml = @"
+
+# --- NIGHTFANG Verified MCP Servers ---
+mcp_servers:
+  mk-qa-master:
+    command: uvx
+    args: ["mk-qa-master"]
+  security-scanner-mcp:
+    command: npx
+    args: ["-y", "security-scanner-mcp"]
+  codebase-memory-mcp:
+    command: npx
+    args: ["-y", "codebase-memory-mcp"]
+  server-memory:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    env:
+      MEMORY_FILE_PATH: "$kgPath"
+  th-memory-mcp:
+    command: npx
+    args: ["-y", "th-memory-mcp"]
+  cve-mcp:
+    command: npx
+    args: ["-y", "cve-mcp"]
+  osint-mcp-server:
+    command: npx
+    args: ["-y", "osint-mcp-server"]
+  playwright:
+    command: npx
+    args: ["-y", "@playwright/mcp@latest", "--headless"]
+"@
+        Add-Content -Path "$HermesHome\config.yaml" -Value $mcpYaml
     }
 } else {
     Copy-Item "$NightfangRoot\adapters\hermes\config.yaml" "$HermesHome\config.yaml" -Force

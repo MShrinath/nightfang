@@ -130,16 +130,53 @@ if [ "$INSTALL_COMPLEMENTARY_SKILLS" = true ]; then
     mkdir -p "$HERMES_HOME/extensions"
 
     # Ensure Node, NPM, NPX toolchain is accessible
-    if ! command -v npx >/dev/null 2>&1; then
-        NODE_BIN_DIR=$(find "$HERMES_HOME/tools" -maxdepth 2 -type d -name "bin" 2>/dev/null | grep -E "node-[^/]+/bin" | head -n 1 || true)
-        if [ -n "$NODE_BIN_DIR" ] && [ -x "$NODE_BIN_DIR/node" ]; then
-            info "Discovered embedded Hermes Node.js toolchain at $NODE_BIN_DIR"
-            mkdir -p "$HOME/.local/bin"
-            ln -sf "$NODE_BIN_DIR/node" "$HOME/.local/bin/node"
-            ln -sf "$NODE_BIN_DIR/npm" "$HOME/.local/bin/npm" 2>/dev/null || true
-            ln -sf "$NODE_BIN_DIR/npx" "$HOME/.local/bin/npx" 2>/dev/null || true
-            export PATH="$NODE_BIN_DIR:$HOME/.local/bin:$PATH"
+    NODE_BIN_DIR=$(find "$HERMES_HOME/tools" -maxdepth 2 -type d -name "bin" 2>/dev/null | grep -E "node-[^/]+/bin" | head -n 1 || true)
+    if [ -n "$NODE_BIN_DIR" ] && [ -x "$NODE_BIN_DIR/node" ]; then
+        info "Discovered embedded Hermes Node.js toolchain at $NODE_BIN_DIR"
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "$NODE_BIN_DIR/node" "$HOME/.local/bin/node"
+        ln -sf "$NODE_BIN_DIR/npm" "$HOME/.local/bin/npm" 2>/dev/null || true
+        ln -sf "$NODE_BIN_DIR/npx" "$HOME/.local/bin/npx" 2>/dev/null || true
+        export PATH="$NODE_BIN_DIR:$HOME/.local/bin:$PATH"
+        if sudo -n true 2>/dev/null; then
+            sudo ln -sf "$NODE_BIN_DIR/node" "/usr/local/bin/node" 2>/dev/null || true
+            sudo ln -sf "$NODE_BIN_DIR/npm" "/usr/local/bin/npm" 2>/dev/null || true
+            sudo ln -sf "$NODE_BIN_DIR/npx" "/usr/local/bin/npx" 2>/dev/null || true
         fi
+    fi
+
+    # Ensure uv and uvx toolchain is accessible for python-based MCPs (e.g. mk-qa-master)
+    UV_BIN=$(find "$HERMES_HOME/tools" -maxdepth 2 -type f -name "uvx" 2>/dev/null | head -n 1 || true)
+    if [ -z "$UV_BIN" ] && [ -x "$HOME/.local/bin/uvx" ]; then
+        UV_BIN="$HOME/.local/bin/uvx"
+    fi
+    if [ -n "$UV_BIN" ] && [ -x "$UV_BIN" ]; then
+        UV_DIR=$(dirname "$UV_BIN")
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "$UV_BIN" "$HOME/.local/bin/uvx"
+        if [ -x "$UV_DIR/uv" ]; then
+            ln -sf "$UV_DIR/uv" "$HOME/.local/bin/uv"
+        fi
+        export PATH="$UV_DIR:$HOME/.local/bin:$PATH"
+        if sudo -n true 2>/dev/null; then
+            sudo ln -sf "$UV_BIN" "/usr/local/bin/uvx" 2>/dev/null || true
+            if [ -x "$UV_DIR/uv" ]; then
+                sudo ln -sf "$UV_DIR/uv" "/usr/local/bin/uv" 2>/dev/null || true
+            fi
+        fi
+    fi
+
+    # Ensure native build dependencies are present for compiled MCP addons (e.g. better-sqlite3 in th-memory-mcp)
+    if ! command -v make >/dev/null 2>&1; then
+        if sudo -n true 2>/dev/null && command -v apt-get >/dev/null 2>&1; then
+            info "Installing native compilation tools (build-essential) for MCP modules..."
+            sudo apt-get update -qq && sudo apt-get install -y -qq build-essential || true
+        fi
+    fi
+
+    # Ensure $HOME/.local/bin is in PATH for future non-interactive and login shells
+    if [ -f "$HOME/.bashrc" ] && ! grep -q 'HOME/.local/bin' "$HOME/.bashrc"; then
+        sed -i '1i export PATH="$HOME/.local/bin:$PATH"' "$HOME/.bashrc"
     fi
 
     PYTHON_BIN=""
@@ -236,6 +273,13 @@ if [ "$INSTALL_COMPLEMENTARY_SKILLS" = true ]; then
 MCPEOF
         cp "$MCP_CONFIG" "$NF_MCP_CONFIG"
     fi
+
+    # Pre-warm native MCP runtime dependencies if npx is available
+    if command -v npx >/dev/null 2>&1; then
+        info "Pre-warming and compiling native MCP dependencies (th-memory-mcp)..."
+        timeout 15 npx -y th-memory-mcp </dev/null >/dev/null 2>&1 || true
+    fi
+
     success "Configured 8 verified MCP servers (QA, memory, OSINT, browser) in Hermes."
 fi
 

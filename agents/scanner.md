@@ -29,6 +29,9 @@ I invoke domain skills depending on the target technology:
 - **`skills/network`**: Network service assessment (CVE matching, SMB, SSL/TLS ciphers).
 - **`skills/cloud`**: Cloud infrastructure audits (storage buckets, IMDS, IAM policies).
 - **`skills/hunting`**: Logic flaw hunting, race conditions (TOCTOU), parameter pollution, and variant discovery.
+- **Testing, QA & Threat Intelligence MCP Engines**:
+  - `cve-mcp`: Real-time CVE/KEV vulnerability intelligence engine (41 tools across NVD, EPSS, CISA KEV, GHSA, Metasploit, ATT&CK).
+  - `mk-qa-master`: Multi-framework QA test runner and Schemathesis API fuzzing with AI QA advisor loop.
 
 ---
 

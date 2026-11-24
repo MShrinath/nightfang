@@ -48,6 +48,15 @@ check_item "Gateway Wrapper" "$HERMES_BIN_DIR/nightfang-gate"
 check_item "Launcher CLI" "$HERMES_BIN_DIR/nightfang"
 check_item "Metadata Record" "$NF_HERMES_HOME/installation.json"
 
+if [[ -f "$HERMES_HOME/mcp.json" ]]; then
+    if python3 -c "import json; d=json.load(open('$HERMES_HOME/mcp.json')); assert 'mcpServers' in d and len(d['mcpServers']) >= 8" 2>/dev/null; then
+        printf "  ${GREEN}[OK]${NC} MCP Servers Verification (All 8 verified servers present in mcp.json)\n"
+    else
+        printf "  ${RED}[FAIL]${NC} MCP Configuration is invalid JSON or missing servers\n"
+        ALL_PASSED=0
+    fi
+fi
+
 if [[ -f "$HERMES_HOME/config.yaml" ]]; then
     if python3 -c "from ruamel.yaml import YAML; YAML().load(open('$HERMES_HOME/config.yaml'))" 2>/dev/null || python3 -c "import yaml; yaml.safe_load(open('$HERMES_HOME/config.yaml'))" 2>/dev/null; then
         printf "  ${GREEN}[OK]${NC} Hermes Config Syntax (Valid YAML)\n"

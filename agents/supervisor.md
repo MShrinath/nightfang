@@ -42,7 +42,9 @@ I serve as the central cognitive driver and runtime supervisor of NIGHTFANG enga
 - **`skills/utility`**: Task graph management, state tracking, and output formatting.
 - **`skills/hunting`**: Attack chain expansion, pivot identification, and lateral vector hypothesis generation.
 - **`skills/reporting`**: Milestone logging and engagement progress tracking for the operator interface.
-- **Cognitive Operational Lenses**:
+- **Cognitive Operational Lenses & Memory MCP Servers**:
+  - `@modelcontextprotocol/server-memory`: Persistent entity-relation knowledge graph store (`memory/knowledge_graph.jsonl`) tracking target assets, entities, and multi-session observations.
+  - `th-memory-mcp`: Adaptive SQLite-backed persistent memory engine with hybrid FTS5 full-text and semantic vector retrieval.
   - `minions`: Mission Control HUD visual state synchronization and DAG telemetry.
   - `oh-my-hermes`: Coworker lanes and adaptive model routing.
   - `loopy`: Stateful exploration feedback cycles.

@@ -28,8 +28,10 @@ I discover and map the reachable attack surface within authorized target boundar
 I delegate execution methodologies to domain skills and native sensory perception lenses:
 - **`skills/recon`**: For passive OSINT, DNS brute-forcing/harvesting, port probing, and technology fingerprinting.
 - **`skills/utility`**: For rapid triage checklists and asset deduplication against engagement memory.
-- **Frontline Sensory Perception Lenses**:
+- **Frontline Sensory Perception & MCP Reconnaissance Lenses**:
   - `Agent-Reach`: Zero-fee multi-platform search across X, Reddit, YouTube transcripts, and GitHub.
+  - `osint-mcp-server`: Extended OSINT aggregator querying Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS records, and crt.sh logs.
+  - `playwright` (`@playwright/mcp`): Native headless browser automation for programmatic DOM probing, dynamic SPA analysis, and failure screenshots.
   - `defuddle`: Token-efficient DOM distillation (80% context savings) for crawled HTML pages.
   - `youtube-skills`: Deep video transcript analysis and chapter indexing for technical disclosures.
   - `browser-harness`: Live authenticated Chrome automation for SPA exploration and client-side DOM analysis.

@@ -42,6 +42,22 @@ foreach ($c in $checks) {
     }
 }
 
+if (Test-Path "$HermesHome\mcp.json") {
+    try {
+        $mcpObj = Get-Content "$HermesHome\mcp.json" -Raw | ConvertFrom-Json
+        $serverCount = ($mcpObj.mcpServers.PSObject.Properties | Measure-Object).Count
+        if ($serverCount -ge 8) {
+            Write-Host "  [OK] MCP Servers Verification ($serverCount verified servers configured in mcp.json)" -ForegroundColor Green
+        } else {
+            Write-Host "  [FAIL] MCP Configuration has fewer than 8 servers ($serverCount detected)" -ForegroundColor Red
+            $allPassed = $false
+        }
+    } catch {
+        Write-Host "  [FAIL] MCP Configuration is not valid JSON" -ForegroundColor Red
+        $allPassed = $false
+    }
+}
+
 if (Test-Path "$HermesHome\config.yaml") {
     try {
         $null = & python -c "import yaml; yaml.safe_load(open(r'$HermesHome\config.yaml'))" 2>$null
