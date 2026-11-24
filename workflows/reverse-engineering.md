@@ -18,7 +18,7 @@
    - Identify embedded encryption keys, proprietary tokens, initialization vectors, and hidden backend URLs.
 4. **Phase 4 — Sink Reachability & Vulnerability Mapping (`reverse-engineer`, `code-auditor`)**:
    - Trace untrusted input paths to critical sinks (memory copy buffers, format string functions, system command execution).
-   - Run variant analysis (`cve_diff.py`) against known vulnerability patterns.
+   - Run variant analysis (`skills/hunting/scripts/cve_diff.py`) against known vulnerability patterns.
 5. **Phase 5 — Isolated Dynamic Emulation & Instrumentation (`reverse-engineer`)**:
    - Execute binary logic inside an air-gapped container sandbox with API hooking (Frida/QEMU) to observe runtime behavior.
 6. **Phase 6 — Detection Signature Authoring (`malware-analyst`)**:
