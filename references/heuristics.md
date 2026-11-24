@@ -254,7 +254,7 @@ NIGHTFANG incorporates a 15-capability cognitive skill matrix categorized into 5
    - *Trigger*: Critical or High vulnerability demonstrations requiring visual executive deliverable.
    - *Autonomous Action*: Synthesize a concise, visual PoC video artifact combining screen capture timelines, attack graph transitions, and technical callouts.
 
-### Lens 5: Specialized Security & Hardware Playbooks
-1. **Anthropic Cybersecurity Skills Catalog (Niche & Exotic Playbooks)**:
+### Lens 5: Low-Level & Specialized Execution Playbooks
+1. **Low-Level & Specialized Playbooks**:
    - *Trigger*: Encountering low-level hardware, firmware, TPM 2.0, post-quantum crypto, or critical infrastructure systems.
-   - *Autonomous Action*: Dynamically reference [`references/playbook_catalog.md`](playbook_catalog.md) to retrieve specialized execution commands and verification methodologies.
+   - *Autonomous Action*: Dynamically reference [`references/low_level_playbooks.md`](low_level_playbooks.md) to retrieve specialized execution commands and verification methodologies.

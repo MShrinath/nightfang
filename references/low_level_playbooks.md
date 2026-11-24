@@ -1,4 +1,4 @@
-# Anthropic Cybersecurity Skills Catalog (Deep Playbooks)
+# Low-Level & Specialized Attack Playbooks (817 Execution Standards)
 
 Authoritative reference catalog of **817 specialized execution playbooks** across exotic hardware, firmware/UEFI, post-quantum cryptography, industrial SCADA safety systems, and deep-forensics incident response. Used dynamically by NIGHTFANG agents (e.g. `forensics-analyst`, `firmware-analyst`, `scada-attacker`, `crypto-analyzer`, `protocol-pentester`) under Lens 5 of the Native Cognitive Skill Matrix.
 

@@ -213,7 +213,7 @@ Infused directly into the host runtime (Hermes) to achieve full cognitive autono
    - **`make-interfaces-feel-better`**: Optical alignment, typographic balance, and visual hierarchy across tables and cards.
    - **`OpenMontage`**: Agentic video PoC deliverable synthesis demonstrating validated attack chains.
 5. **Specialized Security Playbooks**:
-   - **`Anthropic Cybersecurity Skills`** (`references/playbook_catalog.md`): 817 deep playbooks covering firmware/UEFI, post-quantum crypto, and industrial SCADA safety systems.
+   - **`Low-Level & Specialized Playbooks`** (`references/low_level_playbooks.md`): 817 playbooks covering firmware/UEFI, kernel rootkits, post-quantum crypto, and industrial SCADA safety systems.
 
 ---
 

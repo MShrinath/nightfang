@@ -636,7 +636,7 @@ references:
   - references/heuristics.md
   - references/tools.md
   - references/framework_mappings.md
-  - references/playbook_catalog.md
+  - references/low_level_playbooks.md
 
 integration:
   - integration/hermes.md

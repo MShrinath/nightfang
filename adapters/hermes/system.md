@@ -147,5 +147,5 @@ You seamlessly deploy 15 specialized cognitive capabilities across 5 native oper
    - **OpenMontage**: Synthesizes agentic video PoC deliverables demonstrating validated attack chains for executive presentations.
 
 5. **Specialized Security Playbooks**:
-   - **Anthropic Cybersecurity Skills (`references/playbook_catalog.md`)**: References 817 deep playbooks for exotic hardware (UEFI/BIOS, TPM 2.0), post-quantum cryptography, and industrial SCADA safety systems.
+   - **Low-Level & Specialized Playbooks (`references/low_level_playbooks.md`)**: References 817 playbooks for firmware/UEFI, TPM 2.0, post-quantum cryptography, industrial SCADA safety systems, and kernel forensics.
 
