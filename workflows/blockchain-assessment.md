@@ -55,7 +55,7 @@ Analyze incentive structures and economic exploits possible within the protocol 
 
 **Tools**: Formal verification aids (Certora Prover trial mode for critical paths), Foundry invariant testing framework, custom economic scenario modeling spreadsheets.
 
-**Skill Reference**: `skills/crypto/scripts/cryptographic_analyzer.py`, `schemas/finding.md`
+**Skill Reference**: `skills/crypto/scripts/crypto_analyzer.py`, `schemas/finding.md`
 
 ## Phase 4 — Wallet & Custody Architecture Review
 

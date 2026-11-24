@@ -24,7 +24,7 @@ Identify the technology stack and define review boundaries.
 4. Classify trust boundaries between internal components and external inputs.
 5. Define priority ranking based on exposure (public internet-facing, internal, admin-only) and sensitivity (PII, credentials, financial data).
 
-**Tools**: `scripts/sca_scan.py`, `tools/scanner.py`, Snyk CLI, Trivy (artifact scanning only).
+**Tools**: `skills/supply-chain/scripts/dependency_checker.py`, Snyk CLI, Trivy (artifact scanning only).
 
 **Skill Reference**: `skills/secure-code-review`, `skills/web`, `skills/api`
 

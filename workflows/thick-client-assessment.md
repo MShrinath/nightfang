@@ -40,7 +40,7 @@ Perform non-executive disassembly and structural review.
 
 **Tools**: Ghidra, radare2, dnSpy, CFF Explorer, peid, detect it easy, APKTool (for UWP/MAUI).
 
-**Skill Reference**: `skills/reverse-engineering/scripts/decompile_pe.py`, `skills/crypto/scripts/cert_parser.py`
+**Skill Reference**: `skills/reverse-engineering/scripts/triage.py`, `skills/crypto/scripts/crypto_analyzer.py`
 
 ## Phase 3 — Dynamic Analysis
 

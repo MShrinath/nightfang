@@ -41,7 +41,7 @@ Review how secrets are stored, injected, and rotated throughout the pipeline lif
 
 **Tools**: Detect-secrets, gitleaks audit mode (read-only), git-secrets, custom secret pattern matching.
 
-**Skill Reference**: `skills/crypto/scripts/credential_scanner.py`, `schemas/finding.md`
+**Skill Reference**: `skills/credential-access/scripts/credential_audit.py`, `schemas/finding.md`
 
 ## Phase 3 — Dependency & Supply Chain Hardening
 

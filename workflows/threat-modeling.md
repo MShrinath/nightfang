@@ -70,6 +70,6 @@ Translate threats into actionable defense recommendations.
 4. Produce architecture change recommendations that eliminate entire threat categories rather than applying point fixes.
 5. Generate a threat register suitable for ongoing review cycles and architectural decision record (ADR) integration.
 
-**Tools**: Risk scoring matrices, ADR template (`templates/adr_template.md`), MITRE D3FEND knowledge base cross-reference.
+**Tools**: Risk scoring matrices, report template (`templates/full_report_template.md`), MITRE D3FEND knowledge base cross-reference.
 
-**Skill Reference**: `skills/reporting`, `skills/remediation`, `integrations/execution-policy-gateway.md`
+**Skill Reference**: `skills/reporting`, `skills/remediation`, `integration/execution-policy-gateway.md`
