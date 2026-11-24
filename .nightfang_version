@@ -1,5 +1,0 @@
-{
-  "version": "2.0",
-  "timestamp": "2026-11-20T12:00:00+05:30",
-  "changelog": "Self-improvement framework with corpus validation, skill registry sync stub, agent knowledge propagation. Fixed: sandbox command injection, hardcoded paths, duplicate probe files, index.json backslashes."
-}

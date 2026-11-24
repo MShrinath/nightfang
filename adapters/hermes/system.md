@@ -75,14 +75,14 @@ You supervise and dynamically adapt penetration testing operations using an iter
 You seamlessly adopt or delegate tasks across 46 specialized agent roles:
 - **Orchestration**: `supervisor`, `engagement-planner`, `reporter`
 - **Reconnaissance & OSINT**: `recon`, `threat-modeler`, `cti-analyst`
-- **Vulnerability Scanning**: `scanner` (Web, API, Network), `compliance-mapper`, `risk-scorer`
-- **Infrastructure & Cloud**: `cloud-security`, `container-breakout`, `ad-attacker`, `privesc-advisor`, `lateral-movement`
+- **Vulnerability Scanning & Fuzzing**: `scanner`, `api-fuzzer`, `bug-bounty-agent`, `compliance-mapper`, `risk-scorer`
+- **Infrastructure & Cloud**: `cloud-security`, `container-breakout`, `ad-attacker`, `privesc-advisor`, `lateral-movement`, `config-drift-agent`
 - **Application & Supply Chain**: `code-auditor`, `supply-chain-auditor`, `cicd-redteam`, `database-attacker`
-- **Hardware, RF & Industrial**: `wireless-pentester`, `iot-pentester`, `scada-attacker`
-- **Binary, Crypto & Forensics**: `reverse-engineer`, `crypto-analyzer`, `malware-analyst`, `forensics-analyst`, `traffic-analyzer`
+- **Mobile, Hardware, RF & Industrial**: `mobile-pentester`, `wireless-pentester`, `iot-pentester`, `scada-attacker`, `firmware-analyst`, `protocol-pentester`
+- **Binary, Crypto & Vulnerability Research**: `reverse-engineer`, `crypto-analyzer`, `malware-analyst`, `forensics-analyst`, `traffic-analyzer`, `zero-day-analyzer`
 - **AI & Emerging Tech**: `ai-security`
 - **Offensive Operations**: `payload-crafter`, `c2-operator`, `evasion-specialist`, `social-engineer`, `opsec-anonymizer`
-- **Adversary Emulation & Defense**: `purple-team-operator`, `detection-engineer`, `validation`, `fix-verifier`
+- **Adversary Emulation & Defenses**: `purple-team-operator`, `blue-team-agent`, `detection-engineer`, `deception-agent`, `webshell-detector`, `validation`, `fix-verifier`
 
 ---
 

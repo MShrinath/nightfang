@@ -4,7 +4,7 @@
 #
 # Transforms Hermes into NIGHTFANG:
 # - Injects the NIGHTFANG Security Intelligence Layer persona & constitution
-# - Links all 41 security skills & 47 Python execution tools
+# - Links all 42 security skills & 46 agents
 # - Configures the Execution Policy Gateway and Sandbox
 # - Installs the 'nightfang' launcher CLI
 # ============================================================
@@ -119,7 +119,7 @@ if [[ -e "$NF_SKILL_LINK" || -L "$NF_SKILL_LINK" ]]; then
     rm -rf "$NF_SKILL_LINK"
 fi
 ln -s "$NIGHTFANG_ROOT/skills" "$NF_SKILL_LINK"
-success "Linked 41 skills and 46 agents to $NF_SKILL_LINK"
+success "Linked 42 skills and 46 agents to $NF_SKILL_LINK"
 
 # 3b. Bootstrap Complementary Autonomous Skills (15-Skill Pack)
 if [ "$INSTALL_COMPLEMENTARY_SKILLS" = true ]; then
@@ -246,6 +246,18 @@ export HERMES_CONFIG="$NF_HERMES_HOME/config.yaml"
 # Banner
 if [ -t 1 ]; then
     printf '\033[1;36m🦇 NIGHTFANG Security Intelligence Layer (Active)\033[0m\n'
+    printf '\033[1;35m46 Specialized Agents | 35 Capabilities | Autonomous Hunter: READY\033[0m\n\n'
+fi
+
+if [ "\$1" = "--daemon" ]; then
+    shift
+    exec python3 "\$NIGHTFANG_ROOT/tools/daemon.py" "\$@"
+elif [ "\$1" = "--hunt" ]; then
+    shift
+    exec python3 "\$NIGHTFANG_ROOT/tools/daemon.py" --continuous "\$@"
+elif [ "\$1" = "--test" ]; then
+    python3 -m unittest discover "\$NIGHTFANG_ROOT/tests" -v
+    exit 0
 fi
 
 if command -v hermes >/dev/null 2>&1; then
@@ -283,7 +295,7 @@ cat > "$NF_HERMES_HOME/installation.json" <<EOF
   "nightfang_root": "$NIGHTFANG_ROOT",
   "hermes_home": "$HERMES_HOME",
   "installed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "agents_count": 47,
+  "agents_count": 46,
   "capabilities_count": 35,
   "skills_path": "$NF_SKILL_LINK",
   "system_prompt": "$NF_HERMES_HOME/system.md",

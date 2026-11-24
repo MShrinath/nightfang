@@ -1,18 +1,13 @@
-# RBAC Privilege Escalation - SAFE DEFAULT PAYLOAD
+# rbac_privilege_escalation - SAFE DEFAULT SPECIFICATION
 
 ## Description
-RBAC privilege escalation tests
+Safe non-destructive probe specification for rbac_privilege_escalation.
 
 ## CWE: CWE-269
 ## OWASP: A01:2021
 
 ## Safety Classification
-**SAFE_DEFAULT: True** - This is a reconnaissance/probe script that performs read-only operations.
+**SAFE_DEFAULT: True** - Read-only inspection and reconnaissance methodology.
 
-## Usage
-```bash
-python rbac_privilege_escalation_probe.py <target>
-```
-
-## Purpose
-This script safely probes for the vulnerability class without exploitation.
+## Verification Guidance
+Execute non-invasive boundary checks and observational probing without state modification, denial of service, or destructive side effects.

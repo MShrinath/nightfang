@@ -51,7 +51,7 @@ cmd /c "mklink /J `"$NfSkillLink`" `"$NightfangRoot\skills`"" | Out-Null
 if (-not (Test-Path $NfSkillLink)) {
     Copy-Item -Path "$NightfangRoot\skills" -Destination $NfSkillLink -Recurse -Force
 }
-Write-Host "[OK] Linked 31 skills into $NfSkillLink" -ForegroundColor Green
+Write-Host "[OK] Linked 42 skills into $NfSkillLink" -ForegroundColor Green
 
 # 3b. Bootstrap Complementary Autonomous Skills (15-Skill Pack)
 if (-not $SkipSkills) {
@@ -169,7 +169,7 @@ $meta = @{
     nightfang_root     = $NightfangRoot
     hermes_home        = $HermesHome
     installed_at       = (Get-Date -Format "o")
-    agents_count       = 37
+    agents_count       = 46
     capabilities_count = 35
     skills_path        = $NfSkillLink
     system_prompt      = "$NfHermesHome\system.md"

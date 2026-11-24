@@ -1,18 +1,13 @@
-# Credential Dump Audit - SAFE DEFAULT PAYLOAD
+# credential_dump_audit - SAFE DEFAULT SPECIFICATION
 
 ## Description
-Audit for credential dumps
+Safe non-destructive probe specification for credential_dump_audit.
 
 ## CWE: CWE-522
 ## OWASP: A02:2021
 
 ## Safety Classification
-**SAFE_DEFAULT: True** - This is a reconnaissance/probe script that performs read-only operations.
+**SAFE_DEFAULT: True** - Read-only inspection and reconnaissance methodology.
 
-## Usage
-```bash
-python credential_dump_audit_probe.py <target>
-```
-
-## Purpose
-This script safely probes for the vulnerability class without exploitation.
+## Verification Guidance
+Execute non-invasive boundary checks and observational probing without state modification, denial of service, or destructive side effects.

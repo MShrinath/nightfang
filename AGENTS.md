@@ -85,8 +85,8 @@ Nightfang strictly enforces the separation of concerns across the pack:
 
 ### Agent Exposure Taxonomy: Direct vs. Delegated Agents
 NIGHTFANG deploys **46 specialized agents** organized into two operational tiers:
-1. **Direct Entrypoint Agents (27 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. These 27 direct agents service 34 direct capabilities (and 35 total registered capabilities including `repo-graph-memory`), with `supervisor` managing autonomous supervision, `scanner` handling 3 capabilities, `recon` handling 3 capabilities (including the restored `extended-osint-reach`), and `privesc-advisor` and `c2-operator` handling dual capabilities.
-2. **Delegated Specialist Agents (19 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
+1. **Direct Entrypoint Agents (28 agents)**: Directly reachable via the Capability Router from incoming operator requests matching `manifest.yaml capabilities[]`. These 28 direct agents service 34 direct capabilities (and 35 total registered capabilities including `repo-graph-memory`), with `supervisor` managing autonomous supervision, `scanner` handling 3 capabilities, `recon` handling 3 capabilities (including `extended-osint-reach`), and `privesc-advisor` and `c2-operator` handling dual capabilities.
+2. **Delegated Specialist Agents (18 agents)**: Secondary specialists invoked downstream by workflows or primary agents to perform deep analytical or lifecycle sub-tasks:
    - **`detection-engineer`**: Invoked by purple-team workflows and `reporter` to author vendor-neutral Sigma rules, Sentinel KQL, and Splunk SPL queries.
    - **`threat-modeler`**: Invoked during Phase 1 architecture review to decompose trust boundaries and data flows (STRIDE/PASTA) before active probing.
    - **`code-auditor`**: Invoked during SAST, source code reviews, and supply chain audits for sink-to-source taint tracking.
@@ -96,6 +96,15 @@ NIGHTFANG deploys **46 specialized agents** organized into two operational tiers
    - **`payload-crafter`**: Invoked during exploit validation and red-team operations to synthesize non-destructive proof-of-concept payloads.
    - **`traffic-analyzer`**: Invoked during network audits and post-exploitation to dissect packet captures and hunt for covert beaconing channels.
    - **`opsec-anonymizer`**: Invoked prior to active operations to verify proxychains, egress IP isolation, and network deconfliction.
+   - **`protocol-pentester`**: Custom binary protocol fuzzing, proprietary IoT protocol reverse engineering, and protocol-level vulnerability discovery.
+   - **`bug-bounty-agent`**: Automated bug bounty orchestration, finding triage, and platform submission workflow.
+   - **`blue-team-agent`**: Defensive operations, detection engineering, and incident response simulation.
+   - **`deception-agent`**: Honeypot management, decoy infrastructure deployment, and attacker behavioral analysis.
+   - **`api-fuzzer`**: API contract validation, edge case discovery, and parameter space enumeration.
+   - **`firmware-analyst`**: IoT firmware extraction, static analysis, and embedded system security assessment.
+   - **`webshell-detector`**: Post-intrusion webshell discovery, classification, and cleanup verification.
+   - **`zero-day-analyzer`**: Novel vulnerability research and proof-of-concept synthesis.
+   - **`config-drift-agent`**: Security posture monitoring, baseline comparison, and configuration drift detection.
 
 ### OPSEC Noise Classification & Autonomy Boundaries
 Every tool invocation proposed by any agent declares its OPSEC noise profile:

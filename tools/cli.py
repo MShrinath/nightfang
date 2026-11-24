@@ -159,7 +159,6 @@ def cmd_status(args):
         ("daemon.py", "Autonomous Hunter Engine"),
         ("gateway.py", "Execution Policy Gateway"),
         ("sandbox.py", "Sandbox Runner"),
-        ("threat_emulator.py", "Threat Emulation Engine"),
     ]
     
     print("\nCore Tools:")

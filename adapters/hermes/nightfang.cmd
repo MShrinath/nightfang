@@ -16,7 +16,7 @@ set "HERMES_SYSTEM_PROMPT=%HERMES_HOME%\nightfang\system.md"
 set "HERMES_CONFIG=%HERMES_HOME%\nightfang\config.yaml"
 
 echo [NIGHTFANG] Security Intelligence Layer (Active)
-echo 46 Specialized Agents ^| 33 Capabilities ^| Autonomous Hunter: READY
+echo 46 Specialized Agents ^| 35 Capabilities ^| Autonomous Hunter: READY
 echo.
 
 if "%~1"=="--daemon" (

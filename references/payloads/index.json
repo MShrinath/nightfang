@@ -4,7 +4,6 @@
     "owasp": "A01:2021",
     "safe_default": true,
     "payload_files": [
-      "BOLA/bola_probe.py",
       "BOLA/SAFE_DEFAULT.md"
     ]
   },
@@ -13,7 +12,6 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "ble_enumeration/ble_enumeration_probe.py",
       "ble_enumeration/SAFE_DEFAULT.md"
     ]
   },
@@ -22,7 +20,6 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "bluetooth_packet_injection/bluetooth_packet_injection_probe.py",
       "bluetooth_packet_injection/SAFE_DEFAULT.md"
     ]
   },
@@ -31,7 +28,6 @@
     "owasp": "A03:2021",
     "safe_default": true,
     "payload_files": [
-      "coap_injection/coap_injection_probe.py",
       "coap_injection/SAFE_DEFAULT.md"
     ]
   },
@@ -40,7 +36,6 @@
     "owasp": "A02:2021",
     "safe_default": true,
     "payload_files": [
-      "credential_dump_audit/credential_dump_audit_probe.py",
       "credential_dump_audit/SAFE_DEFAULT.md"
     ]
   },
@@ -49,7 +44,6 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "dns_beaconing_test/dns_beaconing_test_probe.py",
       "dns_beaconing_test/SAFE_DEFAULT.md"
     ]
   },
@@ -58,7 +52,6 @@
     "owasp": "A05:2021",
     "safe_default": true,
     "payload_files": [
-      "iam_policy_abuse/iam_policy_abuse_probe.py",
       "iam_policy_abuse/SAFE_DEFAULT.md"
     ]
   },
@@ -67,7 +60,6 @@
     "owasp": "A02:2021",
     "safe_default": true,
     "payload_files": [
-      "jwt_manipulation/jwt_manipulation_probe.py",
       "jwt_manipulation/SAFE_DEFAULT.md"
     ]
   },
@@ -76,7 +68,6 @@
     "owasp": "A03:2021",
     "safe_default": true,
     "payload_files": [
-      "lmq_fuzzing/lmq_fuzzing_probe.py",
       "lmq_fuzzing/SAFE_DEFAULT.md"
     ]
   },
@@ -85,7 +76,6 @@
     "owasp": "A03:2021",
     "safe_default": true,
     "payload_files": [
-      "mqtt_injection/mqtt_injection_probe.py",
       "mqtt_injection/SAFE_DEFAULT.md"
     ]
   },
@@ -94,7 +84,6 @@
     "owasp": "A01:2021",
     "safe_default": true,
     "payload_files": [
-      "rbac_privilege_escalation/rbac_privilege_escalation_probe.py",
       "rbac_privilege_escalation/SAFE_DEFAULT.md"
     ]
   },
@@ -103,7 +92,6 @@
     "owasp": "A04:2021",
     "safe_default": true,
     "payload_files": [
-      "s3_bucket_enumeration/s3_bucket_enumeration_probe.py",
       "s3_bucket_enumeration/SAFE_DEFAULT.md"
     ]
   },
@@ -112,8 +100,7 @@
     "owasp": "A05:2021",
     "safe_default": true,
     "payload_files": [
-      "snmp_enumeration/SAFE_DEFAULT.md",
-      "snmp_enumeration/snmp_enumeration_probe.py"
+      "snmp_enumeration/SAFE_DEFAULT.md"
     ]
   },
   "topic_injection": {
@@ -121,8 +108,7 @@
     "owasp": "A01:2021",
     "safe_default": true,
     "payload_files": [
-      "topic_injection/SAFE_DEFAULT.md",
-      "topic_injection/topic_injection_probe.py"
+      "topic_injection/SAFE_DEFAULT.md"
     ]
   },
   "unquoted_path_audit": {
@@ -130,8 +116,7 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "unquoted_path_audit/SAFE_DEFAULT.md",
-      "unquoted_path_audit/unquoted_path_audit_probe.py"
+      "unquoted_path_audit/SAFE_DEFAULT.md"
     ]
   },
   "vault_enumeration": {
@@ -139,8 +124,7 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "vault_enumeration/SAFE_DEFAULT.md",
-      "vault_enumeration/vault_enumeration_probe.py"
+      "vault_enumeration/SAFE_DEFAULT.md"
     ]
   },
   "webshell_detection": {
@@ -148,8 +132,7 @@
     "owasp": "N/A",
     "safe_default": true,
     "payload_files": [
-      "webshell_detection/SAFE_DEFAULT.md",
-      "webshell_detection/webshell_detection_probe.py"
+      "webshell_detection/SAFE_DEFAULT.md"
     ]
   }
 }

@@ -23,7 +23,7 @@ When installed into Hermes, NIGHTFANG infuses Hermes with its security persona, 
 │                       Security Orchestration Layer                     │
 ├───────────────────┬───────────────────┬────────────────────────────────┤
 │      Agents       │      Skills       │           Workflows            │
-│    (46 Agents)    │    (42 Skills)    │         (17 Workflows)         │
+│    (46 Agents)    │    (42 Skills)    │         (26 Workflows)         │
 ├───────────────────┴───────────────────┴────────────────────────────────┤
 │                   Autonomous Hunter Engine Daemon                      │
 │            PriorityDAG Task Queue • Recursive Lead Expansion           │
@@ -129,7 +129,7 @@ powershell -ExecutionPolicy Bypass -File install\status.ps1
 
 NIGHTFANG deploys **46 specialized agents** across two operational tiers:
 
-### 1. Direct Entrypoint Agents (27 Agents)
+### 1. Direct Entrypoint Agents (28 Agents)
 Cover all 35 registered capabilities from `manifest.yaml`:
 - **`supervisor`**: Dynamic orchestration, recursive decomposition, task replanning, and loop prevention.
 - **`recon`**: Domain enumeration, WHOIS/DNS OSINT, attack surface mapping, and initial access delivery staging.
@@ -160,7 +160,7 @@ Cover all 35 registered capabilities from `manifest.yaml`:
 - **`database-attacker`**: Relational and NoSQL database security, privilege escalation, and injection auditing.
 - **`social-engineer`**: Authorized phishing template design, credential harvest simulation, and awareness testing.
 
-### 2. Delegated Specialist Agents (19 Agents)
+### 2. Delegated Specialist Agents (18 Agents)
 Invoked downstream by workflows or primary agents for specialized lifecycle sub-tasks:
 - **`detection-engineer`**: Authors machine-readable Sigma rules, Sentinel KQL queries, and Splunk SPL logic.
 - **`threat-modeler`**: STRIDE/PASTA architectural threat modeling prior to active testing.
@@ -186,7 +186,34 @@ Invoked downstream by workflows or primary agents for specialized lifecycle sub-
 ## 42 Security Skills
 
 Located in `skills/`, loaded on-demand:
-`recon`, `web`, `api`, `network`, `cloud`, `container`, `cicd`, `active-directory`, `wireless`, `mobile`, `iot`, `ot-ics`, `crypto`, `forensics`, `supply-chain`, `grc`, `cti`, `purple-team`, `privilege-escalation`, `post-exploitation`, `ai-security`, `hunting`, `attack-chain`, `remediation`, `reporting`, `utility`, `defense-evasion`, `c2-operations`, `initial-access`, `credential-access`, `reverse-engineering`.
+`recon`, `web`, `api`, `network`, `cloud`, `container`, `cicd`, `active-directory`, `wireless`, `mobile`, `iot`, `ot-ics`, `crypto`, `forensics`, `supply-chain`, `grc`, `cti`, `purple-team`, `privilege-escalation`, `post-exploitation`, `ai-security`, `hunting`, `attack-chain`, `remediation`, `reporting`, `utility`, `defense-evasion`, `c2-operations`, `initial-access`, `credential-access`, `reverse-engineering`, `mqtt`, `coap`, `bluetooth`, `fuzzing-engine`, `threat-emulation`, `supply-chain-registry`, `detection-engineering`, `osint`, `phishing`, `threat-modeling`, `secure-code-review`.
+
+---
+
+## Native Cognitive Skill Matrix (15 Skills Across 5 Modes)
+
+Infused directly into the host runtime (Hermes) to achieve full cognitive autonomy across 5 operational modes:
+
+1. **Frontline Sensory & Web Perception**:
+   - **`Agent-Reach`**: Zero-fee intelligence gathering across X, Reddit, YouTube transcripts, and GitHub.
+   - **`defuddle`**: Semantic Markdown distillation saving up to 80% context tokens during route discovery.
+   - **`youtube-skills`**: Ingests video transcripts and indexes chapters for conference and tech disclosures.
+   - **`browser-harness`**: Drives authenticated browser sessions for dynamic SPAs, client-side JS, and MFA flows.
+2. **Engineering Rigor & Codebase Knowledge**:
+   - **`addyosmani agent-skills`**: Software engineering lifecycle discipline (`/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`).
+   - **`mattpocock skills`**: Strict verification discipline (`/grill-with-docs`, `/tdd`, `/implement`) before executing custom PoCs.
+   - **`codebase-memory-mcp`**: Persistent AST semantic knowledge graph for cross-file taint analysis and caller-callee auditing.
+3. **Orchestration, Supervision & System Evolution**:
+   - **`minions`**: Mission Control visual HUD dashboard and task supervisor for situational awareness.
+   - **`oh-my-hermes`**: Multi-agent coworker lanes dynamically routing tasks across reasoning and throughput models.
+   - **`loopy`**: Stateful exploration feedback loops for multi-stage business logic and privilege escalation.
+   - **`SkillClaw`**: Post-engagement continuous learning converting exploit trajectories into reusable playbooks.
+4. **Presentation Craft & Workspace Integration**:
+   - **`humanizer`**: Strips robotic AI cliches and corporate fluff to preserve authoritative technical delivery.
+   - **`make-interfaces-feel-better`**: Optical alignment, typographic balance, and visual hierarchy across tables and cards.
+   - **`OpenMontage`**: Agentic video PoC deliverable synthesis demonstrating validated attack chains.
+5. **Specialized Security Playbooks**:
+   - **`Anthropic Cybersecurity Skills`** (`references/playbook_catalog.md`): 817 deep playbooks covering firmware/UEFI, post-quantum crypto, and industrial SCADA safety systems.
 
 ---
 

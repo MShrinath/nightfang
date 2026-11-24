@@ -610,16 +610,27 @@ workflows:
   - workflows/iot-ics-assessment.md
   - workflows/supply-chain-assessment.md
   - workflows/bug-bounty.md
+  - workflows/blockchain-assessment.md
+  - workflows/configuration-review.md
+  - workflows/devsecops-pipeline-review.md
+  - workflows/firewall-assessment.md
+  - workflows/forensic-investigation.md
+  - workflows/osint-collection.md
+  - workflows/secure-code-review.md
+  - workflows/thick-client-assessment.md
+  - workflows/threat-modeling.md
 
 schemas:
   - schemas/finding.md
   - schemas/validator.py
 
 tools:
+  - tools/daemon.py
   - tools/gateway.py
   - tools/sandbox.py
-  - tools/threat_emulator.py
+  - tools/cli.py
   - scripts/fuzzing_engine.py
+  - scripts/generate_sbom.py
 
 references:
   - references/sops.md
