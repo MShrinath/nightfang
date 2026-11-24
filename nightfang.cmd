@@ -19,16 +19,8 @@ echo [NIGHTFANG] Security Intelligence Layer (Active)
 echo 46 Specialized Agents ^| 42 Capabilities ^| Autonomous Hunter: READY
 echo.
 
-if "%~1"=="--daemon" (
-    shift
-    python "%NIGHTFANG_ROOT%\tools\daemon.py" %*
-    goto :eof
-)
-if "%~1"=="--hunt" (
-    shift
-    python "%NIGHTFANG_ROOT%\tools\daemon.py" --continuous %*
-    goto :eof
-)
+if "%~1"=="--daemon" goto :run_daemon
+if "%~1"=="--hunt" goto :run_hunt
 if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test
     python "%NIGHTFANG_ROOT%\tools\gateway.py"
@@ -52,3 +44,28 @@ if %ERRORLEVEL% equ 0 (
         python -i -c "import sys; sys.path.insert(0, r'%NIGHTFANG_ROOT%\tools'); from daemon import AutonomousHunterDaemon; from gateway import ExecutionPolicyGateway; print('[*] NIGHTFANG Autonomous Hunter and Gateway loaded.')"
     )
 )
+goto :eof
+
+:run_daemon
+shift
+set "NF_ARGS="
+:daemon_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :daemon_loop
+)
+python "%NIGHTFANG_ROOT%\tools\daemon.py"%NF_ARGS%
+goto :eof
+
+:run_hunt
+shift
+set "NF_ARGS="
+:hunt_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :hunt_loop
+)
+python "%NIGHTFANG_ROOT%\tools\daemon.py" --continuous%NF_ARGS%
+goto :eof
