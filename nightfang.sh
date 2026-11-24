@@ -37,13 +37,16 @@ elif [ "$1" = "--hunt" ]; then
     exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --continuous "$@"
 elif [ "$1" = "--status-card" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/channel_card.py" "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/channel_card.py" --status-card "$@"
 elif [ "$1" = "--sync" ]; then
     shift
     exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/finding_sync.py" --sync "$@"
 elif [ "$1" = "--verify" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --verify "$@"
+elif [ "$1" = "--verify-canary" ]; then
+    shift
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --verify-canary "$@"
 elif [ "$1" = "--test" ]; then
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --test
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py"

@@ -4,7 +4,8 @@ NIGHTFANG Telegram & Remote Channel Card Formatter (tools/channel_card.py)
 
 Formats real-time daemon state, HITL approvals, findings, and scope summaries into
 mobile-optimized, Telegram-safe messages (<= 4096 characters, MarkdownV2 / safe HTML escaping).
-Supports multi-target/chat partitioning so findings and status can be viewed per-target.
+Supports 2-tier hierarchical scope partitioning (Root Domain -> Subdomains -> Findings)
+so subdomains do not become separate top-level targets while maintaining per-host clarity.
 """
 
 from __future__ import annotations
@@ -29,11 +30,10 @@ TELEGRAM_MAX_LENGTH = 4096
 def escape_markdown(text: str) -> str:
     """
     Escape special Markdown characters for safe Telegram transmission.
-    Escapes: _ * [ ] ( ) ~ ` > # + - = | { } . ! \
+    Escapes: _ * [ ] ( ) ~ ` > # + - = | { } . ! \\
     """
     if not text:
         return ""
-    # Characters that must be escaped in Telegram MarkdownV2 outside code blocks
     special_chars = r"_*[]()~`>#+-=|{}.!\\"
     return re.sub(f"([{re.escape(special_chars)}])", r"\\\1", str(text))
 
@@ -44,6 +44,62 @@ def truncate_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH, suffix: s
         return text
     cutoff = max_length - len(suffix)
     return text[:cutoff] + suffix
+
+
+def normalize_target_host(target: str) -> str:
+    """Extract host/domain/IP part from target string (e.g. https://api.corp.com:443/v1 -> api.corp.com)."""
+    t = str(target).strip()
+    if not t:
+        return "general"
+    if "://" in t:
+        t = t.split("://", 1)[1]
+    if "/" in t:
+        t = t.split("/", 1)[0]
+    if "@" in t:
+        t = t.split("@", 1)[1]
+    if ":" in t:
+        if t.startswith("[") and "]" in t:
+            t = t.split("]")[0] + "]"
+        else:
+            t = t.split(":", 1)[0]
+    return t.strip().lower()
+
+
+def is_ip_address(host: str) -> bool:
+    """Check if host is an IPv4 or IPv6 address."""
+    clean = host.strip("[]").strip()
+    parts = clean.split(".")
+    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+        return True
+    if ":" in clean:
+        return True
+    return False
+
+
+def extract_root_domain(host: str) -> str:
+    """
+    Extract root/apex domain from host or target URL.
+    Examples:
+      - 'api.corp.test' -> 'corp.test'
+      - 'admin.dev.target.corp' -> 'target.corp'
+      - 'target.corp' -> 'target.corp'
+      - 'sub.example.co.uk' -> 'example.co.uk'
+      - '192.168.1.1' -> '192.168.1.1'
+      - 'localhost' -> 'localhost'
+    """
+    clean_host = normalize_target_host(host)
+    if not clean_host or clean_host == "localhost" or is_ip_address(clean_host):
+        return clean_host or "general"
+
+    labels = clean_host.split(".")
+    if len(labels) <= 2:
+        return clean_host
+
+    cc_second_levels = {"co", "com", "net", "org", "gov", "edu", "ac"}
+    if len(labels) >= 3 and labels[-2] in cc_second_levels and len(labels[-1]) == 2:
+        return ".".join(labels[-3:])
+
+    return ".".join(labels[-2:])
 
 
 class ChannelCardFormatter:
@@ -241,49 +297,91 @@ class ChannelCardFormatter:
         filter_target: Optional[str] = None,
     ) -> str:
         """
-        Format /findings card. If filter_target is provided, shows findings only for that target.
-        If filter_target is None, groups findings by target to prevent cross-target mixup.
+        Format /findings card with 2-tier Hierarchical Scope Structure:
+        Root Scope Domain -> Subdomains/Hosts -> Findings.
+        - If filter_target is a root domain, renders all subdomains under that root scope.
+        - If filter_target is a specific host, renders findings for that host.
+        - If filter_target is None, renders a hierarchical overview across all root scopes.
         """
         if not findings:
             target_msg = f" for `{filter_target}`" if filter_target else ""
             return f"🛡️ *NIGHTFANG Findings:*{target_msg}\nNo security findings currently recorded."
 
-        # Partition findings by target
-        partitioned: Dict[str, List[Dict[str, Any]]] = {}
+        # Build hierarchical structure: scopes[root_domain][host] = [findings]
+        scopes: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
         for f in findings:
             inner = f.get("finding", f)
-            t = str(inner.get("target", "general")).strip()
-            # Normalize target hostname if URL or host:port
-            if "://" in t:
-                t = t.split("://", 1)[1]
-            if "/" in t:
-                t = t.split("/", 1)[0]
-            norm_target = t.split(":")[0] if ":" in t else t
-            partitioned.setdefault(norm_target, []).append(inner)
+            raw_target = str(inner.get("target", "general")).strip()
+            host = normalize_target_host(raw_target)
+            root = extract_root_domain(host)
 
+            scope_hosts = scopes.setdefault(root, {})
+            scope_hosts.setdefault(host, []).append(inner)
+
+        # Handle filtering
         if filter_target:
-            norm_filter = filter_target.split(":")[0] if ":" in filter_target else filter_target
-            matched_findings = partitioned.get(norm_filter, [])
-            if not matched_findings:
-                # Fallback: substring match
-                for t_key, t_list in partitioned.items():
-                    if norm_filter in t_key or t_key in norm_filter:
-                        matched_findings = t_list
-                        norm_filter = t_key
+            clean_filter = normalize_target_host(filter_target)
+            filter_root = extract_root_domain(clean_filter)
+
+            # Check if filter matches a Root Scope Domain directly
+            if clean_filter in scopes:
+                target_scope_hosts = scopes[clean_filter]
+                total_in_scope = sum(len(fl) for fl in target_scope_hosts.values())
+                lines = [
+                    f"🛡️ *NIGHTFANG Findings for Scope `{clean_filter}`* ({total_in_scope} findings across {len(target_scope_hosts)} hosts):",
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                ]
+                for h_name, h_list in sorted(target_scope_hosts.items()):
+                    lines.append(f"🌐 *Subdomain:* `{h_name}` ({len(h_list)} findings)")
+                    for idx, item in enumerate(h_list[:5], 1):
+                        sev = item.get("severity", {})
+                        score = sev.get("score", 5.0) if isinstance(sev, dict) else 5.0
+                        badge = "🔴" if score >= 9.0 else "🟠" if score >= 7.0 else "🟡" if score >= 4.0 else "🔵"
+                        cwe = item.get("cwe_id", "CWE-000")
+                        title = item.get("title", "Finding")
+                        lines.append(f"   {idx}. {badge} `[{score:.1f}]` *{title}* (`{cwe}`)")
+                    if len(h_list) > 5:
+                        lines.append(f"   _... and {len(h_list) - 5} more on this host._")
+                    lines.append("")
+                return truncate_message("\n".join(lines).strip())
+
+            # Check if filter matches a specific subdomain/host inside a root scope
+            matched_host_findings: Optional[List[Dict[str, Any]]] = None
+            matched_host_name = clean_filter
+            matched_root_name = filter_root
+
+            for r_name, r_hosts in scopes.items():
+                if clean_filter in r_hosts:
+                    matched_host_findings = r_hosts[clean_filter]
+                    matched_host_name = clean_filter
+                    matched_root_name = r_name
+                    break
+
+            if not matched_host_findings:
+                # Substring fallback search
+                for r_name, r_hosts in scopes.items():
+                    for h_name, h_list in r_hosts.items():
+                        if clean_filter in h_name or h_name in clean_filter:
+                            matched_host_findings = h_list
+                            matched_host_name = h_name
+                            matched_root_name = r_name
+                            break
+                    if matched_host_findings:
                         break
 
-            if not matched_findings:
+            if not matched_host_findings:
+                active_roots = ", ".join(f"`{k}`" for k in scopes.keys())
                 return (
                     f"🛡️ *NIGHTFANG Findings for `{filter_target}`:*\n"
-                    f"No findings recorded for this specific target. Active targets: "
-                    + ", ".join(f"`{k}`" for k in partitioned.keys())
+                    f"No findings recorded for this specific target or host. Active root scopes: {active_roots}"
                 )
 
             lines = [
-                f"🛡️ *NIGHTFANG Findings for `{norm_filter}`* ({len(matched_findings)} total):",
+                f"🛡️ *NIGHTFANG Findings for Host `{matched_host_name}`*",
+                f"🏛️ *Root Scope:* `{matched_root_name}` | *Total:* `{len(matched_host_findings)}` findings",
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
             ]
-            for idx, item in enumerate(matched_findings[:10], 1):
+            for idx, item in enumerate(matched_host_findings[:10], 1):
                 sev = item.get("severity", {})
                 score = sev.get("score", 5.0) if isinstance(sev, dict) else 5.0
                 badge = "🔴" if score >= 9.0 else "🟠" if score >= 7.0 else "🟡" if score >= 4.0 else "🔵"
@@ -291,27 +389,34 @@ class ChannelCardFormatter:
                 title = item.get("title", "Finding")
                 lines.append(f"{idx}. {badge} `[{score:.1f}]` *{title}* (`{cwe}`)")
 
-            if len(matched_findings) > 10:
-                lines.append(f"\n_... and {len(matched_findings) - 10} more findings on this target._")
+            if len(matched_host_findings) > 10:
+                lines.append(f"\n_... and {len(matched_host_findings) - 10} more findings on this host._")
 
             return truncate_message("\n".join(lines))
 
-        # Overview partitioned across targets
+        # Overall Hierarchical Overview across all Root Scope Domains
+        total_findings = sum(sum(len(fl) for fl in r_hosts.values()) for r_hosts in scopes.values())
         lines = [
-            f"🛡️ *NIGHTFANG Findings Overview* ({len(findings)} total across {len(partitioned)} targets):",
+            f"🛡️ *NIGHTFANG Findings Overview* ({total_findings} total across {len(scopes)} root scopes):",
             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         ]
-        for t_name, t_findings in partitioned.items():
-            crits = sum(1 for x in t_findings if (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) >= 9.0)
-            highs = sum(1 for x in t_findings if 7.0 <= (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) < 9.0)
-            meds = len(t_findings) - crits - highs
+        for r_name, r_hosts in sorted(scopes.items()):
+            scope_total = sum(len(fl) for fl in r_hosts.values())
+            all_scope_findings = [f for fl in r_hosts.values() for f in fl]
+            crits = sum(1 for x in all_scope_findings if (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) >= 9.0)
+            highs = sum(1 for x in all_scope_findings if 7.0 <= (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) < 9.0)
+            meds = scope_total - crits - highs
 
-            lines.append(f"🎯 *Target:* `{t_name}` ({len(t_findings)} findings)")
+            lines.append(f"🏛️ *Root Scope:* `{r_name}` ({scope_total} findings across {len(r_hosts)} hosts)")
             lines.append(f"   🔴 {crits} Critical | 🟠 {highs} High | 🟡 {meds} Other")
-            lines.append(f"   👉 View target: `/findings {t_name}`")
+            for h_name, h_list in sorted(r_hosts.items())[:3]:
+                lines.append(f"   • 🌐 `{h_name}`: {len(h_list)} findings")
+            if len(r_hosts) > 3:
+                lines.append(f"   • _... +{len(r_hosts) - 3} more subdomains_")
+            lines.append(f"   👉 View scope: `/findings {r_name}`")
             lines.append("")
 
-        return truncate_message("\n".join(lines))
+        return truncate_message("\n".join(lines).strip())
 
     def format_scope_card(self, scope_config: Dict[str, Any]) -> str:
         """
@@ -431,13 +536,13 @@ def run_self_tests() -> bool:
     assert r"\#" in escaped
     print("  [PASS] Test 5: Verify markdown escaping of special characters in raw tool output.")
 
-    # Test 6: Target-partitioned findings rendering (Operator update requirement)
+    # Test 6: 2-Tier Hierarchical Scopes & Subdomain Isolation (Operator Requirement)
     findings_dataset = [
         {
             "finding": {
                 "id": "F-001",
-                "title": "SQL Injection",
-                "target": "targetA.com:443",
+                "title": "SQL Injection in User Search",
+                "target": "https://api.targetA.com:443/search",
                 "cwe_id": "CWE-89",
                 "severity": {"score": 9.5, "level": "critical"},
             }
@@ -445,26 +550,47 @@ def run_self_tests() -> bool:
         {
             "finding": {
                 "id": "F-002",
+                "title": "Authentication Bypass",
+                "target": "https://auth.targetA.com/login",
+                "cwe_id": "CWE-287",
+                "severity": {"score": 8.0, "level": "high"},
+            }
+        },
+        {
+            "finding": {
+                "id": "F-003",
                 "title": "Cross-Site Scripting",
-                "target": "targetB.com",
+                "target": "https://targetB.com/profile",
                 "cwe_id": "CWE-79",
                 "severity": {"score": 6.5, "level": "medium"},
             }
         },
     ]
-    # Check overview partitions targets
-    overview = formatter.format_findings_overview(findings_dataset)
-    assert "targetA.com" in overview
-    assert "targetB.com" in overview
-    assert "/findings targetA.com" in overview
 
-    # Check target-specific filtered rendering isolates targetA from targetB
-    target_a_card = formatter.format_findings_overview(findings_dataset, filter_target="targetA.com")
-    assert "targetA.com" in target_a_card
-    assert "SQL Injection" in target_a_card
-    assert "targetB.com" not in target_a_card
-    assert "Cross-Site Scripting" not in target_a_card
-    print("  [PASS] Test 6: Target-partitioned findings isolation and /findings <target> verified.")
+    # Check overview groups under Root Scope Domain, listing subdomains
+    overview = formatter.format_findings_overview(findings_dataset)
+    assert "targeta.com" in overview
+    assert "targetb.com" in overview
+    assert "api.targeta.com" in overview
+    assert "auth.targeta.com" in overview
+    assert "/findings targeta.com" in overview
+
+    # Check filtering by Root Scope Domain shows all its subdomains
+    root_a_card = formatter.format_findings_overview(findings_dataset, filter_target="targetA.com")
+    assert "targeta.com" in root_a_card.lower()
+    assert "api.targeta.com" in root_a_card
+    assert "auth.targeta.com" in root_a_card
+    assert "SQL Injection" in root_a_card
+    assert "Authentication Bypass" in root_a_card
+    assert "targetb.com" not in root_a_card.lower()
+
+    # Check filtering by specific Subdomain isolates only that host
+    sub_api_card = formatter.format_findings_overview(findings_dataset, filter_target="api.targetA.com")
+    assert "api.targeta.com" in sub_api_card
+    assert "SQL Injection" in sub_api_card
+    assert "auth.targeta.com" not in sub_api_card
+    assert "targetb.com" not in sub_api_card.lower()
+    print("  [PASS] Test 6: 2-tier Hierarchical scope grouping and subdomain filtering verified.")
 
     print("\nAll 6 Channel Card Formatter self-tests PASSED successfully!")
     return True
@@ -473,12 +599,57 @@ def run_self_tests() -> bool:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NIGHTFANG Telegram & Remote Channel Card Formatter")
     parser.add_argument("--test", action="store_true", help="Run automated self-tests")
-    args = parser.parse_args()
+    parser.add_argument("--status", "--status-card", dest="status_card", action="store_true", help="Print formatted Telegram status card")
+    parser.add_argument("--findings", action="store_true", help="Print formatted Telegram findings card")
+    parser.add_argument("--target", type=str, help="Filter findings by root scope or subdomain")
+    parser.add_argument("--scope", action="store_true", help="Print formatted Telegram scope card")
+    args, unknown = parser.parse_known_args()
 
     if args.test:
         success = run_self_tests()
         sys.exit(0 if success else 1)
 
-    # Default action
-    success = run_self_tests()
-    sys.exit(0 if success else 1)
+    formatter = ChannelCardFormatter()
+
+    if args.findings:
+        try:
+            from tools.finding_sync import FindingSyncManager
+            mgr = FindingSyncManager()
+            findings = mgr.get_all_findings()
+        except Exception:
+            findings = []
+        card = formatter.format_findings_overview(findings, filter_target=args.target)
+        print(card)
+        sys.exit(0)
+
+    if args.scope:
+        scope_cfg = {
+            "target": args.target or "target.corp",
+            "allowed_domains": [args.target] if args.target else ["target.corp", "api.target.corp"],
+            "allowed_cidrs": ["10.0.0.0/8"],
+            "out_of_scope_exclusions": ["169.254.169.254 (IMDS)"],
+            "max_requests_per_second": 20,
+        }
+        card = formatter.format_scope_card(scope_cfg)
+        print(card)
+        sys.exit(0)
+
+    # Default action: render status card
+    try:
+        from tools.hud import get_aggregated_state
+        state = get_aggregated_state(target_scope=[args.target] if args.target else None)
+    except Exception:
+        state = {
+            "engagement_id": "ENG-CLI",
+            "target_scope": [args.target or "target.corp"],
+            "autonomy_tier": "SEMI_AUTONOMOUS",
+            "status": "IDLE",
+            "progress": 0.0,
+            "queue_counts": {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+            "active_tasks": [],
+            "rate_backoffs": {},
+            "pending_hitl": [],
+        }
+    card = formatter.format_status_card(state)
+    print(card)
+    sys.exit(0)

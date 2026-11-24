@@ -21,20 +21,10 @@ echo.
 
 if "%~1"=="--daemon" goto :run_daemon
 if "%~1"=="--hunt" goto :run_hunt
-if "%~1"=="--status-card" (
-    python "%NIGHTFANG_ROOT%\tools\channel_card.py" %*
-    goto :eof
-)
-if "%~1"=="--sync" (
-    shift
-    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --sync %*
-    goto :eof
-)
-if "%~1"=="--verify" (
-    shift
-    python "%NIGHTFANG_ROOT%\tools\verifier.py" %*
-    goto :eof
-)
+if "%~1"=="--status-card" goto :run_status_card
+if "%~1"=="--sync" goto :run_sync
+if "%~1"=="--verify" goto :run_verify
+if "%~1"=="--verify-canary" goto :run_verify_canary
 if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\gateway.py" || exit /b 1
@@ -109,4 +99,52 @@ if not "%~1"=="" (
     goto :hunt_loop
 )
 python "%NIGHTFANG_ROOT%\tools\daemon.py" --continuous%NF_ARGS%
+goto :eof
+
+:run_status_card
+shift
+set "NF_ARGS="
+:status_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :status_loop
+)
+python "%NIGHTFANG_ROOT%\tools\channel_card.py" --status-card!NF_ARGS!
+goto :eof
+
+:run_sync
+shift
+set "NF_ARGS="
+:sync_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :sync_loop
+)
+python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --sync!NF_ARGS!
+goto :eof
+
+:run_verify
+shift
+set "NF_ARGS="
+:verify_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :verify_loop
+)
+python "%NIGHTFANG_ROOT%\tools\verifier.py" --verify!NF_ARGS!
+goto :eof
+
+:run_verify_canary
+shift
+set "NF_ARGS="
+:canary_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :canary_loop
+)
+python "%NIGHTFANG_ROOT%\tools\verifier.py" --verify-canary!NF_ARGS!
 goto :eof

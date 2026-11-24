@@ -5,10 +5,12 @@ NIGHTFANG Finding Persistence, Deduplication & MCP Knowledge Graph Bridge (tools
 Responsibilities:
 1. Normalizes findings using schemas/validator.py.
 2. Deterministic Deduplication: Uses `f"{normalized_target}:{cwe_id}:{endpoint_or_port}"` identity key.
-3. Multi-Target Partitioning: Maintains partitioned index by target/domain and engagement/session so
-   findings for distinct targets/chats never mix up.
+3. 2-Tier Hierarchical Scope Partitioning: Organizes findings under root scope domains
+   (e.g. `target.corp` -> `hosts`: `api.target.corp`, `auth.target.corp`), ensuring subdomains
+   do not become separate top-level targets while maintaining per-host granularity.
 4. MCP Knowledge Graph Bridge: Generates `@modelcontextprotocol/server-memory` JSONL records for
-   `memory/knowledge_graph.jsonl` linking targets, vulnerabilities, CWE weaknesses, and D3FEND defenses.
+   `memory/knowledge_graph.jsonl` linking root scopes, assets/subdomains, vulnerabilities,
+   CWE weaknesses, and D3FEND defenses.
 5. Thread-safe/Atomic persistence for `findings.json`.
 """
 
@@ -36,23 +38,73 @@ except ImportError:
     from validator import FindingValidator, ValidationReport
 
 
-def normalize_target_key(target: str) -> str:
-    """Extract host/domain part from target string (e.g. https://api.corp.com:443/v1 -> api.corp.com)."""
-    t = target.strip()
+def normalize_target_host(target: str) -> str:
+    """
+    Extract host/domain/IP part from target string (e.g. https://api.corp.com:443/v1 -> api.corp.com).
+    """
+    t = str(target).strip()
+    if not t:
+        return "general"
     # Strip protocol
     if "://" in t:
         t = t.split("://", 1)[1]
-    # Strip path
+    # Strip path / query
     if "/" in t:
         t = t.split("/", 1)[0]
-    # Strip port if present
+    # Strip userinfo if present
+    if "@" in t:
+        t = t.split("@", 1)[1]
+    # Strip port if present (handle IPv6 brackets)
     if ":" in t:
-        t = t.split(":", 1)[0]
-    return t.lower()
+        if t.startswith("[") and "]" in t:
+            t = t.split("]")[0] + "]"
+        else:
+            t = t.split(":", 1)[0]
+    return t.strip().lower()
+
+
+def is_ip_address(host: str) -> bool:
+    """Check if host is an IPv4 or IPv6 address."""
+    clean = host.strip("[]").strip()
+    # IPv4 check
+    parts = clean.split(".")
+    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+        return True
+    # IPv6 check
+    if ":" in clean:
+        return True
+    return False
+
+
+def extract_root_domain(host: str) -> str:
+    """
+    Extract root/apex domain from host or target URL.
+    Examples:
+      - 'api.corp.test' -> 'corp.test'
+      - 'admin.dev.target.corp' -> 'target.corp'
+      - 'target.corp' -> 'target.corp'
+      - 'sub.example.co.uk' -> 'example.co.uk'
+      - '192.168.1.1' -> '192.168.1.1'
+      - 'localhost' -> 'localhost'
+    """
+    clean_host = normalize_target_host(host)
+    if not clean_host or clean_host == "localhost" or is_ip_address(clean_host):
+        return clean_host or "general"
+
+    labels = clean_host.split(".")
+    if len(labels) <= 2:
+        return clean_host
+
+    # Known second-level country code domain prefixes (e.g. .co.uk, .com.au, .gov.in)
+    cc_second_levels = {"co", "com", "net", "org", "gov", "edu", "ac"}
+    if len(labels) >= 3 and labels[-2] in cc_second_levels and len(labels[-1]) == 2:
+        return ".".join(labels[-3:])
+
+    return ".".join(labels[-2:])
 
 
 class FindingSyncManager:
-    """Manages finding persistence, target isolation, and MCP Knowledge Graph synchronization."""
+    """Manages finding persistence, hierarchical scope isolation, and MCP Knowledge Graph synchronization."""
 
     def __init__(
         self,
@@ -70,17 +122,35 @@ class FindingSyncManager:
 
     def load_findings_store(self) -> Dict[str, Any]:
         """
-        Load findings store with support for both legacy list/dict and partitioned structures.
+        Load findings store with support for both legacy list/dict and hierarchical 2-tier scopes.
         Returns:
             {
                 "version": "2.0",
                 "findings": { dedup_key: finding_obj },
-                "targets": { target_host: [dedup_keys] },
+                "scopes": {
+                    "target.corp": {
+                        "root_domain": "target.corp",
+                        "hosts": {
+                            "api.target.corp": [key1, key2],
+                            "auth.target.corp": [key3]
+                        },
+                        "total_findings": 3
+                    }
+                },
+                "targets": { host: [keys] },
                 "updated_at": ISO8601
             }
         """
+        default_store: Dict[str, Any] = {
+            "version": "2.0",
+            "findings": {},
+            "scopes": {},
+            "targets": {},
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
         if not os.path.exists(self.findings_path):
-            return {"version": "2.0", "findings": {}, "targets": {}, "updated_at": datetime.now(timezone.utc).isoformat()}
+            return default_store
 
         try:
             with open(self.findings_path, "r", encoding="utf-8") as f:
@@ -88,32 +158,66 @@ class FindingSyncManager:
 
             if isinstance(data, list):
                 # Legacy array format migration
-                store: Dict[str, Any] = {
-                    "version": "2.0",
-                    "findings": {},
-                    "targets": {},
-                    "updated_at": datetime.now(timezone.utc).isoformat(),
-                }
+                store = dict(default_store)
                 for item in data:
                     key = self.compute_dedup_key(item)
                     store["findings"][key] = item
-                    t_host = normalize_target_key(item.get("finding", item).get("target", "general"))
-                    store["targets"].setdefault(t_host, []).append(key)
+                    host = normalize_target_host(item.get("finding", item).get("target", "general"))
+                    root = extract_root_domain(host)
+
+                    # Update scopes
+                    scope_entry = store["scopes"].setdefault(root, {
+                        "root_domain": root,
+                        "hosts": {},
+                        "total_findings": 0,
+                    })
+                    host_keys = scope_entry["hosts"].setdefault(host, [])
+                    if key not in host_keys:
+                        host_keys.append(key)
+                    scope_entry["total_findings"] = sum(len(v) for v in scope_entry["hosts"].values())
+
+                    # Update targets
+                    store["targets"].setdefault(host, []).append(key)
                 return store
 
             if isinstance(data, dict):
-                if "findings" not in data:
-                    data = {"version": "2.0", "findings": data, "targets": {}, "updated_at": datetime.now(timezone.utc).isoformat()}
-                if "targets" not in data:
-                    data["targets"] = {}
-                    for k, item in data.get("findings", {}).items():
-                        t_host = normalize_target_key(item.get("finding", item).get("target", "general"))
-                        data["targets"].setdefault(t_host, []).append(k)
-                return data
+                findings_map = data.get("findings", {})
+                scopes_map = data.get("scopes", {})
+                targets_map = data.get("targets", {})
+
+                # If scopes not yet built, build from findings
+                if not scopes_map:
+                    scopes_map = {}
+                    for k, item in findings_map.items():
+                        host = normalize_target_host(item.get("finding", item).get("target", "general"))
+                        root = extract_root_domain(host)
+                        scope_entry = scopes_map.setdefault(root, {
+                            "root_domain": root,
+                            "hosts": {},
+                            "total_findings": 0,
+                        })
+                        host_keys = scope_entry["hosts"].setdefault(host, [])
+                        if k not in host_keys:
+                            host_keys.append(k)
+                        scope_entry["total_findings"] = sum(len(v) for v in scope_entry["hosts"].values())
+
+                if not targets_map:
+                    targets_map = {}
+                    for k, item in findings_map.items():
+                        host = normalize_target_host(item.get("finding", item).get("target", "general"))
+                        targets_map.setdefault(host, []).append(k)
+
+                return {
+                    "version": "2.0",
+                    "findings": findings_map,
+                    "scopes": scopes_map,
+                    "targets": targets_map,
+                    "updated_at": data.get("updated_at", datetime.now(timezone.utc).isoformat()),
+                }
         except Exception:
             pass
 
-        return {"version": "2.0", "findings": {}, "targets": {}, "updated_at": datetime.now(timezone.utc).isoformat()}
+        return default_store
 
     def save_findings_store(self, store: Dict[str, Any]) -> bool:
         """Atomic write to findings store to avoid corruption under concurrency."""
@@ -147,7 +251,6 @@ class FindingSyncManager:
         if endpoints_list and isinstance(endpoints_list, list):
             endpoint = str(endpoints_list[0]).strip().lower()
         if not endpoint:
-            # Check title or category as discriminator
             endpoint = str(inner.get("title", "")).strip().lower()
 
         # Sanitize key
@@ -163,7 +266,7 @@ class FindingSyncManager:
         """
         Synchronize a single finding:
         1. Validates finding schema.
-        2. Deduplicates & updates findings.json (partitioned by target).
+        2. Deduplicates & updates findings.json with 2-tier hierarchical scope partitioning.
         3. Appends entities & relations to MCP knowledge_graph.jsonl.
         """
         inner = finding_data.get("finding", finding_data)
@@ -178,20 +281,32 @@ class FindingSyncManager:
             return False, err_msg, {}
 
         # Prepare normalized payload
-        payload = {"finding": inner} if "finding" not in finding_data else finding_data
+        payload = {"finding": inner} if "finding" not in finding_data else dict(finding_data)
         if session_id:
             payload["session_id"] = session_id
 
-        # Compute dedup key
+        # Compute dedup key and hierarchy
         dedup_key = self.compute_dedup_key(payload)
-        target_host = normalize_target_key(inner.get("target", "general"))
+        target_host = normalize_target_host(inner.get("target", "general"))
+        root_domain = extract_root_domain(target_host)
 
         # Load & update findings store
         store = self.load_findings_store()
         is_update = dedup_key in store["findings"]
         store["findings"][dedup_key] = payload
 
-        # Update target partitioning index
+        # Update 2-tier Hierarchical Scopes
+        scope_entry = store["scopes"].setdefault(root_domain, {
+            "root_domain": root_domain,
+            "hosts": {},
+            "total_findings": 0,
+        })
+        host_keys = scope_entry["hosts"].setdefault(target_host, [])
+        if dedup_key not in host_keys:
+            host_keys.append(dedup_key)
+        scope_entry["total_findings"] = sum(len(k_list) for k_list in scope_entry["hosts"].values())
+
+        # Update backward-compatible targets map
         target_keys = store["targets"].setdefault(target_host, [])
         if dedup_key not in target_keys:
             target_keys.append(dedup_key)
@@ -200,8 +315,8 @@ class FindingSyncManager:
         if not save_ok:
             return False, "Failed to save findings store atomically", {}
 
-        # Emit to MCP Knowledge Graph
-        self.emit_to_knowledge_graph(inner, target_host)
+        # Emit to MCP Knowledge Graph with Root Domain -> Subdomain -> Vulnerability hierarchy
+        self.emit_to_knowledge_graph(inner, target_host=target_host, root_domain=root_domain)
 
         status_msg = "Updated existing finding" if is_update else "Ingested new finding"
         return True, f"{status_msg} [{dedup_key}]", payload
@@ -213,7 +328,7 @@ class FindingSyncManager:
         target_override: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Synchronize a batch of findings."""
-        results = {
+        results: Dict[str, Any] = {
             "total": len(findings_list),
             "ingested": 0,
             "failed": 0,
@@ -231,29 +346,54 @@ class FindingSyncManager:
         return results
 
     def get_findings_for_target(self, target: str) -> List[Dict[str, Any]]:
-        """Retrieve findings strictly partitioned for a given target."""
+        """
+        Retrieve findings strictly partitioned for a given target.
+        - If target matches a root domain (e.g. 'target.corp'), returns all findings across its subdomains.
+        - If target matches a specific host (e.g. 'api.target.corp'), returns findings for that specific host.
+        """
         store = self.load_findings_store()
-        t_norm = normalize_target_key(target)
-        keys = store.get("targets", {}).get(t_norm, [])
-        if not keys:
-            # Fallback search
-            matched = []
-            for k, f in store.get("findings", {}).items():
-                inner = f.get("finding", f)
-                if t_norm in normalize_target_key(inner.get("target", "")):
-                    matched.append(f)
-            return matched
-        return [store["findings"][k] for k in keys if k in store.get("findings", {})]
+        t_clean = normalize_target_host(target)
+        root = extract_root_domain(t_clean)
+
+        # 1. Exact root domain match: collect all findings across all hosts under this scope
+        if t_clean in store.get("scopes", {}):
+            scope_entry = store["scopes"][t_clean]
+            all_keys: List[str] = []
+            for h_keys in scope_entry.get("hosts", {}).values():
+                all_keys.extend(h_keys)
+            return [store["findings"][k] for k in all_keys if k in store.get("findings", {})]
+
+        # 2. Exact host match in scopes or targets
+        if t_clean in store.get("targets", {}):
+            keys = store["targets"][t_clean]
+            return [store["findings"][k] for k in keys if k in store.get("findings", {})]
+
+        # Check inside scopes for specific host
+        if root in store.get("scopes", {}):
+            hosts_map = store["scopes"][root].get("hosts", {})
+            if t_clean in hosts_map:
+                keys = hosts_map[t_clean]
+                return [store["findings"][k] for k in keys if k in store.get("findings", {})]
+
+        # 3. Fallback search: match substring
+        matched = []
+        for k, f in store.get("findings", {}).items():
+            inner = f.get("finding", f)
+            f_target = normalize_target_host(inner.get("target", ""))
+            if t_clean in f_target or f_target in t_clean:
+                matched.append(f)
+        return matched
 
     def get_all_findings(self) -> List[Dict[str, Any]]:
         """Retrieve all findings."""
         store = self.load_findings_store()
         return list(store.get("findings", {}).values())
 
-    def emit_to_knowledge_graph(self, finding: Dict[str, Any], target_host: str) -> None:
+    def emit_to_knowledge_graph(self, finding: Dict[str, Any], target_host: str, root_domain: str) -> None:
         """
         Append entity and relation records to memory/knowledge_graph.jsonl conforming to
-        @modelcontextprotocol/server-memory specification.
+        @modelcontextprotocol/server-memory specification, establishing the 2-tier hierarchy:
+        Root Scope Domain -> Subdomain/Asset -> Vulnerability -> WeaknessClass -> Countermeasure.
         """
         fid = finding.get("id", "FINDING-UNKNOWN")
         title = finding.get("title", "Security Finding")
@@ -265,15 +405,19 @@ class FindingSyncManager:
         countermeasures = d3fend.get("countermeasures", []) if isinstance(d3fend, dict) else []
         d3_id = countermeasures[0].get("id", "D3-PSA") if countermeasures else "D3-PSA"
 
-        now_iso = datetime.now(timezone.utc).isoformat()
-
-        # Entities to write
+        # Entities: Scope, Asset (Subdomain), Vulnerability, WeaknessClass, Countermeasure
         entities = [
+            {
+                "type": "entity",
+                "name": root_domain,
+                "entityType": "Scope",
+                "observations": [f"Root scope domain: {root_domain}"],
+            },
             {
                 "type": "entity",
                 "name": target_host,
                 "entityType": "Asset",
-                "observations": [f"Target host evaluated during penetration testing: {target_host}"],
+                "observations": [f"Host/subdomain under root scope {root_domain}: {target_host}"],
             },
             {
                 "type": "entity",
@@ -298,8 +442,14 @@ class FindingSyncManager:
             },
         ]
 
-        # Relations to write
+        # Relations: Root Scope -> Subdomain -> Vulnerability -> CWE / D3FEND
         relations = [
+            {
+                "type": "relation",
+                "from": root_domain,
+                "to": target_host,
+                "relationType": "has_subdomain",
+            },
             {
                 "type": "relation",
                 "from": target_host,
@@ -449,16 +599,18 @@ def run_self_tests() -> bool:
         assert len(store_after["findings"]) == 1, "Duplicate finding was incorrectly added instead of deduplicated"
         print("  [PASS] Test 2: Deterministic deduplication updates record without duplication.")
 
-        # Test 3: MCP Knowledge Graph JSONL schema compliance
+        # Test 3: MCP Knowledge Graph JSONL schema compliance with 2-tier Scope hierarchy
         with open(test_kg_path, "r", encoding="utf-8") as f:
             lines = [json.loads(line.strip()) for line in f if line.strip()]
         entity_types = {item.get("entityType") for item in lines if item.get("type") == "entity"}
+        assert "Scope" in entity_types, f"Expected 'Scope' in entity_types: {entity_types}"
         assert "Asset" in entity_types
         assert "Vulnerability" in entity_types
         assert "WeaknessClass" in entity_types
         assert "Countermeasure" in entity_types
 
         relation_types = {item.get("relationType") for item in lines if item.get("type") == "relation"}
+        assert "has_subdomain" in relation_types, f"Expected 'has_subdomain' in relation_types: {relation_types}"
         assert "has_vulnerability" in relation_types
         assert "classified_as" in relation_types
         assert "remediated_by" in relation_types
@@ -471,27 +623,73 @@ def run_self_tests() -> bool:
         assert "Schema validation failed" in bad_msg
         print("  [PASS] Test 4: Corrupt finding correctly rejected by validation gate.")
 
-        # Test 5: Target Partitioning & Cross-Target Isolation (Operator requirement)
+        # Test 5: 2-Tier Hierarchical Scopes & Subdomain Target Isolation (Operator Requirement)
         import copy
-        target_b_finding = copy.deepcopy(sample_finding)
-        target_b_finding["id"] = "NF-2026-0043"
-        target_b_finding["target"] = "https://targetb.test/api/v1/export"
-        target_b_finding["reproduction"][0]["command"] = "curl -s https://targetb.test/api/v1/export"
+        # Subdomain 2 under same root scope (corp.test)
+        target_a_sub2 = copy.deepcopy(sample_finding)
+        target_a_sub2["id"] = "NF-2026-0043"
+        target_a_sub2["title"] = "Authentication Bypass in Auth Portal"
+        target_a_sub2["target"] = "https://auth.corp.test/login"
+        target_a_sub2["cwe_id"] = "CWE-287"
+        target_a_sub2["reproduction"][0]["command"] = "curl -s https://auth.corp.test/login"
 
+        # Completely different root scope (targetb.test)
+        target_b_finding = copy.deepcopy(sample_finding)
+        target_b_finding["id"] = "NF-2026-0044"
+        target_b_finding["title"] = "Stored Cross-Site Scripting"
+        target_b_finding["target"] = "https://targetb.test/profile"
+        target_b_finding["cwe_id"] = "CWE-79"
+        target_b_finding["reproduction"][0]["command"] = "curl -s https://targetb.test/profile"
+
+        ok_a2, _, _ = mgr.sync_finding({"finding": target_a_sub2})
+        assert ok_a2
         ok_b, _, _ = mgr.sync_finding({"finding": target_b_finding})
         assert ok_b
 
-        # Retrieve isolated findings
-        findings_a = mgr.get_findings_for_target("api.corp.test")
-        findings_b = mgr.get_findings_for_target("targetb.test")
-        assert len(findings_a) == 1
-        assert len(findings_b) == 1
-        assert findings_a[0]["finding"]["id"] == "NF-2026-0042"
-        assert findings_b[0]["finding"]["id"] == "NF-2026-0043"
-        # Verify no cross-pollution
-        assert "targetb" not in findings_a[0]["finding"]["target"]
-        assert "api.corp.test" not in findings_b[0]["finding"]["target"]
-        print("  [PASS] Test 5: Target partitioning and strict target isolation verified.")
+        # Verify hierarchical store structure
+        store = mgr.load_findings_store()
+        assert "scopes" in store
+        assert "corp.test" in store["scopes"]
+        assert "targetb.test" in store["scopes"]
+
+        corp_scope = store["scopes"]["corp.test"]
+        assert corp_scope["root_domain"] == "corp.test"
+        assert "api.corp.test" in corp_scope["hosts"]
+        assert "auth.corp.test" in corp_scope["hosts"]
+        assert corp_scope["total_findings"] == 2
+
+        # Verify querying root domain returns all subdomains under that scope
+        root_corp_findings = mgr.get_findings_for_target("corp.test")
+        assert len(root_corp_findings) == 2
+        f_ids = {f["finding"]["id"] for f in root_corp_findings}
+        assert "NF-2026-0042" in f_ids
+        assert "NF-2026-0043" in f_ids
+        assert "NF-2026-0044" not in f_ids
+
+        # Verify querying specific subdomain isolates only that subdomain
+        api_findings = mgr.get_findings_for_target("api.corp.test")
+        assert len(api_findings) == 1
+        assert api_findings[0]["finding"]["id"] == "NF-2026-0042"
+
+        auth_findings = mgr.get_findings_for_target("auth.corp.test")
+        assert len(auth_findings) == 1
+        assert auth_findings[0]["finding"]["id"] == "NF-2026-0043"
+
+        # Verify root targetb.test is completely isolated
+        targetb_findings = mgr.get_findings_for_target("targetb.test")
+        assert len(targetb_findings) == 1
+        assert targetb_findings[0]["finding"]["id"] == "NF-2026-0044"
+        print("  [PASS] Test 5: Hierarchical scope structure and strict target isolation verified.")
+
+        # Test 6: Root domain extraction across edge cases
+        assert extract_root_domain("api.corp.test") == "corp.test"
+        assert extract_root_domain("admin.dev.target.corp") == "target.corp"
+        assert extract_root_domain("target.corp") == "target.corp"
+        assert extract_root_domain("sub.example.co.uk") == "example.co.uk"
+        assert extract_root_domain("192.168.1.1") == "192.168.1.1"
+        assert extract_root_domain("localhost") == "localhost"
+        assert extract_root_domain("https://api.v2.internal.net:8443/test") == "internal.net"
+        print("  [PASS] Test 6: Root domain extraction across diverse formats verified.")
 
     finally:
         # Cleanup temp directory
@@ -511,32 +709,51 @@ def run_self_tests() -> bool:
         except OSError:
             pass
 
-    print("\nAll 5 Finding Sync & Knowledge Graph self-tests PASSED successfully!")
+    print("\nAll 6 Finding Sync & Knowledge Graph self-tests PASSED successfully!")
     return True
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NIGHTFANG Finding Sync & Knowledge Graph Bridge")
     parser.add_argument("--test", action="store_true", help="Run automated self-tests")
-    parser.add_argument("--sync", type=str, help="Path to JSON file containing findings to sync")
+    parser.add_argument("--sync", nargs="?", const="default", type=str, help="Path to JSON file containing findings to sync")
     parser.add_argument("--target", type=str, help="Target override or target filter")
-    args = parser.parse_args()
+    parser.add_argument("--list", action="store_true", help="List stored findings summary")
+    args, unknown = parser.parse_known_args()
 
     if args.test:
         success = run_self_tests()
         sys.exit(0 if success else 1)
 
     if args.sync:
-        if not os.path.exists(args.sync):
-            print(f"[!] Input file '{args.sync}' not found.")
+        sync_path = args.sync
+        if sync_path == "default":
+            sync_path = os.path.join(repo_root, "memory", "findings.json")
+            if not os.path.exists(sync_path):
+                # Fallback to self-tests
+                success = run_self_tests()
+                sys.exit(0 if success else 1)
+        if not os.path.exists(sync_path):
+            print(f"[!] Input file '{sync_path}' not found.")
             sys.exit(1)
-        with open(args.sync, "r", encoding="utf-8") as f:
+        with open(sync_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        findings_list = data if isinstance(data, list) else [data]
+        findings_list = data if isinstance(data, list) else (list(data["findings"].values()) if isinstance(data, dict) and "findings" in data else [data])
         mgr = FindingSyncManager()
         res = mgr.sync_batch(findings_list, target_override=args.target)
         print(f"[*] Sync Complete: Ingested={res['ingested']}, Failed={res['failed']}")
         sys.exit(0 if res["failed"] == 0 else 1)
+
+    if args.list:
+        mgr = FindingSyncManager()
+        store = mgr.load_findings_store()
+        scopes = store.get("scopes", {})
+        print(f"[*] Total Scopes: {len(scopes)} | Total Findings: {len(store.get('findings', {}))}")
+        for s_name, s_data in scopes.items():
+            print(f"  Scope: {s_name} ({s_data.get('total_findings', 0)} findings across {len(s_data.get('hosts', {}))} hosts)")
+            for h_name, h_keys in s_data.get("hosts", {}).items():
+                print(f"    Host: {h_name} -> {len(h_keys)} findings")
+        sys.exit(0)
 
     # Default action
     success = run_self_tests()
