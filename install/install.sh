@@ -256,7 +256,8 @@ elif [ "\$1" = "--hunt" ]; then
     shift
     exec python3 "\$NIGHTFANG_ROOT/tools/daemon.py" --continuous "\$@"
 elif [ "\$1" = "--test" ]; then
-    python3 -m unittest discover "\$NIGHTFANG_ROOT/tests" -v
+    python3 "\$NIGHTFANG_ROOT/tools/daemon.py" --test
+    python3 "\$NIGHTFANG_ROOT/tools/gateway.py"
     exit 0
 fi
 
