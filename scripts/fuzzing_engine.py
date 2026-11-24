@@ -55,13 +55,23 @@ class CoverageTracker:
         self.covered_inputs.add(input_hash)
         return new
 
-    def record_crash(self, case: FuzzTestCase, response_text: str):
-        self.crashes.append({
-            "hash": case.hash_signature,
-            "input_preview": case.input_data[:200],
-            "mutation_type": case.mutation_type,
-            "response_excerpt": response_text[:500],
-        })
+    def record_crash(self, case: Any, response_text: str):
+        if isinstance(case, FuzzTestCase):
+            self.crashes.append({
+                "hash": case.hash_signature,
+                "input_preview": case.input_data[:200],
+                "mutation_type": str(case.mutation_type),
+                "response_excerpt": response_text[:500],
+            })
+        else:
+            inp = str(case)
+            sig = hashlib.sha256(inp.encode()).hexdigest()[:16]
+            self.crashes.append({
+                "hash": sig,
+                "input_preview": inp[:200],
+                "mutation_type": "unknown",
+                "response_excerpt": response_text[:500],
+            })
 
     def stats(self) -> Dict:
         return {
@@ -121,6 +131,42 @@ class FuzzingEngine:
             self.tracker.total_mutations += 1
         return cases
 
+    def evaluate(self, fuzzed_input: Any, evaluator: Any) -> Any:
+        """Evaluate a single test case or raw input with the evaluator function."""
+        is_case = isinstance(fuzzed_input, FuzzTestCase)
+        raw_input = fuzzed_input.input_data if is_case else str(fuzzed_input)
+
+        try:
+            result = evaluator(raw_input)
+            actual = result.get("body", "")[:500] if isinstance(result, dict) else str(result)[:500]
+            timing = result.get("duration_ms", 0) if isinstance(result, dict) else 0
+            crash = (
+                (result.get("crash", False) or result.get("status") in (0, None))
+                if isinstance(result, dict)
+                else False
+            )
+            if is_case:
+                fuzzed_input.actual_response = actual
+                fuzzed_input.timing_delta = timing
+                fuzzed_input.crash_detected = crash
+                self.tracker.record_hit(fuzzed_input.hash_signature)
+                if crash:
+                    self.tracker.record_crash(fuzzed_input, actual)
+            else:
+                sig = hashlib.sha256(raw_input.encode()).hexdigest()[:16]
+                self.tracker.record_hit(sig)
+                if crash:
+                    self.tracker.record_crash(fuzzed_input, actual)
+            return result
+        except Exception as e:
+            if is_case:
+                fuzzed_input.crash_detected = True
+                fuzzed_input.actual_response = str(e)[:500]
+            self.tracker.record_crash(fuzzed_input, str(e))
+            if is_case:
+                return fuzzed_input
+            raise
+
     def run_and_evaluate(self, cases: List[FuzzTestCase], evaluator) -> List[FuzzTestCase]:
         """Run test cases through evaluator function and collect results."""
         results = []
@@ -130,12 +176,13 @@ class FuzzingEngine:
                 case.actual_response = result.get("body", "")[:500]
                 case.timing_delta = result.get("duration_ms", 0)
                 case.crash_detected = result.get("crash", False) or result.get("status") in (0, None)
-                new_cover = self.tracker.record_hit(case.hash_signature)
+                self.tracker.record_hit(case.hash_signature)
                 if case.crash_detected:
                     self.tracker.record_crash(case, case.actual_response or "")
             except Exception as e:
                 case.crash_detected = True
                 case.actual_response = str(e)[:500]
+                self.tracker.record_crash(case, str(e))
             results.append(case)
         return results
 
@@ -156,4 +203,15 @@ if __name__ == "__main__":
     cases = engine.generate_test_cases(base_input="q=test", count=8)
     for c in cases:
         print(f"  [{c.mutation_type}] hash={c.hash_signature} input={c.input_data[:60]}...")
-    print(f"\nCoverage: {json.dumps(engine.tracker.stats(), indent=2)}")
+
+    def failing_evaluator(inp):
+        if ".." in inp or "%" in inp:
+            raise ConnectionResetError("Server crashed with SIGSEGV")
+        return {"status": 200, "body": "OK"}
+
+    engine.run_and_evaluate(cases, failing_evaluator)
+    rep = engine.report()
+    assert rep["stats"]["crashes_found"] > 0, "Crashes must be recorded on exception"
+    assert len(rep["crashes"]) > 0, "Crash list must not be empty"
+    print(f"\n[PASS] Fuzzing Engine Crash Recording verified: {rep['stats']['crashes_found']} crashes captured.")
+    print(f"Coverage: {json.dumps(rep['stats'], indent=2)}")
