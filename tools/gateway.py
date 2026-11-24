@@ -123,20 +123,26 @@ class TargetSpec:
             parsed = urllib.parse.urlparse(target_str)
             self.scheme = parsed.scheme.lower() or "http"
             self.hostname = (parsed.hostname or "").strip("[]")
-            if parsed.port:
-                self.port = parsed.port
-            elif self.scheme == "https":
-                self.port = 443
-            elif self.scheme == "http":
-                self.port = 80
+            try:
+                if parsed.port:
+                    self.port = parsed.port
+                elif self.scheme == "https":
+                    self.port = 443
+                elif self.scheme == "http":
+                    self.port = 80
+            except (ValueError, TypeError):
+                self.port = 443 if self.scheme == "https" else 80
         elif target_str.startswith("["):
             # Bracketed IPv6 notation, possibly with port: [2001:db8::1] or [2001:db8::1]:8080
             bracket_end = target_str.find("]")
             if bracket_end != -1:
                 self.hostname = target_str[1:bracket_end]
                 rest = target_str[bracket_end + 1:]
-                if rest.startswith(":") and rest[1:].isdigit():
-                    self.port = int(rest[1:])
+                if rest.startswith(":"):
+                    try:
+                        self.port = int(rest[1:])
+                    except (ValueError, TypeError):
+                        self.port = 0
             else:
                 self.hostname = target_str.strip("[]")
         elif ":" in target_str:
@@ -146,9 +152,12 @@ class TargetSpec:
                 self.hostname = target_str
             except ValueError:
                 parts = target_str.rsplit(":", 1)
-                if len(parts) == 2 and parts[1].isdigit():
+                if len(parts) == 2:
                     self.hostname = parts[0].strip("[]")
-                    self.port = int(parts[1])
+                    try:
+                        self.port = int(parts[1])
+                    except (ValueError, TypeError):
+                        self.port = 0
                 else:
                     self.hostname = target_str.strip("[]")
         else:
@@ -339,12 +348,15 @@ class ExecutionPolicyGateway:
         else:
             host = raw.strip("[]")
 
+        # Strip trailing dot for RFC 1035 FQDN compliance
+        host = host.rstrip(".")
+
         if not host:
             return False
 
         # Domain whitelist matching
         for auth_domain in self.state.config.authorized_domains:
-            auth = auth_domain.lower().strip()
+            auth = auth_domain.lower().strip().rstrip(".")
             if auth.startswith("*."):
                 wildcard_base = auth[2:]
                 if host == wildcard_base or host.endswith("." + wildcard_base):
@@ -456,6 +468,79 @@ class ExecutionPolicyGateway:
                     reason=f"Target [{hostname}] (IP: {target_ip or 'unresolved'}) is not within authorized engagement domains or CIDRs.",
                 )
 
+        # 3. Command template scope validation (Command Scope Decoupling Prevention)
+        if req.command_template:
+            cmd_hosts = set()
+            # Extract destination URLs: e.g. https?://...
+            url_matches = re.findall(r"https?://[^\s\"'<>]+", req.command_template)
+            for u in url_matches:
+                clean_u = u.rstrip(".,;)\"'>")
+                try:
+                    p = urllib.parse.urlparse(clean_u)
+                    h = (p.hostname or "").strip("[]").rstrip(".")
+                    if h:
+                        cmd_hosts.add(h)
+                except Exception:
+                    pass
+
+            # Inspect command tokens for target hostnames and IPs
+            try:
+                tokens = shlex.split(req.command_template, posix=(os.name != "nt"))
+            except ValueError:
+                tokens = req.command_template.strip().split()
+
+            target_flags = {"-u", "--url", "-target", "--target", "--host"}
+            domain_regex = re.compile(
+                r"^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$"
+            )
+            common_file_exts = (
+                ".txt", ".py", ".json", ".yaml", ".yml", ".sh", ".cmd", ".md",
+                ".csv", ".xml", ".html", ".log", ".tar", ".gz", ".zip", ".conf",
+                ".cfg", ".ini", ".bak", ".tmp", ".so", ".dll", ".exe", ".bin"
+            )
+            for i, tok in enumerate(tokens):
+                clean_tok = tok.strip("'\"").rstrip(".,;")
+                if not clean_tok or clean_tok.startswith("-"):
+                    continue
+
+                is_flag_target = i > 0 and tokens[i - 1].lower() in target_flags
+                ip_cand = clean_tok.strip("[]")
+                is_ip = False
+                try:
+                    ipaddress.ip_address(ip_cand)
+                    is_ip = True
+                except ValueError:
+                    pass
+
+                if is_flag_target or is_ip:
+                    if "://" in clean_tok:
+                        try:
+                            p = urllib.parse.urlparse(clean_tok)
+                            h = (p.hostname or "").strip("[]").rstrip(".")
+                            if h:
+                                cmd_hosts.add(h)
+                        except Exception:
+                            pass
+                    elif is_ip:
+                        cmd_hosts.add(ip_cand.rstrip("."))
+                    elif domain_regex.match(clean_tok):
+                        cmd_hosts.add(clean_tok.rstrip("."))
+                else:
+                    if (
+                        domain_regex.match(clean_tok)
+                        and not any(clean_tok.lower().endswith(ext) for ext in common_file_exts)
+                        and not clean_tok.startswith("FUZZ")
+                    ):
+                        cmd_hosts.add(clean_tok.rstrip("."))
+
+            for dest_host in cmd_hosts:
+                if not self._is_in_scope(dest_host):
+                    return GatewayDisposition(
+                        status=DispositionStatus.REJECTED,
+                        code=CODE_SCOPE_VIOLATION,
+                        reason=f"Command template targets out-of-scope host [{dest_host}] under SOP-01: {req.command_template}",
+                    )
+
         return None
 
     # ------------------------------------------------------------------------
@@ -540,19 +625,29 @@ class ExecutionPolicyGateway:
         tool_name = req.tool_name.lower()
 
         if "ffuf" in tool_name or tool_name == "ffuf":
-            rate_match = re.search(r"(?:^|\s)-rate\s+(\d+)", cmd)
+            rate_match = re.search(r"(?:^|\s)-rate(?:\s*=\s*|\s+)(\d+)", cmd)
             if rate_match:
                 specified_rate = int(rate_match.group(1))
                 if specified_rate > active_rate:
-                    cmd = re.sub(r"(?<=\s-rate\s)\d+", str(active_rate), cmd)
+                    cmd = re.sub(
+                        r"((?:^|\s)-rate(?:\s*=\s*|\s+))\d+",
+                        rf"\g<1>{active_rate}",
+                        cmd,
+                        count=1,
+                    )
             else:
                 cmd = f"{cmd} -rate {active_rate}"
         elif "nmap" in tool_name or tool_name == "nmap":
-            rate_match = re.search(r"(?:^|\s)--max-rate\s+(\d+)", cmd)
+            rate_match = re.search(r"(?:^|\s)--max-rate(?:\s*=\s*|\s+)(\d+)", cmd)
             if rate_match:
                 specified_rate = int(rate_match.group(1))
                 if specified_rate > active_rate:
-                    cmd = re.sub(r"(?<=\s--max-rate\s)\d+", str(active_rate), cmd)
+                    cmd = re.sub(
+                        r"((?:^|\s)--max-rate(?:\s*=\s*|\s+))\d+",
+                        rf"\g<1>{active_rate}",
+                        cmd,
+                        count=1,
+                    )
             else:
                 cmd = f"{cmd} --max-rate {active_rate}"
 
@@ -1044,7 +1139,73 @@ def run_self_tests() -> bool:
     assert "-rate 20" in d9.modified_command and "-rate 500" not in d9.modified_command
     print("  [PASS] Test 9: Excessive rate parameter clamped to active ceiling.")
 
-    print("\nAll 9 Gateway self-tests PASSED successfully!")
+    # Test 10: Command Scope Decoupling Intercept
+    req_decoupled = ToolInvocationRequest(
+        request_id="req-10",
+        engagement_id="ENG-2026-ALPHA",
+        agent_id="scanner",
+        skill_id="skills/web",
+        tool_name="curl",
+        target=TargetSpec(raw_target="https://target.corp/"),
+        opsec=OpsecSpec(noise=NoiseProfile.QUIET),
+        command_template="curl https://out-of-scope.net/malicious",
+        action_type=ActionType.PASSIVE_READ,
+        technique="banner-grab",
+    )
+    d10 = gw.evaluate(req_decoupled)
+    assert d10.status == DispositionStatus.REJECTED and d10.code == CODE_SCOPE_VIOLATION
+    print("  [PASS] Test 10: Command scope decoupling blocked out-of-scope command target.")
+
+    # Test 11: RFC 1035 FQDN Trailing Dot Scope Matching
+    assert gw._is_in_scope("target.corp.") is True
+    assert gw._is_in_scope("https://target.corp./api") is True
+    assert gw._is_in_scope("out-of-scope.net.") is False
+    print("  [PASS] Test 11: RFC 1035 FQDN trailing dots handled correctly.")
+
+    # Test 12: Hardened Rate Limit Clamping
+    req_rate_eq = ToolInvocationRequest(
+        request_id="req-12a",
+        engagement_id="ENG-2026-ALPHA",
+        agent_id="scanner",
+        skill_id="skills/web",
+        tool_name="ffuf",
+        target=TargetSpec(raw_target="https://target.corp/"),
+        opsec=OpsecSpec(noise=NoiseProfile.MODERATE),
+        command_template="ffuf -rate=500 -u https://target.corp/FUZZ",
+        action_type=ActionType.ACTIVE_PROBE,
+        technique="fuzz",
+    )
+    d12a = gw.evaluate(req_rate_eq)
+    assert d12a.status == DispositionStatus.APPROVED
+    assert "-rate=20" in d12a.modified_command and "500" not in d12a.modified_command
+
+    req_nmap_eq = ToolInvocationRequest(
+        request_id="req-12b",
+        engagement_id="ENG-2026-ALPHA",
+        agent_id="scanner",
+        skill_id="skills/network",
+        tool_name="nmap",
+        target=TargetSpec(raw_target="https://target.corp/"),
+        opsec=OpsecSpec(noise=NoiseProfile.MODERATE),
+        command_template="nmap --max-rate=500 target.corp",
+        action_type=ActionType.ACTIVE_PROBE,
+        technique="port-scan",
+    )
+    d12b = gw.evaluate(req_nmap_eq)
+    assert d12b.status == DispositionStatus.APPROVED
+    assert "--max-rate=20" in d12b.modified_command and "500" not in d12b.modified_command
+    print("  [PASS] Test 12: Hardened rate limit regexes clamped = and whitespace variants.")
+
+    # Test 13: TargetSpec Port Resilience
+    ts_bad_port = TargetSpec(raw_target="http://target.corp:invalid/")
+    ts_bad_port.parse_target()
+    assert ts_bad_port.port == 80
+    ts_bad_colon = TargetSpec(raw_target="target.corp:notaport")
+    ts_bad_colon.parse_target()
+    assert ts_bad_colon.port == 0
+    print("  [PASS] Test 13: Malformed ports handled cleanly without uncaught exceptions.")
+
+    print("\nAll 13 Gateway self-tests PASSED successfully!")
     return True
 
 
