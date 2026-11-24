@@ -12,6 +12,13 @@ if [ -z "${NIGHTFANG_ROOT:-}" ]; then
     fi
 fi
 
+PYTHON_BIN="python3"
+if ! command -v python3 >/dev/null 2>&1 || ! python3 --version >/dev/null 2>&1; then
+    if command -v python >/dev/null 2>&1 && python --version >/dev/null 2>&1; then
+        PYTHON_BIN="python"
+    fi
+fi
+
 export HERMES_HOME
 export NIGHTFANG_ROOT
 export HERMES_SYSTEM_PROMPT="$HERMES_HOME/nightfang/system.md"
@@ -24,28 +31,32 @@ fi
 
 if [ "$1" = "--daemon" ]; then
     shift
-    exec python3 "$NIGHTFANG_ROOT/tools/daemon.py" "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" "$@"
 elif [ "$1" = "--hunt" ]; then
     shift
-    exec python3 "$NIGHTFANG_ROOT/tools/daemon.py" --continuous "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --continuous "$@"
 elif [ "$1" = "--test" ]; then
-    python3 "$NIGHTFANG_ROOT/tools/daemon.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/gateway.py"
-    python3 "$NIGHTFANG_ROOT/tools/sandbox.py"
-    python3 "$NIGHTFANG_ROOT/schemas/validator.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/ingest.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/hud.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/sandbox.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/schemas/validator.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/ingest.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/hud.py" --test
+    echo ""
+    echo "[*] All tool self-tests passed successfully!"
     exit 0
 elif [ "$1" = "--test-all" ]; then
-    python3 "$NIGHTFANG_ROOT/tools/daemon.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/gateway.py"
-    python3 "$NIGHTFANG_ROOT/tools/sandbox.py"
-    python3 "$NIGHTFANG_ROOT/schemas/validator.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/ingest.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/hud.py" --test
-    python3 "$NIGHTFANG_ROOT/tools/simulation.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/sandbox.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/schemas/validator.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/ingest.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/hud.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/simulation.py" --test
+    echo ""
+    echo "[*] All tool self-tests and E2E simulation passed successfully!"
     exit 0
 fi
 
@@ -54,7 +65,7 @@ if command -v hermes >/dev/null 2>&1; then
 else
     echo "[*] Hermes binary not detected in PATH."
     if [ "$#" -gt 0 ]; then
-        exec python3 "$NIGHTFANG_ROOT/tools/daemon.py" "$@"
+        exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" "$@"
     else
         echo "Usage:"
         echo "  nightfang --daemon --target <domain>    Run continuous autonomous hunter"
@@ -63,6 +74,6 @@ else
         echo "  nightfang --test-all                    Run all self-tests and E2E simulation"
         echo ""
         echo "Starting interactive Autonomous Hunter session..."
-        python3 -i -c "import sys; sys.path.insert(0, '$NIGHTFANG_ROOT/tools'); from daemon import AutonomousHunterDaemon; from gateway import ExecutionPolicyGateway; print('[*] NIGHTFANG Autonomous Hunter and Gateway loaded.')"
+        "$PYTHON_BIN" -i -c "import sys; sys.path.insert(0, '$NIGHTFANG_ROOT/tools'); from daemon import AutonomousHunterDaemon; from gateway import ExecutionPolicyGateway; print('[*] NIGHTFANG Autonomous Hunter and Gateway loaded.')"
     fi
 fi

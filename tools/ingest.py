@@ -172,18 +172,41 @@ class FindingIngestor:
         return record
 
     def parse_nuclei(self, raw_content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """Parse Nuclei output formatted as JSON or JSONL."""
+        """Parse Nuclei output formatted as JSON array, single JSON, or JSONL."""
         findings: List[Dict[str, Any]] = []
         errors: List[str] = []
 
-        lines = [line.strip() for line in raw_content.splitlines() if line.strip()]
-        for idx, line in enumerate(lines, 1):
-            try:
-                item = json.loads(line)
-            except Exception as e:
-                errors.append(f"Nuclei line {idx} parse error: {e}")
-                continue
+        items: List[Dict[str, Any]] = []
+        trimmed = raw_content.strip()
 
+        # Handle top-level JSON array
+        if trimmed.startswith("[") and trimmed.endswith("]"):
+            try:
+                parsed_json = json.loads(trimmed)
+                if isinstance(parsed_json, list):
+                    items = [x for x in parsed_json if isinstance(x, dict)]
+            except Exception as e:
+                errors.append(f"Nuclei JSON array parse error: {e}")
+        elif trimmed.startswith("{") and trimmed.endswith("}"):
+            try:
+                parsed_json = json.loads(trimmed)
+                if isinstance(parsed_json, dict):
+                    items = [parsed_json]
+            except Exception:
+                pass
+
+        if not items:
+            # Fallback to line-by-line JSONL
+            lines = [line.strip() for line in raw_content.splitlines() if line.strip()]
+            for idx, line in enumerate(lines, 1):
+                try:
+                    item = json.loads(line)
+                    if isinstance(item, dict):
+                        items.append(item)
+                except Exception as e:
+                    errors.append(f"Nuclei line {idx} parse error: {e}")
+
+        for item in items:
             info = item.get("info", {})
             title = info.get("name") or item.get("template-id", "Unknown Nuclei Finding")
             target = item.get("matched-at") or item.get("host", "unknown-target")
@@ -217,48 +240,54 @@ class FindingIngestor:
         return findings, errors
 
     def parse_nmap(self, raw_content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """Parse Nmap text scan output extracting open ports and discovered services."""
+        """Parse Nmap text scan output extracting open ports and discovered services across single or multi-host scans."""
         findings: List[Dict[str, Any]] = []
         errors: List[str] = []
 
-        # Find host
-        host_match = re.search(r"Nmap scan report for ([^\s]+)", raw_content)
-        target_host = host_match.group(1) if host_match else "discovered-host"
-
-        # Regex for open port lines: "80/tcp  open  http  Apache httpd 2.4.41"
-        port_lines = re.findall(r"(\d+/(?:tcp|udp))\s+open\s+([^\s]+)(?:\s+(.*))?", raw_content)
-
-        if not port_lines and "open" in raw_content:
+        if not re.search(r"\d+/(?:tcp|udp)\s+open", raw_content) and "open" in raw_content:
             errors.append("Nmap parser detected 'open' text but could not parse port rows.")
 
-        for port_proto, service_name, version_info in port_lines:
-            version_str = version_info.strip() if version_info else "Unknown Version"
-            full_target = f"{target_host}:{port_proto.split('/')[0]}"
-            title = f"Open Port {port_proto} ({service_name}: {version_str})"
+        # Split on "Nmap scan report for " blocks to cleanly isolate multiple hosts
+        sections = re.split(r"Nmap scan report for\s+", raw_content)
+        for sec in sections:
+            if not sec.strip():
+                continue
+            lines = sec.splitlines()
+            header = lines[0].strip()
+            # Extract host from header: e.g. "api.target.corp (10.0.0.5)" or "10.0.0.5"
+            host_tokens = header.split()
+            current_host = host_tokens[0] if host_tokens else "discovered-host"
+            current_host = current_host.strip("()")
 
-            rec = self._create_normalized_record(
-                title=title,
-                target=full_target,
-                category="network_service_exposure",
-                tool_used="nmap",
-                confidence_score=9,
-                confidence_rationale="TCP/UDP three-way handshake and service probe completed",
-                severity_score=4,
-                severity_level="low",
-                severity_rationale="Exposed network port and banner without active exploit",
-                evidence_data=f"Port: {port_proto} | Service: {service_name} | Version: {version_str}",
-                evidence_description="Nmap service banner probe output",
-                reproduction_cmd=f"nmap -sV -p {port_proto.split('/')[0]} {target_host}",
-                impact_tech="Network surface exposure accessible over network boundary",
-                impact_biz="Enables adversary reconnaissance and service fingerprinting",
-                remediation_guidance="Restrict access to authorized network segments using firewall rules.",
-            )
-            findings.append(rec)
+            port_lines = re.findall(r"(\d+/(?:tcp|udp))\s+open\s+([^\s]+)(?:\s+(.*))?", sec)
+            for port_proto, service_name, version_info in port_lines:
+                version_str = version_info.strip() if version_info else "Unknown Version"
+                full_target = f"{current_host}:{port_proto.split('/')[0]}"
+                title = f"Open Port {port_proto} ({service_name}: {version_str})"
+
+                rec = self._create_normalized_record(
+                    title=title,
+                    target=full_target,
+                    category="network_service_exposure",
+                    tool_used="nmap",
+                    confidence_score=9,
+                    confidence_rationale="TCP/UDP three-way handshake and service probe completed",
+                    severity_score=4,
+                    severity_level="low",
+                    severity_rationale="Exposed network port and banner without active exploit",
+                    evidence_data=f"Port: {port_proto} | Service: {service_name} | Version: {version_str}",
+                    evidence_description="Nmap service banner probe output",
+                    reproduction_cmd=f"nmap -sV -p {port_proto.split('/')[0]} {current_host}",
+                    impact_tech="Network surface exposure accessible over network boundary",
+                    impact_biz="Enables adversary reconnaissance and service fingerprinting",
+                    remediation_guidance="Restrict access to authorized network segments using firewall rules.",
+                )
+                findings.append(rec)
 
         return findings, errors
 
     def parse_semgrep(self, raw_content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """Parse Semgrep SAST JSON results."""
+        """Parse Semgrep SAST JSON results (supporting object wrapper or top-level array)."""
         findings: List[Dict[str, Any]] = []
         errors: List[str] = []
 
@@ -267,8 +296,16 @@ class FindingIngestor:
         except Exception as e:
             return [], [f"Semgrep JSON parse failure: {e}"]
 
-        results = data.get("results", [])
+        if isinstance(data, list):
+            results = data
+        elif isinstance(data, dict):
+            results = data.get("results", [])
+        else:
+            return [], ["Semgrep output format unrecognized (neither object nor array)."]
+
         for item in results:
+            if not isinstance(item, dict):
+                continue
             check_id = item.get("check_id", "semgrep-rule")
             path = item.get("path", "unknown-file")
             extra = item.get("extra", {})
@@ -283,6 +320,7 @@ class FindingIngestor:
                 sev_score, sev_level = 3, "low"
 
             lines = extra.get("lines", "")
+            evidence_text = str(lines).strip() if (isinstance(lines, str) and lines.strip()) else f"AST match: {check_id} - {message}"
             rec = self._create_normalized_record(
                 title=f"Static Analysis Finding: {check_id}",
                 target=f"{path}:{item.get('start', {}).get('line', 1)}",
@@ -293,7 +331,7 @@ class FindingIngestor:
                 severity_score=sev_score,
                 severity_level=sev_level,
                 severity_rationale=f"Semgrep severity {sev_str}: {message[:100]}",
-                evidence_data=str(lines)[:1000],
+                evidence_data=evidence_text[:1000],
                 evidence_description="Source code snippet matching Semgrep AST rule",
                 reproduction_cmd=f"semgrep --config=p/security-audit {path}",
                 impact_tech="Insecure coding pattern identified in code repository",
@@ -305,7 +343,7 @@ class FindingIngestor:
         return findings, errors
 
     def parse_zap(self, raw_content: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """Parse OWASP ZAP or mk-qa-master JSON alert output."""
+        """Parse OWASP ZAP or mk-qa-master JSON alert output supporting site list, single site dict, or top-level alerts."""
         findings: List[Dict[str, Any]] = []
         errors: List[str] = []
 
@@ -314,17 +352,23 @@ class FindingIngestor:
         except Exception as e:
             return [], [f"ZAP JSON parse failure: {e}"]
 
-        # Support both {"site": [{"alerts": [...]}]} and {"alerts": [...]}
         alert_list: List[Dict[str, Any]] = []
-        if "site" in data and isinstance(data["site"], list):
-            for site in data["site"]:
-                alert_list.extend(site.get("alerts", []))
-        elif "alerts" in data and isinstance(data["alerts"], list):
-            alert_list.extend(data["alerts"])
+        if isinstance(data, dict):
+            site_data = data.get("site")
+            if isinstance(site_data, list):
+                for site in site_data:
+                    if isinstance(site, dict):
+                        alert_list.extend(site.get("alerts", []))
+            elif isinstance(site_data, dict):
+                alert_list.extend(site_data.get("alerts", []))
+            elif "alerts" in data and isinstance(data["alerts"], list):
+                alert_list.extend(data["alerts"])
         elif isinstance(data, list):
             alert_list = data
 
         for alert in alert_list:
+            if not isinstance(alert, dict):
+                continue
             title = alert.get("name") or alert.get("alert", "ZAP Alert")
             target = alert.get("url") or alert.get("uri", "http://target.corp")
             risk_desc = alert.get("riskdesc", "Medium").split()[0].lower()
@@ -473,7 +517,52 @@ PORT    STATE SERVICE VERSION
     assert len(err5) > 0, "Corrupted input must record clear descriptive errors without crashing"
     print("  [PASS] Test 5: Corrupted tool output handled gracefully without crashing.")
 
-    print("\nAll 5 Finding Ingestor self-tests PASSED successfully!")
+    # Test 6: Advanced edge cases (Nuclei JSON array, Multi-host Nmap scan, ZAP single site dict)
+    nuclei_arr_sample = json.dumps([
+        {
+            "template-id": "cve-2024-1111",
+            "info": {"name": "SSRF in Webhook", "severity": "critical"},
+            "matched-at": "https://api.target.corp/webhook",
+        }
+    ], indent=2)
+    f6_nuclei, err6_nuclei = ingestor.ingest(nuclei_arr_sample, tool_hint="nuclei")
+    assert len(f6_nuclei) == 1, f"Expected 1 finding from Nuclei JSON array, got {len(f6_nuclei)}"
+
+    multi_nmap = """Nmap scan report for host1.corp (10.0.0.1)
+Host is up.
+PORT   STATE SERVICE
+80/tcp open  http
+Nmap scan report for host2.corp (10.0.0.2)
+Host is up.
+PORT    STATE SERVICE
+443/tcp open  https
+"""
+    f6_nmap, err6_nmap = ingestor.ingest(multi_nmap, tool_hint="nmap")
+    assert len(f6_nmap) == 2, f"Expected 2 findings from multi-host Nmap, got {len(f6_nmap)}"
+    targets = [x["finding"]["target"] for x in f6_nmap]
+    assert "host1.corp:80" in targets and "host2.corp:443" in targets
+
+    zap_single_site = json.dumps({
+        "site": {
+            "@name": "https://api.target.corp",
+            "alerts": [{"alert": "CORS Misconfiguration", "url": "https://api.target.corp/api", "riskdesc": "Medium"}],
+        }
+    })
+    f6_zap, err6_zap = ingestor.ingest(zap_single_site, tool_hint="zap")
+    assert len(f6_zap) == 1, f"Expected 1 finding from ZAP single-site dict, got {len(f6_zap)}"
+
+    semgrep_arr = json.dumps([
+        {
+            "check_id": "hardcoded-secret",
+            "path": "config/keys.py",
+            "extra": {"message": "API key exposed", "severity": "ERROR"},
+        }
+    ])
+    f6_semgrep, err6_semgrep = ingestor.ingest(semgrep_arr, tool_hint="semgrep")
+    assert len(f6_semgrep) == 1, f"Expected 1 finding from Semgrep array, got {len(f6_semgrep)}"
+    print("  [PASS] Test 6: Advanced format variants (Nuclei array, Multi-host Nmap, ZAP single site, Semgrep array) verified.")
+
+    print("\nAll 6 Finding Ingestor self-tests PASSED successfully!")
     return True
 
 

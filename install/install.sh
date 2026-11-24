@@ -402,6 +402,8 @@ elif [ "\$1" = "--test" ]; then
     python3 "\$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
     python3 "\$NIGHTFANG_ROOT/tools/ingest.py" --test
     python3 "\$NIGHTFANG_ROOT/tools/hud.py" --test
+    echo ""
+    echo "[*] All tool self-tests passed successfully!"
     exit 0
 elif [ "\$1" = "--test-all" ]; then
     python3 "\$NIGHTFANG_ROOT/tools/daemon.py" --test
@@ -412,6 +414,8 @@ elif [ "\$1" = "--test-all" ]; then
     python3 "\$NIGHTFANG_ROOT/tools/ingest.py" --test
     python3 "\$NIGHTFANG_ROOT/tools/hud.py" --test
     python3 "\$NIGHTFANG_ROOT/tools/simulation.py" --test
+    echo ""
+    echo "[*] All tool self-tests and E2E simulation passed successfully!"
     exit 0
 fi
 

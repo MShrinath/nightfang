@@ -83,6 +83,9 @@ class MCPGatewayProxy:
 
     def extract_targets(self, tool_name: str, arguments: Dict[str, Any]) -> List[str]:
         """Extract candidate target hostnames, URLs, or IPs from tool call arguments."""
+        if not isinstance(arguments, dict):
+            return ["localhost"]
+
         targets: List[str] = []
         target_keys = ["url", "target", "domain", "host", "ip", "hostname", "endpoint", "uri"]
 
@@ -110,9 +113,17 @@ class MCPGatewayProxy:
                 except Exception:
                     normalized.append(t)
             else:
-                # Strip port if present
-                h = t.split(":")[0] if ":" in t and not t.startswith("[") else t
-                normalized.append(h)
+                # Handle bracketed IPv6 addresses: e.g. [::1]:8080 or [::1]
+                if t.startswith("["):
+                    bracket_end = t.find("]")
+                    if bracket_end != -1:
+                        normalized.append(t[1:bracket_end])
+                    else:
+                        normalized.append(t)
+                else:
+                    # Strip port if present
+                    h = t.split(":")[0] if ":" in t else t
+                    normalized.append(h)
 
         return list(dict.fromkeys(normalized)) if normalized else ["localhost"]
 
@@ -132,15 +143,16 @@ class MCPGatewayProxy:
         return ActionType.PASSIVE_READ, NoiseProfile.QUIET, False
 
     def filter_tool_call(
-        self, tool_name: str, arguments: Dict[str, Any]
+        self, tool_name: str, arguments: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
         """
         Evaluate tool call against Execution Policy Gateway.
         Returns:
             (is_allowed: bool, rejection_reason: Optional[str], modified_arguments: Optional[dict])
         """
-        targets = self.extract_targets(tool_name, arguments)
-        action_type, noise_profile, is_dangerous = self.classify_tool(tool_name, arguments)
+        args_dict = arguments if isinstance(arguments, dict) else {}
+        targets = self.extract_targets(tool_name, args_dict)
+        action_type, noise_profile, is_dangerous = self.classify_tool(tool_name, args_dict)
 
         # Verify scope for all extracted targets
         for tgt in targets:
@@ -166,7 +178,7 @@ class MCPGatewayProxy:
             tool_name=tool_name,
             target=TargetSpec(raw_target=primary_target, hostname=primary_target),
             opsec=OpsecSpec(noise=noise_profile, rationale="MCP tool invocation intercept"),
-            command_template=json.dumps(arguments),
+            command_template=json.dumps(args_dict),
             action_type=action_type,
             technique="MCP_INVOCATION",
         )
@@ -175,7 +187,7 @@ class MCPGatewayProxy:
         if disp.status != DispositionStatus.APPROVED:
             return False, f"GATEWAY DISPOSITION: {disp.reason} (code: {disp.code})", None
 
-        return True, None, arguments
+        return True, None, args_dict
 
     @staticmethod
     def hash_and_tag_evidence(response_data: Any) -> Tuple[str, str]:
@@ -190,8 +202,24 @@ class MCPGatewayProxy:
 
     def process_jsonrpc_message(self, message_str: str) -> str:
         """Parse, evaluate, and handle a JSON-RPC message string."""
+        if not message_str or not message_str.strip():
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32600, "message": "Invalid Request: empty input"},
+            })
+
+        # Strip Content-Length / LSP style header prefixes if present
+        clean_msg = message_str.strip()
+        if clean_msg.startswith("Content-Length:"):
+            parts = clean_msg.split("\r\n\r\n", 1)
+            if len(parts) == 1:
+                parts = clean_msg.split("\n\n", 1)
+            if len(parts) > 1:
+                clean_msg = parts[1].strip()
+
         try:
-            req_json = json.loads(message_str)
+            req_json = json.loads(clean_msg)
         except Exception as e:
             return json.dumps({
                 "jsonrpc": "2.0",
@@ -199,13 +227,22 @@ class MCPGatewayProxy:
                 "error": {"code": -32700, "message": f"Parse error: {str(e)}"},
             })
 
+        if not isinstance(req_json, dict):
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32600, "message": "Invalid Request: expected JSON-RPC object"},
+            })
+
         req_id = req_json.get("id")
         method = req_json.get("method")
-        params = req_json.get("params", {})
+        raw_params = req_json.get("params")
+        params = raw_params if isinstance(raw_params, dict) else {}
 
         if method == "tools/call":
-            tool_name = params.get("name", "")
-            arguments = params.get("arguments", {})
+            tool_name = params.get("name", "") if isinstance(params.get("name"), str) else ""
+            raw_args = params.get("arguments")
+            arguments = raw_args if isinstance(raw_args, dict) else {}
 
             allowed, reason, modified_args = self.filter_tool_call(tool_name, arguments)
             if not allowed:
@@ -332,7 +369,24 @@ def run_self_tests() -> bool:
     assert "evidence_tag" in valid_resp["result"], "Missing evidence_tag in result"
     print("  [PASS] Test 5: JSON-RPC tool intercept and JSON-RPC error dispatch verified.")
 
-    print("\nAll 5 MCP Gateway Proxy self-tests PASSED successfully!")
+    # Test 6: Robustness on edge cases (null arguments, null params, non-dict payloads, Content-Length header)
+    null_args_req = json.dumps({"jsonrpc": "2.0", "id": "req-2", "method": "tools/call", "params": {"name": "test", "arguments": None}})
+    null_args_resp = json.loads(proxy.process_jsonrpc_message(null_args_req))
+    assert "result" in null_args_resp or "error" in null_args_resp
+
+    null_params_req = json.dumps({"jsonrpc": "2.0", "id": "req-3", "method": "tools/call", "params": None})
+    null_params_resp = json.loads(proxy.process_jsonrpc_message(null_params_req))
+    assert "result" in null_params_resp or "error" in null_params_resp
+
+    non_dict_resp = json.loads(proxy.process_jsonrpc_message("12345"))
+    assert non_dict_resp.get("error", {}).get("code") == -32600
+
+    content_len_msg = f"Content-Length: {len(valid_req)}\r\n\r\n{valid_req}"
+    cl_resp = json.loads(proxy.process_jsonrpc_message(content_len_msg))
+    assert "result" in cl_resp
+    print("  [PASS] Test 6: Edge cases (null arguments/params, non-dict input, Content-Length header) handled cleanly.")
+
+    print("\nAll 6 MCP Gateway Proxy self-tests PASSED successfully!")
     return True
 
 

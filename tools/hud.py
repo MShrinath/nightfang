@@ -68,9 +68,14 @@ class HunterHUD:
             return 80, 24
 
     def format_box_line(self, content: str, width: int) -> str:
-        """Format a single row inside an ASCII/Unicode box with proper padding."""
+        """Format a single row inside an ASCII/Unicode box with proper padding and boundary alignment."""
+        max_content_len = max(0, width - 4)
         visible_len = len(self.strip_ansi(content))
-        padding = max(0, width - 4 - visible_len)
+        if visible_len > max_content_len:
+            plain = self.strip_ansi(content)
+            truncated = plain[: max(0, max_content_len - 3)] + "..."
+            return f"│ {truncated} │"
+        padding = max(0, max_content_len - visible_len)
         return f"│ {content}{' ' * padding} │"
 
     def render(
@@ -230,7 +235,14 @@ def run_self_tests() -> bool:
     assert "0 pending authorizations required" in plain_frame
     print("  [PASS] Test 4: Non-TTY fallback mode verified (0 escape codes generated).")
 
-    print("\nAll 4 Terminal HUD self-tests PASSED successfully!")
+    # Test 5: Boundary alignment and truncation for long lines
+    long_line = hud_nontty.format_box_line("X" * 120, 80)
+    assert len(long_line) == 80, f"Expected box line length 80, got {len(long_line)}"
+    assert long_line.startswith("│ ") and long_line.endswith(" │")
+    assert "..." in long_line
+    print("  [PASS] Test 5: Box boundary alignment and overflow truncation verified.")
+
+    print("\nAll 5 Terminal HUD self-tests PASSED successfully!")
     return True
 
 
