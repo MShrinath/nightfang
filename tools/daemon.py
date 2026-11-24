@@ -372,6 +372,16 @@ class AutonomousHunterDaemon:
                 "note": "Non-blocking: Daemon continues processing other targets.",
             }
 
+        if disp.status == DispositionStatus.QUEUED:
+            # Re-enqueue task so it can run once backoff window expires
+            self.queue._task_index.pop(task.task_id, None)
+            self.queue.push(task)
+            return {
+                "task_id": task.task_id,
+                "status": "QUEUED",
+                "reason": disp.reason,
+            }
+
         # 2. Approved or Auto-Passed: Dispatch tool execution
         if dry_run:
             return {
@@ -387,14 +397,23 @@ class AutonomousHunterDaemon:
 
         if res.status != "SUCCESS":
             # Self-Healing & Reflection: Check if failure was caused by rate limit or WAF
-            stdout_text = res.raw_stdout
-            if "429" in stdout_text or "Too Many Requests" in stdout_text:
+            stdout_text = res.raw_stdout or ""
+            stderr_text = res.raw_stderr or ""
+            combined_text = f"{stdout_text} {stderr_text}"
+            if "429" in combined_text or "Too Many Requests" in combined_text:
                 self.gateway.state.trigger_rate_backoff(ts.hostname, "HTTP 429 auto-detected")
                 task.retry_count += 1
                 if task.retry_count <= 2:
                     # Re-enqueue with backoff
                     task.status = TaskStatus.PENDING
+                    self.queue._task_index.pop(task.task_id, None)
                     self.queue.push(task)
+                    return {
+                        "task_id": task.task_id,
+                        "status": "RETRY_QUEUED",
+                        "retry_count": task.retry_count,
+                        "evidence": evd_tag,
+                    }
             self.queue.mark_failed(task, res.raw_stderr or "Command failed")
             return {
                 "task_id": task.task_id,
@@ -648,7 +667,35 @@ def run_self_tests() -> bool:
     assert rate_info is not None and rate_info["current_rate"] < 20, "Rate backoff must throttle request ceiling"
     print("  [PASS] Test 5: Self-healing rate backoff trigger verified.")
 
-    print("\nAll 5 Daemon self-tests PASSED successfully!")
+    # Test 6: 429 Retry Re-enqueues Task without marking failed
+    # Clear backoff window so task is not held in QUEUED state
+    daemon.state.rate_state["target.corp"]["backoff_until"] = 0
+    while daemon.queue.pop() is not None:
+        pass
+    t_retry = HunterTask.create(
+        "t-retry-429",
+        TaskPriority.HIGH,
+        "target.corp",
+        "scanner",
+        "scanner",
+        "python",
+        "python -c raise(Exception(429))",
+        NoiseProfile.QUIET,
+        ActionType.PASSIVE_READ,
+        technique="Rate Limit Retry Test",
+    )
+    daemon.queue.push(t_retry)
+    retry_res = daemon.execute_next_task()
+    assert retry_res is not None and retry_res["status"] == "RETRY_QUEUED", f"Expected RETRY_QUEUED, got {retry_res}"
+    assert retry_res["retry_count"] == 1
+    assert daemon.queue.pending_count() == 1, "Task must be re-enqueued in pending queue"
+    re_popped = daemon.queue.pop()
+    assert re_popped is not None and re_popped.task_id == "t-retry-429"
+    assert re_popped.retry_count == 1
+    assert re_popped.status == TaskStatus.PENDING
+    print("  [PASS] Test 6: 429 retry re-enqueues task without marking failed.")
+
+    print("\nAll 6 Daemon self-tests PASSED successfully!")
     return True
 
 
