@@ -317,8 +317,11 @@ class EngagementState:
 # ============================================================================
 
 class ExecutionPolicyGateway:
-    def __init__(self, state: EngagementState, resolve_dns: bool = False):
-        self.state = state
+    def __init__(self, state: EngagementState | EngagementConfig, resolve_dns: bool = False):
+        if isinstance(state, EngagementConfig):
+            self.state = EngagementState(state)
+        else:
+            self.state = state
         self.resolve_dns = resolve_dns
 
     def _is_in_scope(self, target_host: str) -> bool:
