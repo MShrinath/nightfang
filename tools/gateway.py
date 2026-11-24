@@ -312,6 +312,31 @@ class ExecutionPolicyGateway:
         self.state = state
         self.resolve_dns = resolve_dns
 
+    def _is_in_scope(self, target_host: str) -> bool:
+        """Check if a hostname, domain, or IP is within authorized engagement scope (supporting wildcards)."""
+        if not target_host:
+            return False
+        host = target_host.lower().strip().strip("[]")
+        # Domain whitelist matching
+        for auth_domain in self.state.config.authorized_domains:
+            auth = auth_domain.lower().strip()
+            if auth.startswith("*."):
+                wildcard_base = auth[2:]
+                if host == wildcard_base or host.endswith("." + wildcard_base):
+                    return True
+            elif host == auth:
+                return True
+        # IP / CIDR matching
+        try:
+            ip_obj = ipaddress.ip_address(host)
+            for cidr in self.state.config.authorized_cidrs:
+                net_obj = ipaddress.ip_network(cidr, strict=False)
+                if ip_obj in net_obj:
+                    return True
+        except ValueError:
+            pass
+        return False
+
     # ------------------------------------------------------------------------
     # Stage 1: Scope & Target Boundary Enforcement (SOP-01)
     # ------------------------------------------------------------------------
@@ -359,17 +384,7 @@ class ExecutionPolicyGateway:
                     )
 
         # Domain whitelist matching
-        in_scope_domain = False
-        for auth_domain in self.state.config.authorized_domains:
-            auth_domain = auth_domain.lower()
-            if auth_domain.startswith("*."):
-                wildcard_base = auth_domain[2:]
-                if hostname == wildcard_base or hostname.endswith("." + wildcard_base):
-                    in_scope_domain = True
-                    break
-            elif hostname == auth_domain:
-                in_scope_domain = True
-                break
+        in_scope_domain = self._is_in_scope(hostname)
 
         # Check IP/CIDR matching
         in_scope_ip = False
@@ -683,14 +698,15 @@ class ExecutionPolicyGateway:
         try:
             if sandbox_runner is not None and hasattr(sandbox_runner, "run"):
                 # Delegate to container sandbox
-                res = sandbox_runner.run(cmd, timeout=timeout_seconds)
+                repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                res = sandbox_runner.run(cmd, timeout=timeout_seconds, host_mount_dir=repo_root)
                 exit_code = res.get("exit_code", 0)
                 stdout_data = res.get("stdout", "")
                 stderr_data = res.get("stderr", "")
                 status = res.get("status", "SUCCESS")
             else:
                 # Local safe execution fallback — split command to avoid shell injection
-                cmd_args = shlex.split(cmd) if isinstance(cmd, str) else list(cmd)
+                cmd_args = shlex.split(cmd, posix=(os.name != "nt")) if isinstance(cmd, str) else list(cmd)
                 proc = subprocess.run(
                     cmd_args,
                     shell=False,

@@ -30,7 +30,20 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import taint_trace as tt  # noqa: E402
+try:
+    import taint_trace as tt  # noqa: E402
+except ImportError:
+    try:
+        from skills.hunting.scripts import taint_trace as tt  # noqa: E402
+    except ImportError:
+        import importlib.util
+        _tt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "taint_trace.py")
+        if os.path.exists(_tt_path):
+            _spec = importlib.util.spec_from_file_location("taint_trace", _tt_path)
+            tt = importlib.util.module_from_spec(_spec)
+            _spec.loader.exec_module(tt)
+        else:
+            raise
 
 QUALITY_RANK = {"tainted": 3, "likely": 2, "unlikely": 1, "false_positive": 0}
 

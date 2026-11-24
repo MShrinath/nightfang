@@ -38,6 +38,7 @@ class SandboxMode(str, Enum):
 # category that is enabled via SandboxConfig.allow_categories.
 COMMAND_ALLOWLIST: Dict[str, List[str]] = {
     "read_only": [
+        "python", "python3", "py",
         "echo", "cat", "head", "tail", "wc", "sort", "uniq", "grep", "egrep", "fgrep",
         "find", "ls", "pwd", "stat", "file", "xxd", "hexdump", "strings", "od",
         "whoami", "id", "uname", "hostname", "ip", "ifconfig", "netstat",
@@ -65,7 +66,7 @@ def _command_name(command: str) -> str:
     """Extract the base command name from a shell command string using shlex parsing."""
     import shlex
     try:
-        tokens = shlex.split(command)
+        tokens = shlex.split(command, posix=(os.name != "nt"))
     except ValueError:
         # Fallback: simple split on whitespace
         tokens = command.strip().split()
@@ -355,7 +356,7 @@ class SandboxRunner:
             # Parse command into tokens and execute with shell=False to prevent injection
             import shlex as _shlex
             try:
-                cmd_tokens = _shlex.split(command)
+                cmd_tokens = _shlex.split(command, posix=(os.name != "nt"))
             except ValueError:
                 cmd_tokens = command.strip().split()
             if not cmd_tokens:
