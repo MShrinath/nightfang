@@ -628,7 +628,6 @@ tools:
   - tools/daemon.py
   - tools/gateway.py
   - tools/sandbox.py
-  - tools/cli.py
   - scripts/fuzzing_engine.py
   - scripts/generate_sbom.py
 
