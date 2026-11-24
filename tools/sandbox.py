@@ -53,11 +53,11 @@ COMMAND_ALLOWLIST: Dict[str, List[str]] = {
     ],
     "write_safe": [
         "mkdir", "touch", "cp", "mv", "chmod", "chown",
-        "tee", "dd",
+        "tee",
     ],
     "restricted": [
         "rm", "rmdir", "kill", "pkill",
-        "iptables", "ufw",
+        "iptables", "ufw", "dd",
     ],
 }
 
@@ -86,6 +86,19 @@ def check_command_allowlist(command: str, allowed_categories: Set[str]) -> Tuple
 
     Returns (allowed, reason).
     """
+    if not command or not command.strip():
+        return False, "Empty command"
+
+    # Forbid newline characters (shell command separation)
+    if "\n" in command or "\r" in command:
+        return False, "Shell chaining forbidden: newline characters detected in command"
+
+    # Forbid shell chaining operators (&, &&, |, ||, ;)
+    # These operators allow chained arbitrary commands when executed via cmd.exe /c or sh -c
+    import re
+    if re.search(r"[;&|]", command):
+        return False, "Shell chaining forbidden: command contains chaining operator (&, &&, |, ||, ;)"
+
     cmd_name = _command_name(command)
     if not cmd_name:
         return False, "Empty command"
@@ -453,6 +466,26 @@ def run_self_tests() -> bool:
     # Test 5: Cleanup verification
     assert "cleanup_verified" in res, f"Expected cleanup_verified in result: {res}"
     print("  [PASS] Test 5: Artifact cleanup verification present.")
+
+    # Test 6: Shell chaining operators blocked
+    chain_cmds = [
+        "echo safe & whoami",
+        "echo safe && whoami",
+        "echo safe | whoami",
+        "echo safe || whoami",
+        "echo safe ; whoami",
+        "echo safe\nwhoami",
+    ]
+    for c in chain_cmds:
+        res_chain = sandbox.run(c, timeout=5)
+        assert res_chain["status"] == "ALLOWLIST_BLOCKED", f"Expected chaining blocked for {c}, got: {res_chain}"
+        assert "chaining" in res_chain.get("allowlist_reason", "").lower()
+    print("  [PASS] Test 6: Shell chaining operators blocked (&, &&, |, ||, ;, newlines).")
+
+    # Test 7: Reconciled destructive dd classification blocked
+    res_dd = sandbox.run("dd if=/dev/zero of=test bs=1 count=1", timeout=5)
+    assert res_dd["status"] == "ALLOWLIST_BLOCKED", f"Expected dd blocked, got: {res_dd}"
+    print("  [PASS] Test 7: Destructive command (dd) blocked under default allow_categories.")
 
     print("\nAll Sandbox Runner self-tests PASSED successfully!")
     return True
