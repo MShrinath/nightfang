@@ -78,6 +78,10 @@ def _command_name(command: str) -> str:
         if cmd == prefix and len(tokens) > 1:
             cmd = tokens[1]
             break
+    # Normalize command to base filename (e.g. /usr/bin/python3 -> python3, python.exe -> python)
+    cmd = os.path.basename(cmd)
+    if cmd.lower().endswith(".exe"):
+        cmd = cmd[:-4]
     return cmd
 
 
@@ -93,22 +97,37 @@ def check_command_allowlist(command: str, allowed_categories: Set[str]) -> Tuple
     if "\n" in command or "\r" in command:
         return False, "Shell chaining forbidden: newline characters detected in command"
 
-    # Forbid shell chaining operators (&, &&, |, ||, ;)
-    # These operators allow chained arbitrary commands when executed via cmd.exe /c or sh -c
-    import re
-    if re.search(r"[;&|]", command):
-        return False, "Shell chaining forbidden: command contains chaining operator (&, &&, |, ||, ;)"
+    import shlex
+    try:
+        tokens = shlex.split(command, posix=(os.name != "nt"))
+    except ValueError:
+        tokens = command.strip().split()
+
+    # Forbid unquoted shell chaining operators (&, &&, |, ||, ;) across parsed tokens
+    chain_ops = {"&", "&&", "|", "||", ";", ";;"}
+    for tok in tokens:
+        if tok in chain_ops:
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if any(tok.startswith(op) or tok.endswith(op) for op in ("&&", "||")):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith("&") or tok.endswith("&"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith(";") or tok.endswith(";"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith("|") or tok.endswith("|"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
 
     cmd_name = _command_name(command)
     if not cmd_name:
         return False, "Empty command"
 
-    # Check basename (strip path)
+    # Check basename (strip path and .exe)
     basename = os.path.basename(cmd_name)
+    base_stem = basename[:-4] if basename.lower().endswith(".exe") else basename
 
     for category in allowed_categories:
         allowed_cmds = COMMAND_ALLOWLIST.get(category, [])
-        if basename in allowed_cmds:
+        if basename in allowed_cmds or base_stem in allowed_cmds:
             return True, f"Allowed via category '{category}'"
 
     return False, f"Command '{basename}' not found in any allowed category: {allowed_categories}"
@@ -374,6 +393,9 @@ class SandboxRunner:
                 cmd_tokens = command.strip().split()
             if not cmd_tokens:
                 raise ValueError("Empty command")
+
+            if os.name == "nt":
+                cmd_tokens = [tok[1:-1] if ((tok.startswith('"') and tok.endswith('"')) or (tok.startswith("'") and tok.endswith("'"))) and len(tok) >= 2 else tok for tok in cmd_tokens]
 
             # Windows shell builtins need cmd.exe /c wrapper when shell=False
             exec_tokens = list(cmd_tokens)

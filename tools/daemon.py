@@ -674,14 +674,17 @@ def run_self_tests() -> bool:
     daemon.state.rate_state["target.corp"]["backoff_until"] = 0
     while daemon.queue.pop() is not None:
         pass
+    py_bin = os.path.basename(sys.executable)
+    if py_bin.lower().endswith(".exe"):
+        py_bin = py_bin[:-4]
     t_retry = HunterTask.create(
         "t-retry-429",
         TaskPriority.HIGH,
         "target.corp",
         "scanner",
         "scanner",
-        "python",
-        "python -c raise(Exception(429))",
+        py_bin,
+        f"{sys.executable} -c \"raise SystemExit('HTTP 429 Too Many Requests')\"",
         NoiseProfile.QUIET,
         ActionType.PASSIVE_READ,
         technique="Rate Limit Retry Test",

@@ -526,14 +526,7 @@ class ExecutionPolicyGateway:
                             pass
                     elif is_ip:
                         cmd_hosts.add(ip_cand.rstrip("."))
-                    elif domain_regex.match(clean_tok):
-                        cmd_hosts.add(clean_tok.rstrip("."))
-                else:
-                    if (
-                        domain_regex.match(clean_tok)
-                        and not any(clean_tok.lower().endswith(ext) for ext in common_file_exts)
-                        and not clean_tok.startswith("FUZZ")
-                    ):
+                    elif domain_regex.match(clean_tok) and not any(clean_tok.lower().endswith(ext) for ext in common_file_exts):
                         cmd_hosts.add(clean_tok.rstrip("."))
 
             for dest_host in cmd_hosts:
