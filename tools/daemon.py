@@ -569,6 +569,8 @@ class AutonomousHunterDaemon:
                         print(f"  [✗] {tid} FAILED")
                     elif st == "DRY_RUN":
                         print(f"  [🔍] {tid} DRY-RUN (no execution)")
+                    elif st in ("QUEUED", "RETRY_QUEUED"):
+                        print(f"  [⏳] {tid} {st} (Backoff / Rate Limit)")
                 time.sleep(poll_interval)
         except KeyboardInterrupt:
             print("\n[*] Autonomous Hunter Daemon stopped by operator.")
