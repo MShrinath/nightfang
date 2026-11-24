@@ -397,7 +397,10 @@ def build_cyclonedx_xml(root: str, packages: Dict[str, Dict]) -> str:
         components_el.appendChild(c)
     bom.appendChild(components_el)
 
-    return doc.toprettyxml(indent="  ", encoding="UTF-8")
+    xml_data = doc.toprettyxml(indent="  ", encoding="UTF-8")
+    if isinstance(xml_data, bytes):
+        return xml_data.decode("utf-8")
+    return xml_data
 
 
 # ---------------------------------------------------------------------------
@@ -468,18 +471,23 @@ def main() -> int:
 
 
 def _write_output(content: Any, output_base: str, suffix: str) -> None:
-    # Strip existing .json extension to avoid double suffix like .json.json
-    base = output_base.rsplit(".json")[0] if output_base.endswith(".json") else output_base
+    # Strip existing .json or .xml extension using os.path.splitext to avoid double suffix
+    root_base, ext = os.path.splitext(output_base)
+    base = root_base if ext.lower() in (".json", ".xml") else output_base
     if os.path.isdir(base):
         dest = os.path.join(base, f"sbom{suffix}")
     else:
         dest = base + suffix if suffix else base
     os.makedirs(os.path.dirname(os.path.abspath(dest)), exist_ok=True)
-    with open(dest, "w", encoding="utf-8") as f:
-        if isinstance(content, dict):
-            json.dump(content, f, indent=2, ensure_ascii=False)
-        else:
-            f.write(str(content))
+    if isinstance(content, bytes):
+        with open(dest, "wb") as f:
+            f.write(content)
+    else:
+        with open(dest, "w", encoding="utf-8") as f:
+            if isinstance(content, dict):
+                json.dump(content, f, indent=2, ensure_ascii=False)
+            else:
+                f.write(content if isinstance(content, str) else str(content))
     print(f"  -> {dest}")
 
 
