@@ -2,7 +2,7 @@
 
 **Category**: Automated Vulnerability Discovery  
 **Associated Agents**: `api-fuzzer`, `protocol-pentester`, `web-shell-detector`, `scanner`  
-**Payload Integration**: Each fuzzing target class has associated CWE/OWASP mappings. Access via `resolver.get_safe_payloads(class_name)` before destructive mutation sets.  
+**Payload Integration**: Each fuzzing target class has associated CWE/OWASP mappings. Use safe non-destructive seed inputs before executing mutation sets.  
 
 ---
 

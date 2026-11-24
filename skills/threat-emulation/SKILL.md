@@ -2,7 +2,7 @@
 
 **Category**: Adversary Simulation / MITRE ATT&CK Mapping  
 **Associated Agents**: `threat-emulator-agent`, `purple-team-operator`, `blue-team-agent`  
-**Payload Integration**: Each technique maps to CWE + OWASP entries. Use `resolver.get_by_cwe(cwe_id)` for technique-specific safe payloads.
+**Payload Integration**: Each technique maps to CWE + OWASP entries. Use non-destructive, technique-specific safe verification procedures.
 
 ---
 

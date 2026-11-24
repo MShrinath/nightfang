@@ -15,6 +15,7 @@ import os
 import json
 import time
 import re
+import urllib.parse
 import argparse
 import heapq
 from datetime import datetime, timezone
@@ -419,7 +420,7 @@ class AutonomousHunterDaemon:
         found_domains = set(domain_pattern.findall(stdout))
 
         for dom in found_domains:
-            if dom not in self.discovered_assets and any(auth in dom for auth in self.config.authorized_domains):
+            if dom not in self.discovered_assets and self.gateway._is_in_scope(dom):
                 self.discovered_assets.add(dom)
                 # Enqueue service & port discovery for newly uncovered domain
                 next_task = HunterTask.create(
@@ -441,20 +442,23 @@ class AutonomousHunterDaemon:
         found_urls = set(url_pattern.findall(stdout))
 
         for u in found_urls:
+            parsed = urllib.parse.urlparse(u)
+            if parsed.hostname and not self.gateway._is_in_scope(parsed.hostname):
+                continue
             if u not in self.discovered_assets:
                 self.discovered_assets.add(u)
-                # Enqueue parameter fuzzing and vulnerability check
+                # Enqueue parameter fuzzing and tech fingerprinting
                 next_task = HunterTask.create(
                     task_id=f"lead-web-{len(self.queue._task_index) + 1}",
                     priority=TaskPriority.MEDIUM,
                     target_str=u,
                     capability_id="web-application-security",
                     agent_id="scanner",
-                    tool_name="variant_hunt.py",
-                    command_template=f"python skills/hunting/scripts/variant_hunt.py --target {u}",
+                    tool_name="tech_fingerprint.py",
+                    command_template=f"python skills/recon/scripts/tech_fingerprint.py --url {u}",
                     noise_profile=NoiseProfile.MODERATE,
                     action_type=ActionType.ACTIVE_PROBE,
-                    technique="Variant Analysis & Route Discovery",
+                    technique="Technology Fingerprinting & Recon",
                 )
                 self.queue.push(next_task)
 

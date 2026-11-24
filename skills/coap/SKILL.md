@@ -2,7 +2,7 @@
 
 **Category**: IoT / Lightweight Protocol Security  
 **Associated Agents**: `protocol-pentester`, `iot-pentester`  
-**Payload Integration**: Use `scripts/agent_payloads.py` — CoAP maps to CWE-943 (Improper Input Neutralization). Safe payloads via `resolver.get_safe_payloads("CoAP Injection")`.  
+**Payload Integration**: CoAP maps to CWE-943 (Improper Input Neutralization). Use safe non-destructive enumeration payloads conforming to OPSEC standards.  
 
 ---
 

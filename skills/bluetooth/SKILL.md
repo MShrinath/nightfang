@@ -2,7 +2,7 @@
 
 **Category**: Wireless / Bluetooth Security  
 **Associated Agents**: `protocol-pentester`, `wireless-pentester`, `iot-pentester`  
-**Payload Integration**: BLE pairing attacks map to CWE-287 (Improper Authentication). Use `resolver.get_by_cwe("CWE-287")` for safe enumeration payloads.  
+**Payload Integration**: BLE pairing attacks map to CWE-287 (Improper Authentication). Use safe non-destructive enumeration payloads conforming to OPSEC standards.  
 
 ---
 

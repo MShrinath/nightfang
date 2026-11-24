@@ -59,7 +59,7 @@ telemetry/../../config/dump
 $share/groupname/secret/topic
 ```
 **CWE**: CWE-73 (External Control of File or Directory Name)  
-**Safe payload check**: `resolver.get_safe_payloads("Topic Injection")`
+**Safe payload check**: Verify topic injection using non-destructive test strings (e.g. benign test paths).
 
 ### 3.3 Shared Subscription Abuse
 MQTT 5.x shared subscriptions (`$share/<group>/<topic>`) can be exploited if not properly segmented:
@@ -106,7 +106,7 @@ MQTTEvents
 
 ## 5. Output Schema Compliance
 
-All findings must conform to [`schemas/finding.md`](../schemas/finding.md):
+All findings must conform to [`schemas/finding.md`](../../schemas/finding.md):
 - Category: `iot` or `network`
 - Tool used: `mosquitto_sub/pub`, `paho-mqtt`, custom fuzzer
 - Evidence: raw MQTT packets captured (redacted)
