@@ -115,9 +115,18 @@ class ValidationReport:
 class FindingValidator:
     """Validates finding dictionaries against schemas/finding.md."""
 
-    def validate(self, finding_data: Dict[str, Any]) -> ValidationReport:
+    def validate(self, finding_data: Any) -> ValidationReport:
+        if not isinstance(finding_data, dict):
+            report = ValidationReport(finding_id="UNKNOWN", is_valid=False)
+            report.add_error(f"Finding root object must be a dictionary, got: {type(finding_data).__name__}")
+            return report
+
         # Unwrap nested 'finding' root key if present
-        if "finding" in finding_data and isinstance(finding_data["finding"], dict):
+        if "finding" in finding_data:
+            if not isinstance(finding_data["finding"], dict):
+                report = ValidationReport(finding_id="UNKNOWN", is_valid=False)
+                report.add_error(f"Nested 'finding' key must be a dictionary, got: {type(finding_data['finding']).__name__}")
+                return report
             finding = finding_data["finding"]
         else:
             finding = finding_data
@@ -135,6 +144,10 @@ class FindingValidator:
         self._validate_telemetry_and_detection(finding, report)
 
         return report
+
+    def validate_finding(self, finding_data: Any) -> ValidationReport:
+        """Alias for validate()."""
+        return self.validate(finding_data)
 
     def _validate_core_metadata(self, f: Dict[str, Any], r: ValidationReport) -> None:
         required_fields = ["id", "title", "target", "category", "timestamp", "tool_used"]
@@ -326,8 +339,12 @@ class FindingValidator:
             if not vec or not CVSS_V31_REGEX.match(vec):
                 r.add_error(f"Invalid CVSS v3.1 vector string: '{vec}'")
             score = v31.get("base_score")
-            if score is None or not (0.0 <= float(score) <= 10.0):
-                r.add_error(f"CVSS v3.1 base_score must be between 0.0 and 10.0, got: {score}")
+            try:
+                score_f = float(score) if score is not None else None
+                if score_f is None or not (0.0 <= score_f <= 10.0):
+                    r.add_error(f"CVSS v3.1 base_score must be between 0.0 and 10.0, got: {score}")
+            except (ValueError, TypeError):
+                r.add_error(f"CVSS v3.1 base_score must be a valid float between 0.0 and 10.0, got: {score}")
 
         # CVSS v4.0
         if "cvss_v40" in cls and isinstance(cls["cvss_v40"], dict):
@@ -336,18 +353,31 @@ class FindingValidator:
             if not vec or not CVSS_V40_REGEX.match(vec):
                 r.add_error(f"Invalid CVSS v4.0 vector string: '{vec}'")
             score = v40.get("base_score")
-            if score is None or not (0.0 <= float(score) <= 10.0):
-                r.add_error(f"CVSS v4.0 base_score must be between 0.0 and 10.0, got: {score}")
+            try:
+                score_f = float(score) if score is not None else None
+                if score_f is None or not (0.0 <= score_f <= 10.0):
+                    r.add_error(f"CVSS v4.0 base_score must be between 0.0 and 10.0, got: {score}")
+            except (ValueError, TypeError):
+                r.add_error(f"CVSS v4.0 base_score must be a valid float between 0.0 and 10.0, got: {score}")
 
         # EPSS
         if "epss" in cls and isinstance(cls["epss"], dict):
             epss = cls["epss"]
             epss_score = epss.get("score")
-            if epss_score is None or not (0.0 <= float(epss_score) <= 1.0):
-                r.add_error(f"EPSS score must be a probability between 0.0 and 1.0, got: {epss_score}")
+            try:
+                epss_score_f = float(epss_score) if epss_score is not None else None
+                if epss_score_f is None or not (0.0 <= epss_score_f <= 1.0):
+                    r.add_error(f"EPSS score must be a probability between 0.0 and 1.0, got: {epss_score}")
+            except (ValueError, TypeError):
+                r.add_error(f"EPSS score must be a valid float between 0.0 and 1.0, got: {epss_score}")
+
             epss_pct = epss.get("percentile")
-            if epss_pct is None or not (0.0 <= float(epss_pct) <= 100.0):
-                r.add_error(f"EPSS percentile must be a percentage between 0.0 and 100.0, got: {epss_pct}")
+            try:
+                epss_pct_f = float(epss_pct) if epss_pct is not None else None
+                if epss_pct_f is None or not (0.0 <= epss_pct_f <= 100.0):
+                    r.add_error(f"EPSS percentile must be a percentage between 0.0 and 100.0, got: {epss_pct}")
+            except (ValueError, TypeError):
+                r.add_error(f"EPSS percentile must be a valid float between 0.0 and 100.0, got: {epss_pct}")
 
         # CISA KEV
         if "cisa_kev" in cls:
@@ -406,6 +436,12 @@ class FindingValidator:
         det_status = f.get("detection_status")
         if det_status and det_status not in VALID_DETECTION_STATUSES:
             r.add_error(f"detection_status must be one of {VALID_DETECTION_STATUSES}, got: '{det_status}'")
+
+
+def validate_finding(finding_data: Any) -> ValidationReport:
+    """Convenience function to validate a finding object or dictionary."""
+    validator = FindingValidator()
+    return validator.validate(finding_data)
 
 
 # ============================================================================
@@ -569,6 +605,38 @@ def run_self_tests() -> bool:
     assert not report_bad.is_valid
     assert len(report_bad.errors) >= 12, f"Expected at least 12 errors, got {len(report_bad.errors)}: {report_bad.errors}"
     print(f"  [PASS] Test 2: Successfully caught {len(report_bad.errors)} schema violations in malformed finding.")
+
+    # Test 3: Non-dict root input guarded cleanly
+    report_str = validate_finding("string-input-not-dict")
+    assert not report_str.is_valid
+    assert any("must be a dictionary" in e for e in report_str.errors)
+    report_list = validate_finding([1, 2, 3])
+    assert not report_list.is_valid
+    assert any("must be a dictionary" in e for e in report_list.errors)
+    print("  [PASS] Test 3: Non-dict root objects safely guarded without crashes.")
+
+    # Test 4: Malformed CVSS and EPSS scores safely caught
+    malformed_scores = {
+        "finding": {
+            "id": "NF-2026-BAD-SCORES",
+            "title": "Bad scores",
+            "target": "target.internal",
+            "category": "web",
+            "timestamp": "2026-09-22T00:00:00Z",
+            "tool_used": "nmap",
+            "classifications": {
+                "cvss_v31": {"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "base_score": "not_a_float"},
+                "cvss_v40": {"vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N", "base_score": ["bad"]},
+                "epss": {"score": "invalid_epss", "percentile": None},
+            }
+        }
+    }
+    report_scores = validate_finding(malformed_scores)
+    assert not report_scores.is_valid
+    assert any("CVSS v3.1 base_score" in e for e in report_scores.errors)
+    assert any("CVSS v4.0 base_score" in e for e in report_scores.errors)
+    assert any("EPSS score" in e for e in report_scores.errors)
+    print("  [PASS] Test 4: Malformed CVSS and EPSS score conversions caught cleanly.")
 
     print("\nAll Validator self-tests PASSED successfully!")
     return True
