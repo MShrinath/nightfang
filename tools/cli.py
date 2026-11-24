@@ -193,17 +193,42 @@ def cmd_agents(args):
     manifest_path = os.path.join(os.path.dirname(__file__), "..", "manifest.yaml")
     
     import yaml
-    with open(manifest_path) as f:
+    with open(manifest_path, encoding="utf-8") as f:
         manifest = yaml.safe_load(f)
     
     agents = manifest.get("agents", [])
+    taxonomy = manifest.get("agent_taxonomy", {})
+    tax_lookup = {}
+    for tier in ("direct", "delegated"):
+        for a in taxonomy.get(tier, {}).get("agents", []):
+            tax_lookup[a.get("id")] = a
+
     print(f"\nRegistered Agents ({len(agents)}):")
     print("-" * 40)
     
     for agent in agents:
-        name = agent.get("name", "unknown")
-        purpose = agent.get("purpose", "N/A")[:50]
-        print(f"  {name}: {purpose}...")
+        if isinstance(agent, dict):
+            name = agent.get("name", agent.get("id", "unknown"))
+            purpose = agent.get("purpose", "N/A")[:50]
+        else:
+            agent_id = os.path.splitext(os.path.basename(agent))[0]
+            tax_info = tax_lookup.get(agent_id, {})
+            name = agent_id
+            purpose = tax_info.get("purpose", "")
+            if not purpose:
+                caps = tax_info.get("capabilities", [])
+                if caps:
+                    purpose = f"Capabilities: {', '.join(caps)}"
+            if not purpose:
+                md_path = os.path.join(os.path.dirname(__file__), "..", agent)
+                if os.path.exists(md_path):
+                    with open(md_path, encoding="utf-8") as mf:
+                        for line in mf:
+                            if line.startswith("# "):
+                                purpose = line[2:].strip()
+                                break
+            purpose = (purpose or "Specialized Agent")[:50]
+        print(f"  {name:25s}: {purpose}")
 
 def cmd_skills(args):
     """List registered skills."""
@@ -232,13 +257,28 @@ def cmd_payloads(args):
         print("Payload catalog not found")
         return 1
     
-    with open(catalog_path) as f:
+    with open(catalog_path, encoding="utf-8") as f:
         catalog = json.load(f)
     
+    if args.list:
+        print(f"\nAvailable Categories ({len(catalog)}):")
+        print("-" * 40)
+        for k in sorted(catalog.keys()):
+            safe = "SAFE" if catalog[k].get("safe_default") else "DESTRUCTIVE"
+            cwe = catalog[k].get("cwe", "N/A")
+            owasp = catalog[k].get("owasp", "N/A")
+            print(f"  {k:30s} [{safe:11s}] cwe={cwe} owasp={owasp}")
+        return 0
+
     if args.class_name:
-        if args.class_name in catalog:
-            info = catalog[args.class_name]
-            print(f"\n{args.class_name}:")
+        matched_key = None
+        for k in catalog:
+            if k.lower() == args.class_name.lower():
+                matched_key = k
+                break
+        if matched_key:
+            info = catalog[matched_key]
+            print(f"\n{matched_key}:")
             print(f"  CWE: {info.get('cwe', 'N/A')}")
             print(f"  OWASP: {info.get('owasp', 'N/A')}")
             print(f"  Safe: {info.get('safe_default', False)}")
@@ -253,11 +293,8 @@ def cmd_payloads(args):
                 print("  Payload files: (none - recon/probe only)")
         else:
             print(f"Category '{args.class_name}' not found")
-            print(f"Available: {len(catalog)} categories")
-            if args.list:
-                for k in sorted(catalog.keys()):
-                    safe = "safe" if catalog[k].get("safe_default") else "destructive"
-                    print(f"  {k} [{safe}]")
+            print(f"Available: {len(catalog)} categories (use --list to display all)")
+            return 1
     else:
         safe = [k for k, v in catalog.items() if v.get("safe_default")]
         destructive = [k for k, v in catalog.items() if not v.get("safe_default")]
@@ -265,6 +302,10 @@ def cmd_payloads(args):
         print(f"\nPayload Catalog: {len(catalog)} categories")
         print(f"  Safe for testing: {len(safe)}")
         print(f"  Potentially destructive: {len(destructive)}")
+        if getattr(args, "safe_only", False):
+            print("\nSafe Categories:")
+            for k in sorted(safe):
+                print(f"  {k}")
 
 def cmd_help(args):
     """Show help."""
@@ -339,6 +380,7 @@ def main():
     payloads_parser = subparsers.add_parser("payloads", help="Query payload catalog")
     payloads_parser.add_argument("class_name", nargs="?", help="Category name to query")
     payloads_parser.add_argument("--list", action="store_true", help="List all categories")
+    payloads_parser.add_argument("--safe-only", "--safe", dest="safe_only", action="store_true", help="Filter safe categories only")
     payloads_parser.set_defaults(func=cmd_payloads)
     
     # Help command

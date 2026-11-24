@@ -52,10 +52,12 @@ class AgentPayloadResolver:
         ]
 
     def get_by_class(self, vuln_class: str) -> Optional[Dict[str, Any]]:
-        """Get payload info by exact vulnerability class name."""
+        """Get payload info by vulnerability class name (supports snake_case and spaced format)."""
         cat = self._load()
+        target = vuln_class.lower().strip()
+        target_norm = target.replace("_", " ")
         for name, meta in cat.items():
-            if name.lower() == vuln_class.lower():
+            if name.lower() == target or name.lower().replace("_", " ") == target_norm:
                 return {
                     "class": name,
                     "cwe": meta["cwe"],

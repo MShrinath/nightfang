@@ -364,7 +364,8 @@ class SandboxRunner:
             # Windows shell builtins need cmd.exe /c wrapper when shell=False
             exec_tokens = list(cmd_tokens)
             if os.name == "nt" and cmd_tokens and cmd_tokens[0].lower() in (
-                "echo", "dir", "type", "cls", "ver", "cd", "ren", "move", "copy", "del",
+                "echo", "dir", "type", "cls", "ver", "cd", "chdir", "ren", "rename",
+                "move", "copy", "del", "erase", "mkdir", "md", "rmdir", "rd",
             ):
                 exec_tokens = ["cmd.exe", "/c"] + exec_tokens
 

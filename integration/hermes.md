@@ -9,8 +9,8 @@ This document describes how Hermes hosts, operates, and becomes **NIGHTFANG** as
 NIGHTFANG is not an isolated command-line script — it is the **security brain and capability pack for Hermes**. When an operator installs NIGHTFANG via `install.sh` (Linux/macOS) or `install.ps1` (Windows):
 
 1. NIGHTFANG's persona, constitution, and operating procedures are installed as the default Hermes system prompt (`~/.hermes/nightfang/system.md`).
-2. All 41 domain skills are symlinked/copied into Hermes's skill store (`~/.hermes/skills/nightfang`).
-3. Hermes's runtime config (`~/.hermes/nightfang/config.yaml`) is overlaid with NIGHTFANG's 33 capabilities, execution policy gateway, and tiered autonomy settings.
+2. All 42 domain skills are symlinked/copied into Hermes's skill store (`~/.hermes/skills/nightfang`).
+3. Hermes's runtime config (`~/.hermes/nightfang/config.yaml`) is overlaid with NIGHTFANG's 35 capabilities, execution policy gateway, and tiered autonomy settings.
 4. When Hermes connects to any transport channel (Telegram bot, Discord bot, Web UI, or local CLI terminal), **the operator is talking directly to NIGHTFANG**.
 
 ```
@@ -28,7 +28,7 @@ NIGHTFANG is not an isolated command-line script — it is the **security brain 
 │                       Security Orchestration Layer                     │
 ├───────────────────┬───────────────────┬────────────────────────────────┤
 │      Agents       │      Skills       │           Workflows            │
-│    (46 Agents)    │    (41 Skills)    │         (17 Workflows)         │
+│    (46 Agents)    │    (42 Skills)    │         (26 Workflows)         │
 ├───────────────────┴───────────────────┴────────────────────────────────┤
 │                   Autonomous Hunter Engine Daemon                      │
 │            PriorityDAG Task Queue • Recursive Lead Expansion           │
@@ -52,7 +52,7 @@ NIGHTFANG is not an isolated command-line script — it is the **security brain 
 Hermes loads NIGHTFANG by locating `manifest.yaml` in the pack root. The loader reads:
 - `runtime.name == "hermes"` and `runtime.min_version >= "0.2.0"`.
 - `runtime.entrypoint.agent`: Path to `AGENTS.md`.
-- `capabilities[]`: The 33-capability routing table mapping target classifications to workflows, agents, and skills.
+- `capabilities[]`: The 35-capability routing table mapping target classifications to workflows, agents, and skills.
 
 ### 2.2 Channel Adaptors (Telegram, Discord, Web, CLI)
 
