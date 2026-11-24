@@ -42,7 +42,7 @@ COMMAND_ALLOWLIST: Dict[str, List[str]] = {
         "echo", "cat", "head", "tail", "wc", "sort", "uniq", "grep", "egrep", "fgrep",
         "find", "ls", "pwd", "stat", "file", "xxd", "hexdump", "strings", "od",
         "whoami", "id", "uname", "hostname", "ip", "ifconfig", "netstat",
-        "env", "printenv", "date", "uptime", "df", "du", "ps", "top",
+        "env", "printenv", "date", "uptime", "df", "du", "ps", "top", "sleep",
         "sha256sum", "sha1sum", "md5sum", "cksum",
         "nmap", "nslookup", "dig", "host", "traceroute", "ping",
         "curl", "wget", "httpx", "nikto",
