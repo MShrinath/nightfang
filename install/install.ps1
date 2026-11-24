@@ -105,17 +105,52 @@ if (-not $SkipSkills) {
     }
 
     $mcpJson = Join-Path $HermesHome "mcp.json"
-    if (-not (Test-Path $mcpJson)) {
-        @{
-            mcpServers = @{
-                "codebase-memory" = @{
-                    command = "npx"
-                    args = @("-y", "codebase-memory-mcp")
+    $nfMcpJson = Join-Path $NfHermesHome "mcp.json"
+    $kgPath = (Join-Path $NfHermesHome "memory\knowledge_graph.jsonl") -replace '\\', '/'
+
+    $mcpConfig = @{
+        mcpServers = [ordered]@{
+            "mk-qa-master" = @{
+                command = "uvx"
+                args = @("mk-qa-master")
+            }
+            "security-scanner-mcp" = @{
+                command = "npx"
+                args = @("-y", "security-scanner-mcp")
+            }
+            "codebase-memory-mcp" = @{
+                command = "npx"
+                args = @("-y", "codebase-memory-mcp")
+            }
+            "server-memory" = @{
+                command = "npx"
+                args = @("-y", "@modelcontextprotocol/server-memory")
+                env = @{
+                    MEMORY_FILE_PATH = $kgPath
                 }
             }
-        } | ConvertTo-Json -Depth 5 | Out-File -FilePath $mcpJson -Encoding utf8
+            "th-memory-mcp" = @{
+                command = "npx"
+                args = @("-y", "th-memory-mcp")
+            }
+            "cve-mcp" = @{
+                command = "npx"
+                args = @("-y", "cve-mcp")
+            }
+            "osint-mcp-server" = @{
+                command = "npx"
+                args = @("-y", "osint-mcp-server")
+            }
+            "playwright" = @{
+                command = "npx"
+                args = @("-y", "@playwright/mcp@latest", "--headless")
+            }
+        }
     }
-    Write-Host "[OK] Complementary autonomous skills and MCP configured in Hermes." -ForegroundColor Green
+    $mcpJsonContent = $mcpConfig | ConvertTo-Json -Depth 5
+    $mcpJsonContent | Out-File -FilePath $mcpJson -Encoding utf8
+    $mcpJsonContent | Out-File -FilePath $nfMcpJson -Encoding utf8
+    Write-Host "[OK] Verified Model Context Protocol (MCP) servers configured in Hermes." -ForegroundColor Green
 }
 
 # 4. Install System Prompt & Config
@@ -149,10 +184,17 @@ if (-not (Test-Path "$NfHermesHome\memory\scope.yaml")) {
 if (-not (Test-Path "$NfHermesHome\memory\findings.json")) {
     Copy-Item "$NightfangRoot\adapters\hermes\memory\findings.json" "$NfHermesHome\memory\findings.json" -Force
 }
+if (-not (Test-Path "$NfHermesHome\memory\knowledge_graph.jsonl")) {
+    if (Test-Path "$NightfangRoot\adapters\hermes\memory\knowledge_graph.jsonl") {
+        Copy-Item "$NightfangRoot\adapters\hermes\memory\knowledge_graph.jsonl" "$NfHermesHome\memory\knowledge_graph.jsonl" -Force
+    } else {
+        '{"type":"entity","name":"NIGHTFANG","entityType":"security-capability-pack","observations":["Autonomous security capability pack integrated into Hermes host runtime"]}' | Out-File -FilePath "$NfHermesHome\memory\knowledge_graph.jsonl" -Encoding utf8
+    }
+}
 if (-not (Test-Path "$NfHermesHome\memory\audit.log")) {
     New-Item -ItemType File -Path "$NfHermesHome\memory\audit.log" -Force | Out-Null
 }
-Write-Host "[OK] Memory templates ready." -ForegroundColor Green
+Write-Host "[OK] Memory templates and knowledge graph ready." -ForegroundColor Green
 
 # 6. Install Execution Policy Gateway & Launchers
 Write-Host "[+] Deploying NIGHTFANG CLI and Gateway launcher..." -ForegroundColor Blue
@@ -173,6 +215,8 @@ $meta = @{
     skills_path        = $NfSkillLink
     system_prompt      = "$NfHermesHome\system.md"
     config             = "$NfHermesHome\config.yaml"
+    knowledge_graph    = "$NfHermesHome\memory\knowledge_graph.jsonl"
+    mcp_config         = "$HermesHome\mcp.json"
     gateway            = "$HermesBinDir\nightfang-gate.cmd"
     launcher           = "$HermesBinDir\nightfang.cmd"
 }
@@ -188,6 +232,8 @@ Write-Host "  * NIGHTFANG Root : $NightfangRoot"
 Write-Host "  * Hermes Home    : $HermesHome"
 Write-Host "  * System Prompt  : $NfHermesHome\system.md"
 Write-Host "  * Skills Linked  : $NfSkillLink"
+Write-Host "  * MCP Config     : $HermesHome\mcp.json"
+Write-Host "  * Knowledge Graph: $NfHermesHome\memory\knowledge_graph.jsonl"
 Write-Host "  * Launcher CLI   : $HermesBinDir\nightfang.cmd"
 Write-Host ""
 Write-Host "Quick Start:" -ForegroundColor White

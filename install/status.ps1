@@ -25,6 +25,8 @@ $checks = @(
     @{ Name = "Config Overlay"; Path = "$NfHermesHome\config.yaml"; Type = "File" },
     @{ Name = "Scope Storage"; Path = "$NfHermesHome\memory\scope.yaml"; Type = "File" },
     @{ Name = "Findings Store"; Path = "$NfHermesHome\memory\findings.json"; Type = "File" },
+    @{ Name = "Knowledge Graph Store"; Path = "$NfHermesHome\memory\knowledge_graph.jsonl"; Type = "File" },
+    @{ Name = "MCP Configuration"; Path = "$HermesHome\mcp.json"; Type = "File" },
     @{ Name = "Gateway Wrapper"; Path = "$HermesBinDir\nightfang-gate.cmd"; Type = "File" },
     @{ Name = "Launcher CLI"; Path = "$HermesBinDir\nightfang.cmd"; Type = "File" },
     @{ Name = "Metadata Record"; Path = "$NfHermesHome\installation.json"; Type = "File" }

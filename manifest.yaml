@@ -13,6 +13,7 @@ runtime:
     skills: true
     workflows: true
     schemas: true
+    mcp: true
 
 capabilities:
   - id: autonomous-supervision
@@ -703,6 +704,7 @@ tools:
   - tools/sandbox.py
   - scripts/fuzzing_engine.py
   - scripts/generate_sbom.py
+  - adapters/hermes/mcp.json
 
 references:
   - references/sops.md
@@ -722,3 +724,55 @@ templates:
   - templates/full_report_template.md
   - templates/finding_template.md
   - templates/detection_rules.md
+
+mcp_servers:
+  testing_qa:
+    - id: mk-qa-master
+      package: mk-qa-master
+      command: uvx
+      args: ["mk-qa-master"]
+      description: "Autonomous multi-framework QA test runner (pytest, Jest, Cypress, Go, Schemathesis) with built-in DOM analyzer and QA advisor loop"
+    - id: security-scanner-mcp
+      package: security-scanner-mcp
+      command: npx
+      args: ["-y", "security-scanner-mcp"]
+      description: "AST-level static application security testing (OWASP Top 10, secrets, SQLi, XSS) for AI-generated code and target repositories"
+  memory:
+    - id: codebase-memory-mcp
+      package: codebase-memory-mcp
+      command: npx
+      args: ["-y", "codebase-memory-mcp"]
+      description: "Persistent AST semantic knowledge graph for cross-file taint analysis, caller-callee hierarchy, and code intelligence"
+    - id: server-memory
+      package: "@modelcontextprotocol/server-memory"
+      command: npx
+      args: ["-y", "@modelcontextprotocol/server-memory"]
+      env:
+        MEMORY_FILE_PATH: "memory/knowledge_graph.jsonl"
+      description: "Persistent entity-relation knowledge graph memory for tracking target assets, entities, and multi-session observations"
+    - id: th-memory-mcp
+      package: th-memory-mcp
+      command: npx
+      args: ["-y", "th-memory-mcp"]
+      description: "Adaptive SQLite-backed persistent memory engine with hybrid FTS5 full-text and semantic vector retrieval"
+  threat_intel_browser:
+    - id: cve-mcp
+      package: cve-mcp
+      command: npx
+      args: ["-y", "cve-mcp"]
+      description: "Real-time CVE and vulnerability intelligence engine (41 tools across NVD, EPSS, CISA KEV, GHSA, OSV, Shodan, Metasploit, ATT&CK)"
+    - id: osint-mcp-server
+      package: osint-mcp-server
+      command: npx
+      args: ["-y", "osint-mcp-server"]
+      description: "Comprehensive OSINT reconnaissance aggregator querying Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS, and crt.sh"
+    - id: playwright
+      package: "@playwright/mcp"
+      command: npx
+      args: ["-y", "@playwright/mcp@latest", "--headless"]
+      description: "Native headless browser automation for DOM probing, dynamic SPA analysis, network event inspection, and failure screenshot capture"
+
+memory_templates:
+  - adapters/hermes/memory/scope.yaml
+  - adapters/hermes/memory/findings.json
+  - adapters/hermes/memory/knowledge_graph.jsonl

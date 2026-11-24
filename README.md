@@ -199,10 +199,17 @@ Infused directly into the host runtime (Hermes) to achieve full cognitive autono
    - **`defuddle`**: Semantic Markdown distillation saving up to 80% context tokens during route discovery.
    - **`youtube-skills`**: Ingests video transcripts and indexes chapters for conference and tech disclosures.
    - **`browser-harness`**: Drives authenticated browser sessions for dynamic SPAs, client-side JS, and MFA flows.
-2. **Engineering Rigor & Codebase Knowledge**:
+   - **`cve-mcp`**: Real-time CVE/KEV vulnerability intelligence engine (41 tools across NVD, EPSS, CISA KEV, GHSA, Metasploit, ATT&CK).
+   - **`osint-mcp-server`**: Extended OSINT intelligence aggregator (Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS, crt.sh).
+   - **`@playwright/mcp`**: Headless browser automation for DOM probing, SPA inspection, and failure screenshot capture.
+2. **Engineering Rigor, QA & Codebase Knowledge**:
+   - **`mk-qa-master`**: Multi-framework QA test runner (pytest, Jest, Cypress, Go, Schemathesis) with built-in DOM analyzer and QA advisor loop.
+   - **`security-scanner-mcp`**: AST-level static security scanner detecting OWASP Top 10 vulnerabilities, secrets, SQLi, and XSS.
+   - **`codebase-memory-mcp`**: Persistent AST semantic knowledge graph for cross-file taint analysis and caller-callee auditing.
+   - **`@modelcontextprotocol/server-memory`**: Persistent entity-relation knowledge graph store (`memory/knowledge_graph.jsonl`) for multi-turn engagements.
+   - **`th-memory-mcp`**: Adaptive SQLite-backed persistent memory engine with hybrid FTS5 and semantic vector retrieval.
    - **`addyosmani agent-skills`**: Software engineering lifecycle discipline (`/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`).
    - **`mattpocock skills`**: Strict verification discipline (`/grill-with-docs`, `/tdd`, `/implement`) before executing custom PoCs.
-   - **`codebase-memory-mcp`**: Persistent AST semantic knowledge graph for cross-file taint analysis and caller-callee auditing.
 3. **Orchestration, Supervision & System Evolution**:
    - **`minions`**: Mission Control visual HUD dashboard and task supervisor for situational awareness.
    - **`oh-my-hermes`**: Multi-agent coworker lanes dynamically routing tasks across reasoning and throughput models.
@@ -214,6 +221,23 @@ Infused directly into the host runtime (Hermes) to achieve full cognitive autono
    - **`OpenMontage`**: Agentic video PoC deliverable synthesis demonstrating validated attack chains.
 5. **Specialized Security Playbooks**:
    - **`Low-Level & Specialized Playbooks`** (`references/low_level_playbooks.md`): 817 playbooks covering firmware/UEFI, kernel rootkits, post-quantum crypto, and industrial SCADA safety systems.
+
+---
+
+## Verified Model Context Protocol (MCP) Integration
+
+NIGHTFANG integrates a verified matrix of 8 Model Context Protocol (MCP) servers deployed across Hermes:
+
+| Category | Server ID | Command / Invocation | Description |
+| :--- | :--- | :--- | :--- |
+| **Testing & QA** | `mk-qa-master` | `uvx mk-qa-master` | Multi-framework QA testing (pytest, Jest, Cypress, Go, Schemathesis) with DOM analyzer & AI QA advisor loop. |
+| **Testing & QA** | `security-scanner-mcp` | `npx -y security-scanner-mcp` | AST-level security scanner for AI-generated code and repository source (OWASP Top 10, secrets, SQLi, XSS). |
+| **Memory** | `codebase-memory-mcp` | `npx -y codebase-memory-mcp` | Tree-sitter AST semantic codebase intelligence and cross-file taint analysis. |
+| **Memory** | `server-memory` | `npx -y @modelcontextprotocol/server-memory` | Entity-relation knowledge graph memory (`memory/knowledge_graph.jsonl`) for multi-session persistence. |
+| **Memory** | `th-memory-mcp` | `npx -y th-memory-mcp` | SQLite-backed adaptive persistent memory with hybrid FTS5 full-text and vector indexing. |
+| **Threat Intel** | `cve-mcp` | `npx -y cve-mcp` | Real-time CVE/KEV vulnerability intelligence (41 tools across NVD, EPSS, CISA KEV, GHSA, Metasploit, ATT&CK). |
+| **Threat Intel** | `osint-mcp-server` | `npx -y osint-mcp-server` | Multi-source OSINT intelligence aggregator (Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS, crt.sh). |
+| **Browser** | `playwright` | `npx -y @playwright/mcp@latest --headless` | Native headless browser automation for dynamic SPAs, DOM probing, and failure screenshot capture. |
 
 ---
 

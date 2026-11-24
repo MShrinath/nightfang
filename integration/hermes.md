@@ -129,3 +129,25 @@ Hermes must never execute security tools or network traffic directly. All tool i
 4. **Stage 4 (Action Classification & HITL Gate)**: Applies the Autonomy Tier and checks 5-D approval tokens.
 5. **Stage 5 (Non-Destructive Safety Filter)**: Blocks destructive commands and tracks artifact canaries.
 6. **Stage 6 (Evidence Hashing)**: Captures raw execution streams and computes cryptographic SHA-256 digests (`[EVD-XXXXXX]`).
+
+---
+
+## 6. Model Context Protocol (MCP) Integration & Knowledge Graph Architecture
+
+NIGHTFANG integrates a verified suite of 8 Model Context Protocol (MCP) servers into Hermes, bridging external testing engines, memory systems, threat intelligence feeds, and browser automation directly into the agent runtime:
+
+### 6.1 Verified MCP Servers
+1. **Testing & QA Runners**:
+   - `mk-qa-master`: Multi-framework QA test runner (`pytest`, `Jest`, `Cypress`, `Go`, `Schemathesis`) with built-in DOM analyzer and QA advisor loop. Invoked via `uvx mk-qa-master`.
+   - `security-scanner-mcp`: AST-level static security scanner detecting OWASP Top 10 vulnerabilities, secrets, SQLi, and XSS across AI-generated code and target projects. Invoked via `npx -y security-scanner-mcp`.
+2. **Memory & Knowledge Graph**:
+   - `codebase-memory-mcp`: AST code intelligence and persistent semantic index for cross-file taint analysis. Invoked via `npx -y codebase-memory-mcp`.
+   - `@modelcontextprotocol/server-memory`: Persistent entity-relation knowledge graph memory server. Configured with `MEMORY_FILE_PATH: ~/.hermes/nightfang/memory/knowledge_graph.jsonl` for tracking entities, relations, and observations across multi-turn engagements.
+   - `th-memory-mcp`: Adaptive SQLite-backed persistent memory engine with hybrid FTS5 full-text search and vector retrieval. Invoked via `npx -y th-memory-mcp`.
+3. **Threat Intelligence & Browser Automation**:
+   - `cve-mcp`: Real-time vulnerability intelligence engine with 41 tools across NVD, EPSS, CISA KEV, GHSA, Metasploit, and MITRE ATT&CK. Invoked via `npx -y cve-mcp`.
+   - `osint-mcp-server`: Comprehensive OSINT reconnaissance aggregator querying Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS, and crt.sh. Invoked via `npx -y osint-mcp-server`.
+   - `playwright` (`@playwright/mcp`): Headless browser automation for dynamic SPA crawling, DOM probing, network event inspection, and failure screenshot capture. Invoked via `npx -y @playwright/mcp@latest --headless`.
+
+### 6.2 Knowledge Graph Persistence
+The knowledge graph memory store is initialized at `~/.hermes/nightfang/memory/knowledge_graph.jsonl`. Both `install.sh` and `install.ps1` configure the exact absolute path in `~/.hermes/mcp.json` and ensure parent directory isolation and atomic write safety.

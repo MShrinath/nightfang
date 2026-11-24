@@ -60,3 +60,20 @@ Reference catalog of external security tools, command templates, timeouts, and f
 | `Prowler` | AWS CIS benchmark audit | `prowler aws` |
 | `curl` / `requests`| Adversarial LLM prompt testing | Python script with timeout & session isolation |
 | Headless Browser | Dynamic SPA DOM inspection & screenshots | Playwright / Puppeteer execution |
+
+---
+
+## 6. Model Context Protocol (MCP) Verified Integration Matrix
+
+Verified MCP servers integrated into NIGHTFANG for autonomous QA, persistent memory, threat intelligence, and browser automation:
+
+| Server ID | Category | Command / Invocation | Purpose | Storage / Env |
+| :--- | :--- | :--- | :--- | :--- |
+| `mk-qa-master` | Testing & QA | `uvx mk-qa-master` | Autonomous test runner (pytest, Jest, Cypress, Go, Schemathesis) with built-in DOM analyzer & self-improvement QA loop | — |
+| `security-scanner-mcp` | Testing & QA | `npx -y security-scanner-mcp` | AST-level static security scanner for AI code and repositories (OWASP Top 10, secrets, SQLi, XSS) | — |
+| `codebase-memory-mcp` | Memory | `npx -y codebase-memory-mcp` | Persistent AST semantic knowledge graph for cross-file taint analysis and caller-callee hierarchy tracking | Project tree-sitter index |
+| `server-memory` | Memory | `npx -y @modelcontextprotocol/server-memory` | Persistent entity-relation knowledge graph memory for multi-phase tracking | `MEMORY_FILE_PATH: <path>/knowledge_graph.jsonl` |
+| `th-memory-mcp` | Memory | `npx -y th-memory-mcp` | Adaptive SQLite-backed persistent memory with hybrid FTS5 and semantic retrieval | SQLite database |
+| `cve-mcp` | Threat Intel | `npx -y cve-mcp` | Real-time vulnerability intelligence (41 tools: NVD, EPSS, CISA KEV, GHSA, Metasploit, ATT&CK) | Remote API / local cache |
+| `osint-mcp-server` | Threat Intel / OSINT | `npx -y osint-mcp-server` | Extended OSINT aggregator (Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS, crt.sh) | Remote API / query cache |
+| `playwright` | Browser Tools | `npx -y @playwright/mcp@latest --headless` | Headless browser automation for DOM probing, dynamic SPA analysis, and failure screenshot capture | Headless Chromium instance |

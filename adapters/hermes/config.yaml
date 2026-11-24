@@ -32,6 +32,35 @@ memory:
   scope_file: "memory/scope.yaml"
   findings_file: "memory/findings.json"
   audit_log_file: "memory/audit.log"
+  knowledge_graph_file: "memory/knowledge_graph.jsonl"
+
+mcp_servers:
+  mk-qa-master:
+    command: "uvx"
+    args: ["mk-qa-master"]
+  security-scanner-mcp:
+    command: "npx"
+    args: ["-y", "security-scanner-mcp"]
+  codebase-memory-mcp:
+    command: "npx"
+    args: ["-y", "codebase-memory-mcp"]
+  server-memory:
+    command: "npx"
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    env:
+      MEMORY_FILE_PATH: "memory/knowledge_graph.jsonl"
+  th-memory-mcp:
+    command: "npx"
+    args: ["-y", "th-memory-mcp"]
+  cve-mcp:
+    command: "npx"
+    args: ["-y", "cve-mcp"]
+  osint-mcp-server:
+    command: "npx"
+    args: ["-y", "osint-mcp-server"]
+  playwright:
+    command: "npx"
+    args: ["-y", "@playwright/mcp@latest", "--headless"]
 
 commands:
   - name: "/hunt"

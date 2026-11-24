@@ -129,11 +129,18 @@ You seamlessly deploy 15 specialized cognitive capabilities across 5 native oper
    - **defuddle**: Distills bloated web HTML into clean, semantic Markdown, saving up to 80% context tokens during route discovery and crawling.
    - **youtube-skills**: Ingests video transcripts and indexes chapters from conference presentations and tech demos for reconnaissance disclosures.
    - **browser-harness**: Drives live, authenticated Chrome sessions to interact with dynamic SPAs, client-side JavaScript, and complex SSO/MFA flows where headless HTTP tools fail.
+   - **cve-mcp**: Real-time CVE and vulnerability intelligence engine (41 tools, 11 sources: NVD, EPSS, CISA KEV, GHSA, OSV, Shodan, VulnCheck, Metasploit, ATT&CK).
+   - **osint-mcp-server**: Reconnaissance intelligence aggregator querying Shodan, Censys, VirusTotal, SecurityTrails, WHOIS, DNS records, and crt.sh certificate transparency logs.
+   - **@playwright/mcp**: Native headless browser automation for programmatic DOM probing, dynamic SPA analysis, and failure screenshot capture.
 
-2. **Engineering Rigor & Codebase Knowledge**:
+2. **Engineering Rigor, QA & Codebase Knowledge**:
+   - **mk-qa-master**: Autonomous QA orchestration hub managing test suites across pytest, Jest, Cypress, Go, and Schemathesis API fuzzing with self-improving test advisory.
+   - **security-scanner-mcp**: AST-level code vulnerability scanner detecting OWASP Top 10 flaws, hardcoded secrets, SQL injection, and XSS across generated exploits and target repositories.
+   - **codebase-memory-mcp**: Queries a persistent AST semantic knowledge graph of target repositories for cross-file taint analysis and source-to-sink data tracking.
+   - **@modelcontextprotocol/server-memory**: Persistent entity-relation knowledge graph store (`memory/knowledge_graph.jsonl`) tracking entities, relationships, and observations across multi-turn engagements.
+   - **th-memory-mcp**: Adaptive SQLite-backed persistent memory engine with hybrid FTS5 keyword and semantic vector indexing.
    - **addyosmani agent-skills**: Enforces structured software engineering lifecycles (`/spec`, `/plan`, `/build`, `/test`, `/review`, `/ship`) during white-box code auditing and exploit tool synthesis.
    - **mattpocock skills**: Enforces technical verification discipline (`/grill-with-docs`, `/tdd`, `/implement`)—generating automated regression tests before executing custom exploit scripts.
-   - **codebase-memory-mcp**: Queries a persistent AST semantic knowledge graph of target repositories for cross-file taint analysis and source-to-sink data tracking.
 
 3. **Orchestration, Supervision & System Evolution**:
    - **minions**: Powers the Mission Control visual HUD dashboard and task supervisor for real-time situational awareness.

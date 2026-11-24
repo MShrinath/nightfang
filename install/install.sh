@@ -129,6 +129,19 @@ if [ "$INSTALL_COMPLEMENTARY_SKILLS" = true ]; then
     mkdir -p "$HERMES_HOME/plugins"
     mkdir -p "$HERMES_HOME/extensions"
 
+    # Ensure Node, NPM, NPX toolchain is accessible
+    if ! command -v npx >/dev/null 2>&1; then
+        NODE_BIN_DIR=$(find "$HERMES_HOME/tools" -maxdepth 2 -type d -name "bin" 2>/dev/null | grep -E "node-[^/]+/bin" | head -n 1 || true)
+        if [ -n "$NODE_BIN_DIR" ] && [ -x "$NODE_BIN_DIR/node" ]; then
+            info "Discovered embedded Hermes Node.js toolchain at $NODE_BIN_DIR"
+            mkdir -p "$HOME/.local/bin"
+            ln -sf "$NODE_BIN_DIR/node" "$HOME/.local/bin/node"
+            ln -sf "$NODE_BIN_DIR/npm" "$HOME/.local/bin/npm" 2>/dev/null || true
+            ln -sf "$NODE_BIN_DIR/npx" "$HOME/.local/bin/npx" 2>/dev/null || true
+            export PATH="$NODE_BIN_DIR:$HOME/.local/bin:$PATH"
+        fi
+    fi
+
     PYTHON_BIN=""
     if command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
         PYTHON_BIN="python3"
@@ -169,21 +182,61 @@ if [ "$INSTALL_COMPLEMENTARY_SKILLS" = true ]; then
         done
     fi
 
-    # Configure Hermes MCP for codebase-memory-mcp
+    # Configure verified NIGHTFANG Model Context Protocol (MCP) servers
+    info "Configuring verified NIGHTFANG Model Context Protocol (MCP) servers..."
     MCP_CONFIG="$HERMES_HOME/mcp.json"
-    if [ ! -f "$MCP_CONFIG" ]; then
-        cat > "$MCP_CONFIG" << 'MCPEOF'
+    NF_MCP_CONFIG="$NF_HERMES_HOME/mcp.json"
+    KG_PATH="$NF_HERMES_HOME/memory/knowledge_graph.jsonl"
+    MCP_SRC="$NIGHTFANG_ROOT/adapters/hermes/mcp.json"
+
+    if [ -f "$MCP_SRC" ]; then
+        sed "s|\${HERMES_HOME}|$HERMES_HOME|g" "$MCP_SRC" > "$NF_MCP_CONFIG"
+        cp "$NF_MCP_CONFIG" "$MCP_CONFIG"
+    else
+        cat > "$MCP_CONFIG" << MCPEOF
 {
   "mcpServers": {
-    "codebase-memory": {
+    "mk-qa-master": {
+      "command": "uvx",
+      "args": ["mk-qa-master"]
+    },
+    "security-scanner-mcp": {
+      "command": "npx",
+      "args": ["-y", "security-scanner-mcp"]
+    },
+    "codebase-memory-mcp": {
       "command": "npx",
       "args": ["-y", "codebase-memory-mcp"]
+    },
+    "server-memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "$KG_PATH"
+      }
+    },
+    "th-memory-mcp": {
+      "command": "npx",
+      "args": ["-y", "th-memory-mcp"]
+    },
+    "cve-mcp": {
+      "command": "npx",
+      "args": ["-y", "cve-mcp"]
+    },
+    "osint-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "osint-mcp-server"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--headless"]
     }
   }
 }
 MCPEOF
+        cp "$MCP_CONFIG" "$NF_MCP_CONFIG"
     fi
-    success "Complementary autonomous skills and MCP configured in Hermes."
+    success "Configured 8 verified MCP servers (QA, memory, OSINT, browser) in Hermes."
 fi
 
 # 4. Install System Prompt & Configuration
@@ -205,6 +258,39 @@ if [[ -f "$HERMES_HOME/config.yaml" ]]; then
         echo "nightfang:" >> "$HERMES_HOME/config.yaml"
         echo "  config: \"$NF_HERMES_HOME/config.yaml\"" >> "$HERMES_HOME/config.yaml"
     fi
+    if ! grep -q "^mcp_servers:" "$HERMES_HOME/config.yaml"; then
+        cat >> "$HERMES_HOME/config.yaml" << YAMLEOF
+
+# --- NIGHTFANG Verified MCP Servers ---
+mcp_servers:
+  mk-qa-master:
+    command: uvx
+    args: ["mk-qa-master"]
+  security-scanner-mcp:
+    command: npx
+    args: ["-y", "security-scanner-mcp"]
+  codebase-memory-mcp:
+    command: npx
+    args: ["-y", "codebase-memory-mcp"]
+  server-memory:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-memory"]
+    env:
+      MEMORY_FILE_PATH: "$NF_HERMES_HOME/memory/knowledge_graph.jsonl"
+  th-memory-mcp:
+    command: npx
+    args: ["-y", "th-memory-mcp"]
+  cve-mcp:
+    command: npx
+    args: ["-y", "cve-mcp"]
+  osint-mcp-server:
+    command: npx
+    args: ["-y", "osint-mcp-server"]
+  playwright:
+    command: npx
+    args: ["-y", "@playwright/mcp@latest", "--headless"]
+YAMLEOF
+    fi
 else
     cp "$CONFIG_SRC" "$HERMES_HOME/config.yaml"
 fi
@@ -218,8 +304,17 @@ fi
 if [[ ! -f "$NF_HERMES_HOME/memory/findings.json" ]]; then
     cp "$MEMORY_SRC/findings.json" "$NF_HERMES_HOME/memory/findings.json"
 fi
+if [[ ! -f "$NF_HERMES_HOME/memory/knowledge_graph.jsonl" ]]; then
+    if [[ -f "$MEMORY_SRC/knowledge_graph.jsonl" ]]; then
+        cp "$MEMORY_SRC/knowledge_graph.jsonl" "$NF_HERMES_HOME/memory/knowledge_graph.jsonl"
+    else
+        cat > "$NF_HERMES_HOME/memory/knowledge_graph.jsonl" << 'KGEOF'
+{"type":"entity","name":"NIGHTFANG","entityType":"security-capability-pack","observations":["Autonomous security capability pack integrated into Hermes host runtime","Features 46 specialized agents, 42 skills, and 26 workflows","Equipped with verified MCP integration covering QA, memory, OSINT, and browser automation"]}
+KGEOF
+    fi
+fi
 touch "$NF_HERMES_HOME/memory/audit.log"
-success "Engagement memory storage initialized."
+success "Engagement memory storage and knowledge graph initialized."
 
 # 6. Install Execution Policy Gateway & Tools Integration
 info "Wiring Execution Policy Gateway to Hermes..."
@@ -303,6 +398,8 @@ cat > "$NF_HERMES_HOME/installation.json" <<EOF
   "skills_path": "$NF_SKILL_LINK",
   "system_prompt": "$NF_HERMES_HOME/system.md",
   "config": "$NF_HERMES_HOME/config.yaml",
+  "knowledge_graph": "$NF_HERMES_HOME/memory/knowledge_graph.jsonl",
+  "mcp_config": "$HERMES_HOME/mcp.json",
   "gateway": "$HERMES_BIN_DIR/nightfang-gate",
   "launcher": "$HERMES_BIN_DIR/nightfang"
 }
@@ -327,6 +424,8 @@ echo "  • NIGHTFANG Root : $NIGHTFANG_ROOT"
 echo "  • Hermes Home    : $HERMES_HOME"
 echo "  • System Prompt  : $NF_HERMES_HOME/system.md"
 echo "  • Skills Linked  : $NF_SKILL_LINK"
+echo "  • MCP Config     : $HERMES_HOME/mcp.json"
+echo "  • Knowledge Graph: $NF_HERMES_HOME/memory/knowledge_graph.jsonl"
 echo "  • Gateway Binary : $HERMES_BIN_DIR/nightfang-gate"
 echo "  • Launcher CLI   : $HERMES_BIN_DIR/nightfang"
 echo
