@@ -30,9 +30,9 @@ import sys
 try:
     from triton import (TritonContext, ARCH, Instruction, MemoryAccess, CPUSIZE,
                         MODE)
+    HAVE_TRITON = True
 except ImportError:
-    print("error: pip install triton (the JonathanSalwan/Triton library)", file=sys.stderr)
-    sys.exit(1)
+    HAVE_TRITON = False
 try:
     import lief
 except ImportError:
@@ -149,6 +149,9 @@ def main():
     ap.add_argument("--arch", choices=["x64", "x86"], default="x64")
     ap.add_argument("-o", "--out", default="deflat.dot")
     args = ap.parse_args()
+    if not HAVE_TRITON:
+        print("error: pip install triton (the JonathanSalwan/Triton library)", file=sys.stderr)
+        return 1
 
     func_addr = int(args.func, 16)
     blocks, edges = deflatten(args.binary, func_addr, arch64=(args.arch == "x64"))

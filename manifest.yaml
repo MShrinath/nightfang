@@ -611,7 +611,7 @@ agent_taxonomy:
         purpose: "IoT firmware extraction, static analysis, and embedded system security assessment"
       - id: webshell-detector
         path: agents/webshell-detector.md
-        invoked_by: [workflows/post-exploitation.md, workflows/standard-pentest.md]
+        invoked_by: [workflows/red-team.md, workflows/standard-pentest.md]
         purpose: "Post-intrusion webshell discovery, classification, and cleanup verification"
       - id: zero-day-analyzer
         path: agents/zero-day-analyzer.md

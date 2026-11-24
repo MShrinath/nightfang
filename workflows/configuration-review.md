@@ -81,4 +81,4 @@ Transform configuration findings into prioritized action items mapped to regulat
 4. Produce a configuration drift summary showing movement toward or away from baseline over successive review cycles if historical data is available.
 5. Deliver a compliance readiness scorecard suitable for auditor presentation with gap closure timelines.
 
-**Skill Reference**: `skills/reporting/scripts/report_assembler.py`, `templates/master_report.md`, `references/framework_mappings.md`
+**Skill Reference**: `skills/reporting/scripts/report_generator.py`, `templates/full_report_template.md`, `references/framework_mappings.md`

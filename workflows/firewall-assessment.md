@@ -81,4 +81,4 @@ Produce findings that map observed behavior to security policy gaps.
 4. Provide rule-level remediation recommendations specifying exact policy statements to modify, add, or remove.
 5. Deliver a consolidated firewall security posture report suitable for both technical remediation teams and executive briefing.
 
-**Skill Reference**: `skills/reporting/scripts/report_assembler.py`, `templates/master_report.md`, `references/framework_mappings.md`
+**Skill Reference**: `skills/reporting/scripts/report_generator.py`, `templates/full_report_template.md`, `references/framework_mappings.md`

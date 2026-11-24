@@ -18,8 +18,17 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=/dev/null
-source "$HERE/../../coding-mastery/scripts/lib.sh"
+_err() { echo "[!] ERROR: $*" >&2; }
+_warn() { echo "[-] WARNING: $*" >&2; }
+_log() { echo "[*] $*"; }
+_ok() { echo "[+] $*"; }
+_need() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "[-] Missing dependency: $1 ($2)" >&2
+    return 1
+  fi
+  return 0
+}
 
 OUT="${OUT:-./rr-out}"
 TARGET="${1:-}"

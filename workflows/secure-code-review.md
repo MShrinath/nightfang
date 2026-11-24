@@ -52,7 +52,7 @@ Conduct structured walkthrough of high-risk components identified in Phase 2 and
 4. **Cryptography Usage**: Verify algorithm selection, key management practices, IV reuse prevention, and correct implementation of authenticated encryption. Flag custom cryptography in favor of established libraries.
 5. **Error Handling & Logging**: Inspect stack trace exposure, error message information leakage, and sensitive data inclusion in log outputs.
 
-**Tools**: Manual review via agent reasoning, supplemented by `skills/code-auditor` agent delegation.
+**Tools**: Manual review via agent reasoning, supplemented by `agents/code-auditor.md` delegation.
 
 **Skill Reference**: `skills/crypto`, `skills/credential-access`, `schemas/finding.md`
 
@@ -81,6 +81,6 @@ Consolidate all findings into unified deliverables with prioritized remediation 
 5. Produce language-specific secure coding recommendations with before/after code examples.
 6. Attach machine-readable detection signatures (Sigma rules for log-based detection, IDE plugin rules for future prevention).
 
-**Tools**: `skills/reporting/scripts/report_assembler.py`, `schemas/finding.md`, `templates/master_report.md`.
+**Tools**: `skills/reporting/scripts/report_generator.py`, `schemas/finding.md`, `templates/full_report_template.md`.
 
 **Skill Reference**: `skills/reporting`, `skills/remediation`, `workflows/supply-chain-assessment.md`

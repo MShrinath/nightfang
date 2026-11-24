@@ -157,9 +157,8 @@ Write-Host "[OK] Memory templates ready." -ForegroundColor Green
 # 6. Install Execution Policy Gateway & Launchers
 Write-Host "[+] Deploying NIGHTFANG CLI and Gateway launcher..." -ForegroundColor Blue
 Copy-Item "$NightfangRoot\adapters\hermes\nightfang-gate.cmd" "$HermesBinDir\nightfang-gate.cmd" -Force
-Copy-Item "$NightfangRoot\adapters\hermes\nightfang.cmd" "$HermesBinDir\nightfang.cmd" -Force
-Copy-Item "$NightfangRoot\adapters\hermes\nightfang.cmd" "$NightfangRoot\nightfang.cmd" -Force
-Write-Host "[OK] Launchers installed at $HermesBinDir and repo root." -ForegroundColor Green
+Copy-Item "$NightfangRoot\nightfang.cmd" "$HermesBinDir\nightfang.cmd" -Force
+Write-Host "[OK] Launchers installed at $HermesBinDir." -ForegroundColor Green
 
 # 7. Record Installation Metadata
 $meta = @{
@@ -170,7 +169,7 @@ $meta = @{
     hermes_home        = $HermesHome
     installed_at       = (Get-Date -Format "o")
     agents_count       = 46
-    capabilities_count = 35
+    capabilities_count = 42
     skills_path        = $NfSkillLink
     system_prompt      = "$NfHermesHome\system.md"
     config             = "$NfHermesHome\config.yaml"

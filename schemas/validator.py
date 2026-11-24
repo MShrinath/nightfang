@@ -498,7 +498,7 @@ def run_self_tests() -> bool:
                 }
             },
             "detection_status": "detection",
-            "validated_by_blue_skill": "skills/remediation/detection-engineering.md",
+            "validated_by_blue_skill": "skills/detection-engineering/SKILL.md",
             "classifications": {
                 "cvss_v31": {
                     "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",

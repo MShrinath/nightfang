@@ -29,9 +29,9 @@ try:
                          UcError)
     from unicorn.x86_const import (UC_X86_REG_RSP, UC_X86_REG_RDI, UC_X86_REG_RIP,
                                    UC_X86_REG_ESP)
+    HAVE_UNICORN = True
 except ImportError:
-    print("error: pip install unicorn", file=sys.stderr)
-    sys.exit(1)
+    HAVE_UNICORN = False
 try:
     import lief
 except ImportError:
@@ -145,6 +145,9 @@ def main():
                     help="list call sites to --func instead of emulating")
     ap.add_argument("-o", "--out")
     args = ap.parse_args()
+    if not HAVE_UNICORN:
+        print("error: pip install unicorn", file=sys.stderr)
+        return 1
 
     func_addr = int(args.func, 16)
     arch64 = args.arch == "x64"

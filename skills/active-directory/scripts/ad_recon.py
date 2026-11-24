@@ -25,8 +25,9 @@ import sys
 try:
     from ldap3 import Server, Connection, ALL, NTLM, SUBTREE, Tls
     import ssl
+    HAVE_LDAP3 = True
 except ImportError:
-    sys.exit("[-] pip install ldap3")
+    HAVE_LDAP3 = False
 
 # userAccountControl bit flags
 UAC = {
@@ -44,6 +45,8 @@ def base_dn(domain):
 
 
 def connect(args):
+    if not HAVE_LDAP3:
+        sys.exit("[-] Missing required library: pip install ldap3")
     use_ssl = args.ssl
     port = 636 if use_ssl else 389
     tls = Tls(validate=ssl.CERT_NONE) if use_ssl else None

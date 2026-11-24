@@ -79,4 +79,4 @@ Compile adversary-relevant intelligence from public threat feeds and incident da
 4. Compile domain and IP reputation scores from VirusTotal, AbuseIPDB, and emerging threat intel provider free tiers.
 5. Produce an OSINT evidence package with SHA-256 hashes for all downloaded artifacts and URLs visited, stored per `schemas/finding.md` provenance requirements.
 
-**Skill Reference**: `skills/reporting/scripts/report_assembler.py`, `templates/master_report.md`, `references/framework_mappings.md`
+**Skill Reference**: `skills/reporting/scripts/report_generator.py`, `templates/full_report_template.md`, `references/framework_mappings.md`

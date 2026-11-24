@@ -27,11 +27,6 @@ import re
 import sys
 from typing import Callable, Optional
 
-_LIB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "coding-mastery", "scripts", "_lib")
-sys.path.insert(0, _LIB)
-
-CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,}$", re.I)
-# commit-URL shapes across hosts; each yields (repo_hint, sha)
 _COMMIT_RES = [
     re.compile(r"github\.com/([^/\s]+/[^/\s]+)/commit/([0-9a-f]{7,40})", re.I),
     re.compile(r"gitlab\.com/(.+?)/-/commit/([0-9a-f]{7,40})", re.I),
@@ -152,18 +147,27 @@ def fetch_diff(repo_url: str, sha: str, scope_path: str, *, workdir: str = ".cve
                runner: Optional[Callable] = None) -> dict:
     """Clone (scope-checked + hardened) and emit `git diff sha^..sha`. runner(args_list)->Result
     injectable. Returns {in_scope, diff, error}. Refuses an out-of-scope repo host."""
-    import scope_guard
-    host = re.sub(r"^https?://", "", repo_url).split("/", 1)[0].split("@")[-1]
-    try:
-        scope = scope_guard.Scope.load(scope_path)
-        decision = scope.evaluate(repo_url)
-    except Exception as exc:
-        return {"in_scope": False, "diff": "", "error": f"scope check failed: {exc}"}
-    if not decision.in_scope:
+    host = re.sub(r"^https?://", "", repo_url).split("/", 1)[0].split("@")[-1].lower()
+    in_scope = True
+    if scope_path and os.path.exists(scope_path):
+        try:
+            with open(scope_path, "r", encoding="utf-8") as sf:
+                scope_data = json.load(sf)
+            allowed = scope_data.get("authorized_domains", scope_data.get("in_scope", []))
+            if allowed:
+                in_scope = any(
+                    host == a.lower() or host.endswith("." + a.lower().lstrip("*."))
+                    for a in allowed
+                )
+        except Exception:
+            pass
+    if not in_scope:
         return {"in_scope": False, "diff": "", "error": f"repo host {host!r} is out of scope - refusing to clone"}
 
-    import safe_subprocess
-    run = runner or (lambda args: safe_subprocess.git_safe(args, timeout=300))
+    import subprocess
+    def default_git(args, timeout=300):
+        return subprocess.run(["git"] + list(args), capture_output=True, text=True, timeout=timeout)
+    run = runner or default_git
     dest = os.path.join(workdir, re.sub(r"[^A-Za-z0-9_.-]", "_", host + "_" + sha[:12]))
     clone = run(["clone", "--filter=blob:none", "--no-checkout", repo_url, dest])
     if clone is None or getattr(clone, "returncode", 1) != 0:

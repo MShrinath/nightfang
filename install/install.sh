@@ -246,7 +246,7 @@ export HERMES_CONFIG="$NF_HERMES_HOME/config.yaml"
 # Banner
 if [ -t 1 ]; then
     printf '\033[1;36m🦇 NIGHTFANG Security Intelligence Layer (Active)\033[0m\n'
-    printf '\033[1;35m46 Specialized Agents | 35 Capabilities | Autonomous Hunter: READY\033[0m\n\n'
+    printf '\033[1;35m46 Specialized Agents | 42 Capabilities | Autonomous Hunter: READY\033[0m\n\n'
 fi
 
 if [ "\$1" = "--daemon" ]; then
@@ -297,7 +297,7 @@ cat > "$NF_HERMES_HOME/installation.json" <<EOF
   "hermes_home": "$HERMES_HOME",
   "installed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "agents_count": 46,
-  "capabilities_count": 35,
+  "capabilities_count": 42,
   "skills_path": "$NF_SKILL_LINK",
   "system_prompt": "$NF_HERMES_HOME/system.md",
   "config": "$NF_HERMES_HOME/config.yaml",

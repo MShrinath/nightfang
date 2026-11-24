@@ -81,4 +81,4 @@ Produce a comprehensive forensic report documenting findings, methodology, and e
 4. Assign severity classifications per `schemas/finding.md` dual ranking system for each significant finding; compute CVSS v3.1/v4.0 vectors where applicable to vulnerability-driven root causes.
 5. Deliver actionable IOCs package suitable for organization-wide threat hunting deployment and provide remediation prioritization guidance to the incident response team lead.
 
-**Skill Reference**: `skills/reporting/scripts/report_assembler.py`, `templates/master_report.md`, `integration/execution-policy-gateway.md`
+**Skill Reference**: `skills/reporting/scripts/report_generator.py`, `templates/full_report_template.md`, `integration/execution-policy-gateway.md`

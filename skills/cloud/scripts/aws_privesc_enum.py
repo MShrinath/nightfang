@@ -29,8 +29,9 @@ import sys
 try:
     import boto3
     from botocore.exceptions import ClientError, BotoCoreError
+    HAVE_BOTO3 = True
 except ImportError:
-    sys.exit("[!] pip install boto3")
+    HAVE_BOTO3 = False
 
 # path_name -> list of actions that ALL must be allowed for the path to work
 PRIVESC_PATHS = {
@@ -122,6 +123,8 @@ def main():
     p.add_argument("--region", default="us-east-1")
     p.add_argument("--json", help="write full results to JSON")
     a = p.parse_args()
+    if not HAVE_BOTO3:
+        sys.exit("[!] Missing required library: pip install boto3")
 
     session = session_from_args(a)
     sts = session.client("sts", region_name=a.region)
