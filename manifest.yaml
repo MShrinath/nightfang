@@ -336,7 +336,7 @@ capabilities:
   - id: repo-graph-memory
     description: "Persistent AST semantic knowledge graph analysis, cross-file taint tracking, and caller-callee hierarchy auditing"
     target_types: [source_code, git_repo, ast_graph, code_workspace, repo_graph_memory]
-    workflow: workflows/supply-chain-assessment.md
+    workflow: workflows/secure-code-review.md
     agent: agents/code-auditor.md
     skills:
       - skills/web
@@ -389,6 +389,24 @@ capabilities:
       - skills/recon
       - skills/web
       - skills/hunting
+
+  - id: threat-modeling
+    description: "System architecture threat modeling, trust boundary decomposition, STRIDE/PASTA analysis, and attack surface risk profiling"
+    target_types: [architecture_diagram, system_spec, data_flow, api_spec]
+    workflow: workflows/threat-modeling.md
+    agent: agents/threat-modeler.md
+    skills:
+      - skills/threat-modeling
+      - skills/hunting
+
+  - id: blockchain-security
+    description: "Smart contract audit, EVM bytecode analysis, DeFi economic attack vector simulation, and cryptographic key management"
+    target_types: [smart_contract, solidity_contract, dapp, defi_protocol, crypto_wallet]
+    workflow: workflows/blockchain-assessment.md
+    agent: agents/crypto-analyzer.md
+    skills:
+      - skills/crypto
+      - skills/reverse-engineering
 
 
 agents:

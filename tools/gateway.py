@@ -313,10 +313,35 @@ class ExecutionPolicyGateway:
         self.resolve_dns = resolve_dns
 
     def _is_in_scope(self, target_host: str) -> bool:
-        """Check if a hostname, domain, or IP is within authorized engagement scope (supporting wildcards)."""
+        """Check if a hostname, domain, or IP is within authorized engagement scope (supporting wildcards and ports)."""
         if not target_host:
             return False
-        host = target_host.lower().strip().strip("[]")
+        raw = target_host.lower().strip()
+        # Strip URL scheme and path if present
+        if "://" in raw:
+            import urllib.parse
+            parsed = urllib.parse.urlparse(raw)
+            host = (parsed.hostname or "").strip("[]")
+        elif raw.startswith("["):
+            # Bracketed IPv6 notation with optional port: [2001:db8::1] or [2001:db8::1]:8080
+            b_end = raw.find("]")
+            host = raw[1:b_end] if b_end != -1 else raw.strip("[]")
+        elif ":" in raw:
+            try:
+                ipaddress.IPv6Address(raw)
+                host = raw
+            except ValueError:
+                parts = raw.rsplit(":", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    host = parts[0].strip("[]")
+                else:
+                    host = raw.strip("[]")
+        else:
+            host = raw.strip("[]")
+
+        if not host:
+            return False
+
         # Domain whitelist matching
         for auth_domain in self.state.config.authorized_domains:
             auth = auth_domain.lower().strip()
@@ -324,8 +349,13 @@ class ExecutionPolicyGateway:
                 wildcard_base = auth[2:]
                 if host == wildcard_base or host.endswith("." + wildcard_base):
                     return True
+            elif auth.startswith("."):
+                wildcard_base = auth[1:]
+                if host == wildcard_base or host.endswith("." + wildcard_base):
+                    return True
             elif host == auth:
                 return True
+
         # IP / CIDR matching
         try:
             ip_obj = ipaddress.ip_address(host)
@@ -706,10 +736,12 @@ class ExecutionPolicyGateway:
                 status = res.get("status", "SUCCESS")
             else:
                 # Local safe execution fallback — split command to avoid shell injection
+                repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 cmd_args = shlex.split(cmd, posix=(os.name != "nt")) if isinstance(cmd, str) else list(cmd)
                 proc = subprocess.run(
                     cmd_args,
                     shell=False,
+                    cwd=repo_root,
                     capture_output=True,
                     text=True,
                     timeout=timeout_seconds,
@@ -969,6 +1001,12 @@ def run_self_tests() -> bool:
     assert req_ipv6.target.hostname == "2001:db8::1"
     assert req_ipv6.target.port == 8080
     assert req_ipv6.target.ip == "2001:db8::1"
+    # Verify _is_in_scope endpoint & port resilience
+    assert gw._is_in_scope("target.corp:8080") is True
+    assert gw._is_in_scope("https://target.corp/api/v1") is True
+    assert gw._is_in_scope("out-of-scope.net") is False
+    assert gw._is_in_scope("10.5.0.1:443") is True
+    assert gw._is_in_scope("[2001:db8::1]:8080") is True
     print("  [PASS] Test 7: IPv6 bracketed address parsing and CIDR matching verified.")
 
     # Test 8: Multi-tenant Cloud Edge S3 Detection

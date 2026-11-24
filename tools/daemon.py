@@ -443,7 +443,7 @@ class AutonomousHunterDaemon:
 
         for u in found_urls:
             parsed = urllib.parse.urlparse(u)
-            if parsed.hostname and not self.gateway._is_in_scope(parsed.hostname):
+            if not parsed.hostname or not self.gateway._is_in_scope(parsed.hostname):
                 continue
             if u not in self.discovered_assets:
                 self.discovered_assets.add(u)
@@ -598,6 +598,11 @@ def run_self_tests() -> bool:
     assert res is not None and res["status"] == "COMPLETED", "Passive task must auto-complete under SEMI_AUTONOMOUS"
     assert "api.target.corp" in daemon.discovered_assets, "Domain discovery must automatically expand attack surface"
     assert daemon.queue.pending_count() > 0, "Lead generator must automatically enqueue new scan for discovered domain"
+    # Verify URL lead expansion and scope filtering
+    daemon._expand_attack_surface(t_passive, "Endpoints: https://api.target.corp/login and https://evil.corp/payload and http:///bad")
+    assert "https://api.target.corp/login" in daemon.discovered_assets, "In-scope URL lead must be discovered"
+    assert "https://evil.corp/payload" not in daemon.discovered_assets, "Out-of-scope URL lead must be rejected"
+    assert "http:///bad" not in daemon.discovered_assets, "Malformed URL without hostname must be rejected"
     print("  [PASS] Test 2: Semi-Autonomous execution and recursive lead expansion verified.")
 
     # Test 3: Non-Blocking Asynchronous HITL Queueing

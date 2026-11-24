@@ -43,7 +43,90 @@ except ImportError:
             tt = importlib.util.module_from_spec(_spec)
             _spec.loader.exec_module(tt)
         else:
-            raise
+            # Resilient fallback: minimal pattern models so hunt never crashes with ModuleNotFoundError
+            import types
+            tt = types.ModuleType("taint_trace")
+            tt.MODEL = {
+                "py": {
+                    "func": re.compile(r"^\s*(?:async\s+)?def\s+([A-Za-z0-9_]+)\s*\("),
+                    "sources": [r"request\.(GET|POST|args|form|values|json|data|files|headers|cookies)", r"sys\.argv", r"os\.environ"],
+                    "sanitizers": [r"html\.escape\(", r"escape\(", r"shlex\.quote\(", r"int\(", r"float\(", r"bleach\.clean\("],
+                    "sinks": {
+                        "CWE-89": [r"\.execute\(", r"\.executemany\(", r"\.raw\("],
+                        "CWE-78": [r"os\.system\(", r"subprocess\.Popen\(", r"subprocess\.run\(", r"subprocess\.call\("],
+                        "CWE-79": [r"render_template_string\(", r"Markup\(", r"HttpResponse\("],
+                        "CWE-22": [r"open\(", r"os\.path\.join\(", r"send_file\("],
+                        "CWE-94": [r"eval\(", r"exec\(", r"compile\("],
+                        "CWE-502": [r"pickle\.loads\(", r"yaml\.load\("],
+                    },
+                },
+                "js": {
+                    "func": re.compile(r"^\s*(?:function\s+([A-Za-z0-9_$]+)|(?:const|let|var)\s+([A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>)"),
+                    "sources": [r"req\.(query|body|params|headers|cookies)", r"process\.argv"],
+                    "sanitizers": [r"encodeURIComponent\(", r"DOMPurify\.sanitize\(", r"parseInt\(", r"parseFloat\("],
+                    "sinks": {
+                        "CWE-89": [r"\.query\(", r"\.execute\("],
+                        "CWE-78": [r"child_process\.exec\(", r"child_process\.spawn\("],
+                        "CWE-79": [r"innerHTML\s*=", r"document\.write\("],
+                        "CWE-22": [r"fs\.readFile\(", r"fs\.readFileSync\("],
+                        "CWE-94": [r"eval\(", r"Function\("],
+                    },
+                },
+                "php": {
+                    "func": re.compile(r"^\s*(?:public|protected|private|static|\s)*function\s+([A-Za-z0-9_]+)\s*\("),
+                    "sources": [r"\$_(GET|POST|REQUEST|COOKIE|SERVER|FILES)"],
+                    "sanitizers": [r"htmlspecialchars\(", r"htmlentities\(", r"intval\(", r"escapeshellarg\("],
+                    "sinks": {
+                        "CWE-89": [r"mysqli_query\(", r"mysql_query\(", r"->query\("],
+                        "CWE-78": [r"system\(", r"exec\(", r"shell_exec\("],
+                        "CWE-79": [r"echo\s+", r"print\s+"],
+                        "CWE-22": [r"include\(", r"require\(", r"file_get_contents\("],
+                        "CWE-94": [r"eval\(", r"assert\("],
+                    },
+                },
+                "java": {
+                    "func": re.compile(r"^\s*(?:public|protected|private|static|final|\s)+[\w<>\[\],\s]+\s+([A-Za-z0-9_]+)\s*\([^)]*\)\s*(?:throws\s+[\w,\s]+)?\s*\{"),
+                    "sources": [r"request\.getParameter\(", r"request\.getHeader\(", r"@RequestParam"],
+                    "sanitizers": [r"HtmlUtils\.htmlEscape\(", r"Integer\.parseInt\(", r"PreparedStatement"],
+                    "sinks": {
+                        "CWE-89": [r"executeQuery\(", r"executeUpdate\("],
+                        "CWE-78": [r"Runtime\.getRuntime\(\)\.exec\(", r"ProcessBuilder\("],
+                        "CWE-79": [r"response\.getWriter\(\)\.write\("],
+                        "CWE-22": [r"new\s+File\(", r"Paths\.get\("],
+                        "CWE-94": [r"Method\.invoke\("],
+                    },
+                },
+            }
+            tt.EXT_TO_LANG = {".py": "py", ".js": "js", ".php": "php", ".java": "java"}
+
+            def _scan_lines(p):
+                try:
+                    with open(p, "r", encoding="utf-8", errors="replace") as fh:
+                        return fh.readlines()
+                except Exception:
+                    return []
+
+            def _lang_for(p):
+                _, ext = os.path.splitext(p.lower())
+                return tt.EXT_TO_LANG.get(ext)
+
+            def _iter_files(r, ls):
+                t_langs = set(ls)
+                if os.path.isfile(r):
+                    L = _lang_for(r)
+                    if L and L in t_langs:
+                        yield r
+                    return
+                for dp, _, fns in os.walk(r):
+                    for fn in fns:
+                        fp = os.path.join(dp, fn)
+                        L = _lang_for(fp)
+                        if L and L in t_langs:
+                            yield fp
+
+            tt.scan_lines = _scan_lines
+            tt.lang_for = _lang_for
+            tt.iter_files = _iter_files
 
 QUALITY_RANK = {"tainted": 3, "likely": 2, "unlikely": 1, "false_positive": 0}
 
