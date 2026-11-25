@@ -232,8 +232,8 @@ Write-Host "[OK] Memory templates and knowledge graph ready." -ForegroundColor G
 
 # 6. Install Execution Policy Gateway & Launchers
 Write-Host "[+] Deploying NIGHTFANG CLI and Gateway launcher..." -ForegroundColor Blue
-Copy-Item "$NightfangRoot\adapters\hermes\nightfang-gate.cmd" "$HermesBinDir\nightfang-gate.cmd" -Force
-Copy-Item "$NightfangRoot\nightfang.cmd" "$HermesBinDir\nightfang.cmd" -Force
+"@echo off`r`npython `"$NightfangRoot\tools\gateway.py`" %*" | Set-Content -Path "$HermesBinDir\nightfang-gate.cmd" -Encoding Ascii
+"@echo off`r`ncall `"$NightfangRoot\nightfang.cmd`" %*" | Set-Content -Path "$HermesBinDir\nightfang.cmd" -Encoding Ascii
 Write-Host "[OK] Launchers installed at $HermesBinDir." -ForegroundColor Green
 
 # 7. Record Installation Metadata
