@@ -47,9 +47,10 @@ check_item "MCP Configuration" "$HERMES_HOME/mcp.json"
 check_item "Gateway Wrapper" "$HERMES_BIN_DIR/nightfang-gate"
 check_item "Launcher CLI" "$HERMES_BIN_DIR/nightfang"
 check_item "Metadata Record" "$NF_HERMES_HOME/installation.json"
-check_item "Channel Card Formatter" "$NIGHTFANG_ROOT/tools/channel_card.py"
-check_item "Finding Sync Manager" "$NIGHTFANG_ROOT/tools/finding_sync.py"
-check_item "Adversarial Verifier" "$NIGHTFANG_ROOT/tools/verifier.py"
+check_item "Execution Policy Gateway & Sandbox" "$NIGHTFANG_ROOT/tools/gateway.py"
+check_item "Autonomous Hunter Daemon & Cards" "$NIGHTFANG_ROOT/tools/daemon.py"
+check_item "Findings Engine & Adversarial Gate" "$NIGHTFANG_ROOT/tools/findings.py"
+check_item "E2E Lifecycle Simulation" "$NIGHTFANG_ROOT/tools/simulation.py"
 
 if [[ -f "$HERMES_HOME/mcp.json" ]]; then
     if python3 -c "import json; d=json.load(open('$HERMES_HOME/mcp.json')); assert 'mcpServers' in d and len(d['mcpServers']) >= 8" 2>/dev/null; then
@@ -71,7 +72,7 @@ fi
 
 if [[ -x "$HERMES_BIN_DIR/nightfang" ]]; then
     if "$HERMES_BIN_DIR/nightfang" --test-all >/dev/null 2>&1; then
-        printf "  ${GREEN}[OK]${NC} NIGHTFANG Self-Tests (All 10 Core Engines & E2E Simulation PASS)\n"
+        printf "  ${GREEN}[OK]${NC} NIGHTFANG Self-Tests (All 3 Unified Engines & E2E Simulation PASS)\n"
     else
         printf "  ${RED}[FAIL]${NC} NIGHTFANG Self-Tests failed\n"
         ALL_PASSED=0

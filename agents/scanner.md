@@ -48,6 +48,13 @@ I invoke domain skills depending on the target technology:
 - **Input**: Discovered target inventory from `recon`.
 - **Output**: Structured candidate findings adhering to [`schemas/finding.md`](../schemas/finding.md).
 
+### Tool Ingestion & Schema Normalization Command
+To parse, normalize, and schema-validate raw output from vulnerability discovery tools (Nuclei JSONL, Nmap text/XML, Semgrep SAST JSON, OWASP ZAP alerts), invoke the findings engine:
+```bash
+python tools/findings.py --ingest <scan_output> [--tool nuclei|nmap|semgrep|zap] [--out <output_json>]
+```
+This guarantees all recorded candidate vulnerabilities adhere 100% to [`schemas/finding.md`](../schemas/finding.md) before passing downstream to `validation`.
+
 ---
 
 ## 6. Constraints

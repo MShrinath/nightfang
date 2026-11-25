@@ -37,44 +37,38 @@ elif [ "$1" = "--hunt" ]; then
     exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --continuous "$@"
 elif [ "$1" = "--status-card" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/channel_card.py" --status-card "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --card status "$@"
 elif [ "$1" = "--sync" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/finding_sync.py" --sync "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --sync "$@"
 elif [ "$1" = "--verify" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --verify "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --verify "$@"
 elif [ "$1" = "--verify-canary" ]; then
     shift
-    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --verify-canary "$@"
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --verify-canary "$@"
+elif [ "$1" = "--ingest" ]; then
+    shift
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --ingest "$@"
+elif [ "$1" = "--list-findings" ]; then
+    shift
+    exec "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --list-findings "$@"
 elif [ "$1" = "--test" ]; then
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py"
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/sandbox.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py" --test
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/schemas/validator.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/ingest.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/hud.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/channel_card.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/finding_sync.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --test
     echo ""
-    echo "[*] All 10 tool self-tests passed successfully!"
+    echo "[*] All 3 unified engine self-tests and schema validator passed successfully!"
     exit 0
 elif [ "$1" = "--test-all" ]; then
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/daemon.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py"
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/sandbox.py"
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/gateway.py" --test
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/schemas/validator.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/mcp_proxy.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/ingest.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/hud.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/channel_card.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/finding_sync.py" --test
-    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/verifier.py" --test
+    "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/findings.py" --test
     "$PYTHON_BIN" "$NIGHTFANG_ROOT/tools/simulation.py" --test
     echo ""
-    echo "[*] All 10 tool self-tests and E2E simulation passed successfully!"
+    echo "[*] All 3 unified engines and E2E simulation passed successfully!"
     exit 0
 fi
 

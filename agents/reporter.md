@@ -43,6 +43,18 @@ I synthesize all findings across the swarm into executive deliverables, technica
   - Individual finding walkthroughs conforming to [`templates/finding_template.md`](../templates/finding_template.md).
   - ATT&CK Navigator coverage layer JSON (if purple team exercises were conducted).
 
+### Finding Persistence & MCP Knowledge Graph Synchronization
+To persist validated findings into engagement memory (`memory/findings.json`) and synchronize them into the persistent MCP Knowledge Graph (`memory/knowledge_graph.jsonl` consumed by `@modelcontextprotocol/server-memory`):
+```bash
+python tools/findings.py --sync <findings_file> [--target <domain>]
+```
+This executes deterministic deduplication, structures findings under 2-tier hierarchical scopes (root domains and subdomains), and emits knowledge graph nodes and relations.
+
+To inspect persisted findings across all authorized scopes:
+```bash
+python tools/findings.py --list-findings [--target <domain>]
+```
+
 ---
 
 ## 5. Constraints

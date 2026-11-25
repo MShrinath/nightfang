@@ -104,6 +104,27 @@ finding:
 
 ---
 
-## 6. Constraints
+## 6. Verification & Canary Cleanup Commands
+
+### 1. 7-Question Adversarial Gate Evaluation
+To programmatically evaluate candidate findings against the 7-Question Gate:
+```bash
+python tools/findings.py --verify <findings_file> [--target <domain>]
+```
+Verdicts evaluate to `PASS`, `KILL` (disqualified due to scope violation, missing SHA-256 evidence, unreachable WAF block, or lack of sink control), `DOWNGRADE`, or `CHAIN_REQUIRED`.
+
+### 2. SOP-05 Canary Lifecycle & Cleanup Verification
+To register and verify post-validation removal of temporary test canaries (test files, headers, tokens):
+```bash
+# Register deployed test canary
+python tools/findings.py --register-canary <canary_id> --target <domain> --type test_file --path <resource_path>
+
+# Verify 100% artifact cleanup (asserts target baseline restored, e.g. HTTP 404)
+python tools/findings.py --verify-canary <canary_id>
+```
+
+---
+
+## 7. Constraints
 - Strict benign PoC rules per [SOP-05](../references/sops.md#sop-05-proof-of-concept-safety-artifact-cleanup): Benign execution only (`id`, `whoami`, `SELECT version()`). Zero DoS, zero persistence, zero data alteration.
 - 100% Canary cleanup: Verify target returns HTTP 404 on temporary test artifacts before closing finding.

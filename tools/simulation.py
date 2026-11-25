@@ -41,19 +41,21 @@ try:
         DispositionStatus,
         HitlApprovalToken,
         approve_request,
+        SandboxRunner,
     )
     from tools.daemon import (
         AutonomousHunterDaemon,
         HunterTask,
         TaskPriority,
         TaskStatus,
+        ChannelCardFormatter,
     )
-    from tools.sandbox import SandboxRunner
-    from tools.ingest import FindingIngestor
+    from tools.findings import (
+        FindingIngestor,
+        FindingSyncManager,
+        AdversarialVerifier,
+    )
     from schemas.validator import FindingValidator
-    from tools.channel_card import ChannelCardFormatter
-    from tools.finding_sync import FindingSyncManager
-    from tools.verifier import AdversarialVerifier
 except ImportError:
     sys.path.insert(0, os.path.join(repo_root, "tools"))
     from gateway import (
@@ -69,19 +71,21 @@ except ImportError:
         DispositionStatus,
         HitlApprovalToken,
         approve_request,
+        SandboxRunner,
     )
     from daemon import (
         AutonomousHunterDaemon,
         HunterTask,
         TaskPriority,
         TaskStatus,
+        ChannelCardFormatter,
     )
-    from sandbox import SandboxRunner
-    from ingest import FindingIngestor
+    from findings import (
+        FindingIngestor,
+        FindingSyncManager,
+        AdversarialVerifier,
+    )
     from schemas.validator import FindingValidator
-    from channel_card import ChannelCardFormatter
-    from finding_sync import FindingSyncManager
-    from verifier import AdversarialVerifier
 
 
 class EngagementSimulator:

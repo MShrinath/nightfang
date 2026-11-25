@@ -12,6 +12,7 @@ Autonomous execution daemon for Hermes that runs continuous penetration testing:
 
 import sys
 import os
+import html
 import json
 import time
 import re
@@ -582,7 +583,649 @@ class AutonomousHunterDaemon:
 # Self-Test Verification Suite
 # ============================================================================
 
-def run_self_tests() -> bool:
+# ============================================================================
+# Consolidated Terminal HUD Engine
+# ============================================================================
+
+# ANSI escape sequences for formatting
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+MAGENTA = "\033[35m"
+CYAN = "\033[36m"
+WHITE = "\033[37m"
+BG_DARK = "\033[40m"
+
+
+class HunterHUD:
+    """Terminal HUD renderer for NIGHTFANG Autonomous Hunter Daemon."""
+
+    def __init__(self, force_ansi: Optional[bool] = None) -> None:
+        if force_ansi is not None:
+            self.use_ansi = force_ansi
+        else:
+            self.use_ansi = sys.stdout.isatty() and os.name != "dumb"
+
+    def strip_ansi(self, text: str) -> str:
+        """Strip ANSI escape sequences from text for measuring visible length."""
+        return re.sub(r"\033\[[0-9;]*[mK]", "", text)
+
+    def colorize(self, text: str, color_code: str) -> str:
+        """Wrap text in ANSI color code if ANSI is enabled."""
+        if not self.use_ansi:
+            return text
+        return f"{color_code}{text}{RESET}"
+
+    def get_term_size(self) -> Tuple[int, int]:
+        """Get current terminal dimensions (width, height), defaulting to 80x24."""
+        try:
+            cols, rows = shutil.get_terminal_size(fallback=(80, 24))
+            return max(60, cols), max(20, rows)
+        except Exception:
+            return 80, 24
+
+    def format_box_line(self, content: str, width: int) -> str:
+        """Format a single row inside an ASCII/Unicode box with proper padding and boundary alignment."""
+        max_content_len = max(0, width - 4)
+        visible_len = len(self.strip_ansi(content))
+        if visible_len > max_content_len:
+            plain = self.strip_ansi(content)
+            truncated = plain[: max(0, max_content_len - 3)] + "..."
+            return f"│ {truncated} │"
+        padding = max(0, max_content_len - visible_len)
+        return f"│ {content}{' ' * padding} │"
+
+    def render(
+        self,
+        engagement_id: str,
+        target_scope: List[str],
+        autonomy_tier: str,
+        status: str,
+        queue_counts: Dict[str, int],
+        active_tasks: List[Dict[str, str]],
+        rate_backoffs: Dict[str, float],
+        discovered_assets: List[str],
+        pending_hitl: List[Dict[str, str]],
+        term_width: Optional[int] = None,
+    ) -> str:
+        """Render complete HUD frame as a formatted multi-line string."""
+        cols, _ = self.get_term_size()
+        width = min(term_width or cols, 100)
+        inner_width = width - 2
+
+        border_h = "─" * inner_width
+        top_border = f"┌{border_h}┐"
+        mid_border = f"├{border_h}┤"
+        bot_border = f"└{border_h}┘"
+
+        lines: List[str] = [top_border]
+
+        # 1. Header Section
+        title = self.colorize("🦇 NIGHTFANG AUTONOMOUS HUNTER HUD", BOLD + CYAN)
+        status_color = GREEN if status == "ACTIVE" else (YELLOW if status == "PAUSED" else WHITE)
+        status_badge = self.colorize(f"[{status}]", BOLD + status_color)
+        lines.append(self.format_box_line(f"{title} {status_badge}", width))
+
+        scope_str = ", ".join(target_scope[:3]) + ("..." if len(target_scope) > 3 else "")
+        info_line = (
+            f"Engagement: {self.colorize(engagement_id, YELLOW)} │ "
+            f"Scope: {self.colorize(scope_str, WHITE)} │ "
+            f"Tier: {self.colorize(autonomy_tier, MAGENTA)}"
+        )
+        lines.append(self.format_box_line(info_line, width))
+        lines.append(mid_border)
+
+        # 2. Priority DAG Queue Section
+        c_count = queue_counts.get("CRITICAL", 0)
+        h_count = queue_counts.get("HIGH", 0)
+        m_count = queue_counts.get("MEDIUM", 0)
+        l_count = queue_counts.get("LOW", 0)
+        total_queued = c_count + h_count + m_count + l_count
+
+        q_header = self.colorize("PRIORITY DAG QUEUE", BOLD)
+        q_line = (
+            f"{q_header} ({total_queued} tasks): "
+            f"{self.colorize(f'CRITICAL: {c_count}', BOLD + RED)} │ "
+            f"{self.colorize(f'HIGH: {h_count}', YELLOW)} │ "
+            f"{self.colorize(f'MEDIUM: {m_count}', BLUE)} │ "
+            f"{self.colorize(f'LOW: {l_count}', DIM)}"
+        )
+        lines.append(self.format_box_line(q_line, width))
+
+        # 3. Active Host Rate Throttles & Backoffs
+        lines.append(mid_border)
+        backoff_header = self.colorize("ACTIVE HOST RATE THROTTLES & BACKOFFS", BOLD)
+        if rate_backoffs:
+            now = time.time()
+            backoff_items: List[str] = []
+            for host, expire in list(rate_backoffs.items())[:3]:
+                remaining = max(0, int(expire - now))
+                backoff_items.append(f"{host}: {remaining}s remaining")
+            lines.append(self.format_box_line(f"{backoff_header}: {', '.join(backoff_items)}", width))
+        else:
+            lines.append(self.format_box_line(f"{backoff_header}: None (All target hosts nominal)", width))
+
+        # 4. Active Tasks Execution
+        lines.append(mid_border)
+        exec_header = self.colorize("ACTIVE CONCURRENCY & EXECUTIONS", BOLD)
+        lines.append(self.format_box_line(f"{exec_header} ({len(active_tasks)} active):", width))
+        if active_tasks:
+            for task in active_tasks[:3]:
+                t_str = f"  ▶ [{task.get('tool', 'tool')}] {task.get('target', 'target')} ({task.get('technique', 'scanning')})"
+                lines.append(self.format_box_line(self.colorize(t_str, CYAN), width))
+        else:
+            lines.append(self.format_box_line("  (No tasks currently in flight)", width))
+
+        # 5. Attack Surface Discovered
+        lines.append(mid_border)
+        assets_header = self.colorize("DISCOVERED ATTACK SURFACE", BOLD)
+        assets_preview = ", ".join(discovered_assets[:4]) if discovered_assets else "None"
+        if len(discovered_assets) > 4:
+            assets_preview += f" (+{len(discovered_assets) - 4} more)"
+        lines.append(self.format_box_line(f"{assets_header} ({len(discovered_assets)} assets): {assets_preview}", width))
+
+        # 6. HITL Operator Approval Bar
+        lines.append(mid_border)
+        hitl_header = self.colorize("OPERATOR HITL APPROVAL GATE", BOLD + (RED if pending_hitl else GREEN))
+        if pending_hitl:
+            p = pending_hitl[0]
+            hitl_msg = f"  ⚠ PENDING APPROVAL: Token [{p.get('token', 'TOKEN')}] for {p.get('technique', 'Exploit')} on {p.get('target', 'target')}"
+            lines.append(self.format_box_line(self.colorize(hitl_msg, BOLD + RED), width))
+            lines.append(self.format_box_line(f"    Press 'a' to approve, 'd' to deny, 's' to skip", width))
+        else:
+            lines.append(self.format_box_line(f"{hitl_header}: 0 pending authorizations required", width))
+
+        lines.append(bot_border)
+        return "\n".join(lines)
+
+
+def get_aggregated_state(
+    daemon: Optional[Any] = None,
+    engagement_id: Optional[str] = None,
+    target_scope: Optional[List[str]] = None,
+    autonomy_tier: Optional[str] = None,
+    status: Optional[str] = None,
+    queue_counts: Optional[Dict[str, int]] = None,
+    active_tasks: Optional[List[Dict[str, str]]] = None,
+    rate_backoffs: Optional[Dict[str, float]] = None,
+    discovered_assets: Optional[List[str]] = None,
+    pending_hitl: Optional[List[Dict[str, str]]] = None,
+    progress: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Helper to aggregate daemon state into a standardized dictionary for HUD & channel cards."""
+    if daemon is not None:
+        cfg = getattr(daemon, "config", None)
+        return {
+            "engagement_id": getattr(cfg, "engagement_id", "ENG-SESSION"),
+            "target_scope": list(getattr(cfg, "target_scope", ["localhost"])),
+            "autonomy_tier": getattr(cfg, "autonomy_tier", "SEMI_AUTONOMOUS"),
+            "status": "ACTIVE" if getattr(daemon, "running", False) else "IDLE",
+            "queue_counts": daemon.get_queue_counts() if hasattr(daemon, "get_queue_counts") else {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+            "active_tasks": getattr(daemon, "active_tasks", []),
+            "rate_backoffs": getattr(daemon, "rate_backoffs", {}),
+            "discovered_assets": list(getattr(daemon, "discovered_assets", [])),
+            "pending_hitl": getattr(daemon, "pending_hitl", []),
+            "progress": getattr(daemon, "progress", 0.0),
+        }
+    return {
+        "engagement_id": engagement_id or "ENG-NIGHTFANG",
+        "target_scope": target_scope or ["target.corp"],
+        "autonomy_tier": autonomy_tier or "SEMI_AUTONOMOUS",
+        "status": status or "IDLE",
+        "queue_counts": queue_counts or {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0},
+        "active_tasks": active_tasks or [],
+        "rate_backoffs": rate_backoffs or {},
+        "discovered_assets": discovered_assets or [],
+        "pending_hitl": pending_hitl or [],
+        "progress": progress if progress is not None else 0.0,
+    }
+
+
+
+# ============================================================================
+# Consolidated Channel Card Formatter
+# ============================================================================
+
+TELEGRAM_MAX_LENGTH = 4096
+
+
+def escape_markdown(text: str) -> str:
+    """
+    Escape special Markdown characters for safe Telegram transmission.
+    Escapes: _ * [ ] ( ) ~ ` > # + - = | { } . ! \\
+    """
+    if not text:
+        return ""
+    special_chars = r"_*[]()~`>#+-=|{}.!\\"
+    return re.sub(f"([{re.escape(special_chars)}])", r"\\\1", str(text))
+
+
+def truncate_message(text: str, max_length: int = TELEGRAM_MAX_LENGTH, suffix: str = "\n\n... [truncated for Telegram]") -> str:
+    """Ensure message does not exceed Telegram's character limit."""
+    if len(text) <= max_length:
+        return text
+    cutoff = max_length - len(suffix)
+    return text[:cutoff] + suffix
+
+
+def normalize_target_host(target: str) -> str:
+    """Extract host/domain/IP part from target string (e.g. https://api.corp.com:443/v1 -> api.corp.com)."""
+    t = str(target).strip()
+    if not t:
+        return "general"
+    if "://" in t:
+        t = t.split("://", 1)[1]
+    if "/" in t:
+        t = t.split("/", 1)[0]
+    if "@" in t:
+        t = t.split("@", 1)[1]
+    if ":" in t:
+        if t.startswith("[") and "]" in t:
+            t = t.split("]")[0] + "]"
+        else:
+            t = t.split(":", 1)[0]
+    return t.strip().lower()
+
+
+def is_ip_address(host: str) -> bool:
+    """Check if host is an IPv4 or IPv6 address."""
+    clean = host.strip("[]").strip()
+    parts = clean.split(".")
+    if len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+        return True
+    if ":" in clean:
+        return True
+    return False
+
+
+def extract_root_domain(host: str) -> str:
+    """
+    Extract root/apex domain from host or target URL.
+    Examples:
+      - 'api.corp.test' -> 'corp.test'
+      - 'admin.dev.target.corp' -> 'target.corp'
+      - 'target.corp' -> 'target.corp'
+      - 'sub.example.co.uk' -> 'example.co.uk'
+      - '192.168.1.1' -> '192.168.1.1'
+      - 'localhost' -> 'localhost'
+    """
+    clean_host = normalize_target_host(host)
+    if not clean_host or clean_host == "localhost" or is_ip_address(clean_host):
+        return clean_host or "general"
+
+    labels = clean_host.split(".")
+    if len(labels) <= 2:
+        return clean_host
+
+    cc_second_levels = {"co", "com", "net", "org", "gov", "edu", "ac"}
+    if len(labels) >= 3 and labels[-2] in cc_second_levels and len(labels[-1]) == 2:
+        return ".".join(labels[-3:])
+
+    return ".".join(labels[-2:])
+
+
+class ChannelCardFormatter:
+    """Mobile and remote channel card formatter for Hermes/Telegram."""
+
+    def __init__(self, use_markdown: bool = True) -> None:
+        self.use_markdown = use_markdown
+
+    @staticmethod
+    def render_progress_bar(percentage: float, width: int = 10) -> str:
+        """Render ASCII/block progress bar: [████████░░] 80%"""
+        clamped = max(0.0, min(100.0, percentage))
+        filled = int(round((clamped / 100.0) * width))
+        empty = max(0, width - filled)
+        bar = "█" * filled + "░" * empty
+        return f"[{bar}] {int(round(clamped))}%"
+
+    def format_status_card(self, state: Dict[str, Any]) -> str:
+        """
+        Format /status card for Telegram:
+        - ASCII visual progress bar
+        - Queue counters (CRITICAL, HIGH, MEDIUM, LOW)
+        - Active rate limiter state / backoffs
+        - Target scope & status
+        - Pending HITL authorization count
+        """
+        engagement_id = state.get("engagement_id", "ENG-SESSION")
+        scope = state.get("target_scope", ["target.corp"])
+        status = state.get("status", "IDLE")
+        tier = state.get("autonomy_tier", "SEMI_AUTONOMOUS")
+        progress = float(state.get("progress", 0.0))
+        queue_counts = state.get("queue_counts", {})
+        c_count = queue_counts.get("CRITICAL", 0)
+        h_count = queue_counts.get("HIGH", 0)
+        m_count = queue_counts.get("MEDIUM", 0)
+        l_count = queue_counts.get("LOW", 0)
+        total_tasks = c_count + h_count + m_count + l_count
+
+        active_tasks = state.get("active_tasks", [])
+        rate_backoffs = state.get("rate_backoffs", {})
+        pending_hitl = state.get("pending_hitl", [])
+
+        bar = self.render_progress_bar(progress)
+
+        scope_str = ", ".join(scope[:3])
+        if len(scope) > 3:
+            scope_str += f" (+{len(scope) - 3} more)"
+
+        lines = [
+            "🦇 *NIGHTFANG HUNT STATUS*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            f"🎯 *Scope:* `{scope_str}`",
+            f"⚡ *Autonomy:* `{tier}` | *State:* `{status}`",
+            f"📊 *Progress:* `{bar}`",
+            "",
+            "📋 *Task Queue DAG:*",
+            f"  🔴 Critical: `{c_count}` | 🟠 High: `{h_count}`",
+            f"  🟡 Medium: `{m_count}` | ⚪ Low: `{l_count}`",
+            f"  📦 Total In Queue: `{total_tasks}`",
+            "",
+            f"🚀 *Active Concurrency:* `{len(active_tasks)}` running",
+        ]
+
+        if active_tasks:
+            for t in active_tasks[:3]:
+                lines.append(f"  ▶ `[{t.get('tool', 'tool')}]` {t.get('target', 'target')} \\({t.get('technique', 'probing')}\\)")
+
+        if rate_backoffs:
+            now = time.time()
+            backoff_strs = []
+            for h, expire in list(rate_backoffs.items())[:3]:
+                rem = max(0, int(expire - now))
+                backoff_strs.append(f"`{h}`: {rem}s")
+            lines.append(f"⏳ *Host Throttles:* {', '.join(backoff_strs)}")
+        else:
+            lines.append("⏳ *Host Throttles:* Nominal (no backoffs)")
+
+        lines.append("")
+        if pending_hitl:
+            p = pending_hitl[0]
+            token = p.get("token") or p.get("request_id") or "UNKNOWN"
+            target = p.get("target", "target")
+            lines.append(f"⚠️ *HITL Approvals Required:* `{len(pending_hitl)}` pending")
+            lines.append(f"👉 Action required: `/go {token}` or `/hold {token}` for `{target}`")
+        else:
+            lines.append("🛡️ *HITL Approvals:* Clear (0 pending)")
+
+        msg = "\n".join(lines)
+        return truncate_message(msg)
+
+    def format_hitl_card(self, approval_request: Dict[str, Any]) -> str:
+        """
+        Format HITL approval card for operator with one-tap `/go` and `/hold` commands.
+        """
+        token = (
+            approval_request.get("token")
+            or approval_request.get("request_id")
+            or approval_request.get("id")
+            or "REQ-0000"
+        )
+        target = approval_request.get("target", "unknown-target")
+        tool = approval_request.get("tool", "unknown-tool")
+        noise = approval_request.get("noise_profile") or approval_request.get("noise") or "LOUD"
+        technique = approval_request.get("technique") or approval_request.get("description") or "Exploit Validation"
+        command = approval_request.get("command") or approval_request.get("benign_command") or "N/A"
+        evidence_tag = approval_request.get("evidence_tag", "EVD-PENDING")
+
+        lines = [
+            "⚠️ *NIGHTFANG HITL AUTHORIZATION REQUIRED*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            f"🆔 *Request Token:* `{token}`",
+            f"🎯 *Target:* `{target}`",
+            f"🔧 *Tool:* `{tool}` | 🔊 *Noise:* `{noise}`",
+            f"💡 *Technique:* {technique}",
+            f"🏷️ *Evidence Tag:* `{evidence_tag}`",
+            "",
+            "🔬 *Proposed Benign PoC Command:*",
+            f"```\n{command}\n```",
+            "",
+            "⚖️ *Operator Decision:*",
+            f"✅ Approve: `/go {token}`",
+            f"🛑 Reject:  `/hold {token}`",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            "_(Other non-invasive scans continue executing in parallel)_",
+        ]
+        return truncate_message("\n".join(lines))
+
+    def format_finding_alert(self, finding: Dict[str, Any]) -> str:
+        """
+        Format push notification alert for high/critical findings.
+        """
+        inner = finding.get("finding", finding)
+        fid = inner.get("id", "NF-FINDING-000")
+        title = inner.get("title", "Security Finding")
+        target = inner.get("target", "unknown")
+        category = inner.get("category", "vulnerability")
+        cwe_id = inner.get("cwe_id", "CWE-000")
+
+        sev_obj = inner.get("severity", {})
+        if isinstance(sev_obj, dict):
+            sev_level = sev_obj.get("level", "medium").upper()
+            sev_score = sev_obj.get("score", 5.0)
+        else:
+            sev_level = str(sev_obj).upper()
+            sev_score = 5.0
+
+        conf_obj = inner.get("confidence", {})
+        conf_score = conf_obj.get("score", 7) if isinstance(conf_obj, dict) else 7
+
+        badge = "🔴" if sev_score >= 9.0 else "🟠" if sev_score >= 7.0 else "🟡" if sev_score >= 4.0 else "🔵"
+
+        # MITRE ATT&CK & D3FEND
+        mitre = inner.get("mitre_attack", {})
+        tactics = mitre.get("tactics", []) if isinstance(mitre, dict) else []
+        tactic_id = tactics[0].get("id", "T1190") if tactics else "T1190"
+
+        d3fend = inner.get("mitre_d3fend", {})
+        countermeasures = d3fend.get("countermeasures", []) if isinstance(d3fend, dict) else []
+        d3_id = countermeasures[0].get("id", "D3-PSA") if countermeasures else "D3-WAF"
+
+        # Evidence
+        evd = inner.get("evidence", {})
+        if isinstance(evd, list):
+            first_evd = evd[0] if evd else {}
+            digest = (first_evd.get("raw_payload_sha256") or "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")[:12]
+            sample = first_evd.get("data", "") or first_evd.get("description", "") or inner.get("description", "")
+        elif isinstance(evd, dict):
+            digest = evd.get("raw_payload_sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")[:12]
+            sample = evd.get("evidence_sample", "") or inner.get("description", "")
+        else:
+            digest = "e3b0c44298fc"
+            sample = str(inner.get("description", ""))
+
+        if len(sample) > 200:
+            sample = sample[:197] + "..."
+
+        lines = [
+            f"{badge} *NIGHTFANG FINDING ALERT: [{sev_level}]*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            f"🆔 *ID:* `{fid}` | `{cwe_id}`",
+            f"📌 *Title:* {title}",
+            f"🎯 *Target:* `{target}`",
+            f"📊 *Severity:* `{sev_score}/10` | *Confidence:* `{conf_score}/10`",
+            f"🛡️ *MITRE:* ATT&CK `{tactic_id}` ↔ D3FEND `{d3_id}`",
+            f"🔑 *Evidence Hash:* `[EVD-{digest}]`",
+            "",
+            "📝 *Description / Evidence Preview:*",
+            f"```\n{sample}\n```",
+        ]
+        return truncate_message("\n".join(lines))
+
+    def format_findings_overview(
+        self,
+        findings: List[Dict[str, Any]],
+        filter_target: Optional[str] = None,
+    ) -> str:
+        """
+        Format /findings card with 2-tier Hierarchical Scope Structure:
+        Root Scope Domain -> Subdomains/Hosts -> Findings.
+        - If filter_target is a root domain, renders all subdomains under that root scope.
+        - If filter_target is a specific host, renders findings for that host.
+        - If filter_target is None, renders a hierarchical overview across all root scopes.
+        """
+        if not findings:
+            target_msg = f" for `{filter_target}`" if filter_target else ""
+            return f"🛡️ *NIGHTFANG Findings:*{target_msg}\nNo security findings currently recorded."
+
+        # Build hierarchical structure: scopes[root_domain][host] = [findings]
+        scopes: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        for f in findings:
+            inner = f.get("finding", f)
+            raw_target = str(inner.get("target", "general")).strip()
+            host = normalize_target_host(raw_target)
+            root = extract_root_domain(host)
+
+            scope_hosts = scopes.setdefault(root, {})
+            scope_hosts.setdefault(host, []).append(inner)
+
+        # Handle filtering
+        if filter_target:
+            clean_filter = normalize_target_host(filter_target)
+            filter_root = extract_root_domain(clean_filter)
+
+            # Check if filter matches a Root Scope Domain directly
+            if clean_filter in scopes:
+                target_scope_hosts = scopes[clean_filter]
+                total_in_scope = sum(len(fl) for fl in target_scope_hosts.values())
+                lines = [
+                    f"🛡️ *NIGHTFANG Findings for Scope `{clean_filter}`* ({total_in_scope} findings across {len(target_scope_hosts)} hosts):",
+                    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+                ]
+                for h_name, h_list in sorted(target_scope_hosts.items()):
+                    lines.append(f"🌐 *Subdomain:* `{h_name}` ({len(h_list)} findings)")
+                    for idx, item in enumerate(h_list[:5], 1):
+                        sev = item.get("severity", {})
+                        score = sev.get("score", 5.0) if isinstance(sev, dict) else 5.0
+                        badge = "🔴" if score >= 9.0 else "🟠" if score >= 7.0 else "🟡" if score >= 4.0 else "🔵"
+                        cwe = item.get("cwe_id", "CWE-000")
+                        title = item.get("title", "Finding")
+                        lines.append(f"   {idx}. {badge} `[{score:.1f}]` *{title}* (`{cwe}`)")
+                    if len(h_list) > 5:
+                        lines.append(f"   _... and {len(h_list) - 5} more on this host._")
+                    lines.append("")
+                return truncate_message("\n".join(lines).strip())
+
+            # Check if filter matches a specific subdomain/host inside a root scope
+            matched_host_findings: Optional[List[Dict[str, Any]]] = None
+            matched_host_name = clean_filter
+            matched_root_name = filter_root
+
+            for r_name, r_hosts in scopes.items():
+                if clean_filter in r_hosts:
+                    matched_host_findings = r_hosts[clean_filter]
+                    matched_host_name = clean_filter
+                    matched_root_name = r_name
+                    break
+
+            if not matched_host_findings:
+                # Substring fallback search
+                for r_name, r_hosts in scopes.items():
+                    for h_name, h_list in r_hosts.items():
+                        if clean_filter in h_name or h_name in clean_filter:
+                            matched_host_findings = h_list
+                            matched_host_name = h_name
+                            matched_root_name = r_name
+                            break
+                    if matched_host_findings:
+                        break
+
+            if not matched_host_findings:
+                active_roots = ", ".join(f"`{k}`" for k in scopes.keys())
+                return (
+                    f"🛡️ *NIGHTFANG Findings for `{filter_target}`:*\n"
+                    f"No findings recorded for this specific target or host. Active root scopes: {active_roots}"
+                )
+
+            lines = [
+                f"🛡️ *NIGHTFANG Findings for Host `{matched_host_name}`*",
+                f"🏛️ *Root Scope:* `{matched_root_name}` | *Total:* `{len(matched_host_findings)}` findings",
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            ]
+            for idx, item in enumerate(matched_host_findings[:10], 1):
+                sev = item.get("severity", {})
+                score = sev.get("score", 5.0) if isinstance(sev, dict) else 5.0
+                badge = "🔴" if score >= 9.0 else "🟠" if score >= 7.0 else "🟡" if score >= 4.0 else "🔵"
+                cwe = item.get("cwe_id", "CWE-000")
+                title = item.get("title", "Finding")
+                lines.append(f"{idx}. {badge} `[{score:.1f}]` *{title}* (`{cwe}`)")
+
+            if len(matched_host_findings) > 10:
+                lines.append(f"\n_... and {len(matched_host_findings) - 10} more findings on this host._")
+
+            return truncate_message("\n".join(lines))
+
+        # Overall Hierarchical Overview across all Root Scope Domains
+        total_findings = sum(sum(len(fl) for fl in r_hosts.values()) for r_hosts in scopes.values())
+        lines = [
+            f"🛡️ *NIGHTFANG Findings Overview* ({total_findings} total across {len(scopes)} root scopes):",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        ]
+        for r_name, r_hosts in sorted(scopes.items()):
+            scope_total = sum(len(fl) for fl in r_hosts.values())
+            all_scope_findings = [f for fl in r_hosts.values() for f in fl]
+            crits = sum(1 for x in all_scope_findings if (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) >= 9.0)
+            highs = sum(1 for x in all_scope_findings if 7.0 <= (x.get("severity", {}).get("score", 0) if isinstance(x.get("severity"), dict) else 0) < 9.0)
+            meds = scope_total - crits - highs
+
+            lines.append(f"🏛️ *Root Scope:* `{r_name}` ({scope_total} findings across {len(r_hosts)} hosts)")
+            lines.append(f"   🔴 {crits} Critical | 🟠 {highs} High | 🟡 {meds} Other")
+            for h_name, h_list in sorted(r_hosts.items())[:3]:
+                lines.append(f"   • 🌐 `{h_name}`: {len(h_list)} findings")
+            if len(r_hosts) > 3:
+                lines.append(f"   • _... +{len(r_hosts) - 3} more subdomains_")
+            lines.append(f"   👉 View scope: `/findings {r_name}`")
+            lines.append("")
+
+        return truncate_message("\n".join(lines).strip())
+
+    def format_scope_card(self, scope_config: Dict[str, Any]) -> str:
+        """
+        Format /scope card displaying target CIDRs, domains, and restricted exclusions.
+        """
+        target = scope_config.get("target", "target.corp")
+        cidrs = scope_config.get("allowed_cidrs", [])
+        domains = scope_config.get("allowed_domains", [])
+        exclusions = scope_config.get("out_of_scope_exclusions", [])
+        rate = scope_config.get("max_requests_per_second", 20)
+
+        lines = [
+            "🎯 *NIGHTFANG ENGAGEMENT SCOPE*",
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            f"📍 *Primary Target:* `{target}`",
+            f"⚡ *Max Safe Rate:* `{rate} req/sec`",
+            "",
+            "✅ *Authorized In-Scope Domains:*",
+        ]
+        for d in (domains or [target])[:5]:
+            lines.append(f"  • `{d}`")
+
+        if cidrs:
+            lines.append("")
+            lines.append("🌐 *Authorized CIDR Subnets:*")
+            for c in cidrs[:5]:
+                lines.append(f"  • `{c}`")
+
+        lines.append("")
+        lines.append("🛑 *Prohibited Exclusions (Zero Traffic):*")
+        ex_list = exclusions or ["169.254.169.254 (Cloud IMDS)", "Production Auth DBs", "Payment Gateways"]
+        for e in ex_list[:4]:
+            lines.append(f"  ❌ {e}")
+
+        return truncate_message("\n".join(lines))
+
+
+
+# ============================================================================
+# Test Suites
+# ============================================================================
+
+def run_daemon_tests() -> bool:
     """Verifies all aspects of the Autonomous Hunter Daemon."""
     print("Running NIGHTFANG Autonomous Hunter Daemon Self-Tests...")
 
@@ -704,33 +1347,338 @@ def run_self_tests() -> bool:
     return True
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="NIGHTFANG Autonomous Hunter Engine Daemon")
-    parser.add_argument("--test", action="store_true", help="Run automated self-tests")
-    parser.add_argument("--target", type=str, help="Initial target domain or IP")
+
+def run_hud_tests() -> bool:
+    """Run automated verification suite for Autonomous Hunter Terminal HUD."""
+    print("Running NIGHTFANG Autonomous Hunter Terminal HUD Self-Tests...")
+
+    # Test 1: ASCII box generation and boundary formatting (with ANSI)
+    hud_ansi = HunterHUD(force_ansi=True)
+    frame = hud_ansi.render(
+        engagement_id="ENG-2026-TEST",
+        target_scope=["target.corp", "*.target.corp"],
+        autonomy_tier="SEMI_AUTONOMOUS",
+        status="ACTIVE",
+        queue_counts={"CRITICAL": 1, "HIGH": 3, "MEDIUM": 5, "LOW": 10},
+        active_tasks=[{"tool": "nuclei", "target": "api.target.corp", "technique": "API Scan"}],
+        rate_backoffs={"api.target.corp": time.time() + 30},
+        discovered_assets=["target.corp", "api.target.corp", "vpn.target.corp"],
+        pending_hitl=[{"token": "tok-987a", "target": "api.target.corp", "technique": "SQLi PoC"}],
+        term_width=80,
+    )
+    assert "NIGHTFANG AUTONOMOUS HUNTER HUD" in frame
+    assert "ENG-2026-TEST" in frame
+    assert "CRITICAL: 1" in frame
+    assert "HIGH: 3" in frame
+    print("  [PASS] Test 1: Terminal HUD ASCII border layout and box formatting verified.")
+
+    # Test 2: Queue counts and formatting assertion
+    assert "MEDIUM: 5" in frame
+    assert "LOW: 10" in frame
+    assert "19 tasks" in frame
+    print("  [PASS] Test 2: Multi-tier DAG priority queue counts formatted accurately.")
+
+    # Test 3: Rate backoff countdown rendering
+    assert "30s remaining" in frame or "29s remaining" in frame
+    print("  [PASS] Test 3: Host rate throttle backoff countdown rendering verified.")
+
+    # Test 4: Non-TTY fallback mode (clean plain text without escape sequences)
+    hud_nontty = HunterHUD(force_ansi=False)
+    plain_frame = hud_nontty.render(
+        engagement_id="ENG-PLAIN-TEST",
+        target_scope=["plain.corp"],
+        autonomy_tier="FULL_AUTONOMOUS",
+        status="ACTIVE",
+        queue_counts={"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 0},
+        active_tasks=[],
+        rate_backoffs={},
+        discovered_assets=["plain.corp"],
+        pending_hitl=[],
+        term_width=80,
+    )
+    assert "\033[" not in plain_frame, f"Found unexpected ANSI escapes in non-TTY mode: {plain_frame}"
+    assert "ENG-PLAIN-TEST" in plain_frame
+    assert "0 pending authorizations required" in plain_frame
+    print("  [PASS] Test 4: Non-TTY fallback mode verified (0 escape codes generated).")
+
+    # Test 5: Boundary alignment and truncation for long lines
+    long_line = hud_nontty.format_box_line("X" * 120, 80)
+    assert len(long_line) == 80, f"Expected box line length 80, got {len(long_line)}"
+    assert long_line.startswith("│ ") and long_line.endswith(" │")
+    assert "..." in long_line
+    print("  [PASS] Test 5: Box boundary alignment and overflow truncation verified.")
+
+    print("\nAll 5 Terminal HUD self-tests PASSED successfully!")
+    return True
+
+
+
+def run_channel_card_tests() -> bool:
+    """Run automated verification suite for ChannelCardFormatter."""
+    print("Running NIGHTFANG Channel Card Formatter Self-Tests...")
+    formatter = ChannelCardFormatter()
+
+    # Test 1: Render /status card from mock state
+    mock_state = {
+        "engagement_id": "ENG-2026-TEST",
+        "target_scope": ["target.corp", "api.target.corp"],
+        "autonomy_tier": "SEMI_AUTONOMOUS",
+        "status": "ACTIVE",
+        "progress": 75.0,
+        "queue_counts": {"CRITICAL": 1, "HIGH": 3, "MEDIUM": 5, "LOW": 10},
+        "active_tasks": [{"tool": "nuclei", "target": "api.target.corp", "technique": "API Scan"}],
+        "rate_backoffs": {"api.target.corp": time.time() + 25},
+        "pending_hitl": [{"token": "tok-77a", "target": "api.target.corp", "technique": "SQLi PoC"}],
+    }
+    status_card = formatter.format_status_card(mock_state)
+    assert "NIGHTFANG HUNT STATUS" in status_card
+    assert "[████████░░] 75%" in status_card
+    assert "/go tok-77a" in status_card
+    assert len(status_card) <= TELEGRAM_MAX_LENGTH
+    print("  [PASS] Test 1: Render /status card with progress bar and HITL action verified.")
+
+    # Test 2: Render HITL approval card
+    mock_hitl = {
+        "token": "tok-987a",
+        "target": "auth.corp.internal",
+        "tool": "sqlmap",
+        "noise_profile": "LOUD",
+        "technique": "Blind SQL Injection PoC",
+        "command": "sqlmap -u 'https://auth.corp.internal/login' --batch --banner",
+        "evidence_tag": "EVD-a1b2c3d4",
+    }
+    hitl_card = formatter.format_hitl_card(mock_hitl)
+    assert "NIGHTFANG HITL AUTHORIZATION REQUIRED" in hitl_card
+    assert "/go tok-987a" in hitl_card
+    assert "/hold tok-987a" in hitl_card
+    assert "sqlmap -u" in hitl_card
+    print("  [PASS] Test 2: Render HITL approval card with /go and /hold verified.")
+
+    # Test 3: Render Critical finding push alert
+    mock_finding = {
+        "finding": {
+            "id": "NF-FINDING-001",
+            "title": "Remote Code Execution via Log4Shell",
+            "target": "vpn.target.corp:443",
+            "cwe_id": "CWE-94",
+            "severity": {"score": 10.0, "level": "critical"},
+            "confidence": {"score": 9, "level": "confirmed"},
+            "mitre_attack": {"tactics": [{"id": "T1190"}]},
+            "mitre_d3fend": {"countermeasures": [{"id": "D3-UVI"}]},
+            "evidence": {
+                "raw_payload_sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+                "evidence_sample": "${jndi:ldap://canary.nightfang/a} executed.",
+            },
+        }
+    }
+    alert_card = formatter.format_finding_alert(mock_finding)
+    assert "NIGHTFANG FINDING ALERT: [CRITICAL]" in alert_card
+    assert "10.0/10" in alert_card
+    assert "T1190" in alert_card
+    assert "D3-UVI" in alert_card
+    assert "EVD-abcdef012345" in alert_card
+    print("  [PASS] Test 3: Render Critical finding push alert with CVSS meter and evidence tag verified.")
+
+    # Test 4: Truncation guard when exceeding Telegram 4096-char limit
+    huge_text = "A" * 6000
+    truncated = truncate_message(huge_text, max_length=4096)
+    assert len(truncated) <= 4096
+    assert "[truncated for Telegram]" in truncated
+    print("  [PASS] Test 4: Verify text chunking/truncation when payload exceeds Telegram limit.")
+
+    # Test 5: Markdown escaping utility
+    raw_unsafe = "select * from users where name='test_user' and (1=1); # drop table!"
+    escaped = escape_markdown(raw_unsafe)
+    assert r"\*" in escaped
+    assert r"\(" in escaped
+    assert r"\)" in escaped
+    assert r"\#" in escaped
+    print("  [PASS] Test 5: Verify markdown escaping of special characters in raw tool output.")
+
+    # Test 6: 2-Tier Hierarchical Scopes & Subdomain Isolation (Operator Requirement)
+    findings_dataset = [
+        {
+            "finding": {
+                "id": "F-001",
+                "title": "SQL Injection in User Search",
+                "target": "https://api.targetA.com:443/search",
+                "cwe_id": "CWE-89",
+                "severity": {"score": 9.5, "level": "critical"},
+            }
+        },
+        {
+            "finding": {
+                "id": "F-002",
+                "title": "Authentication Bypass",
+                "target": "https://auth.targetA.com/login",
+                "cwe_id": "CWE-287",
+                "severity": {"score": 8.0, "level": "high"},
+            }
+        },
+        {
+            "finding": {
+                "id": "F-003",
+                "title": "Cross-Site Scripting",
+                "target": "https://targetB.com/profile",
+                "cwe_id": "CWE-79",
+                "severity": {"score": 6.5, "level": "medium"},
+            }
+        },
+    ]
+
+    # Check overview groups under Root Scope Domain, listing subdomains
+    overview = formatter.format_findings_overview(findings_dataset)
+    assert "targeta.com" in overview
+    assert "targetb.com" in overview
+    assert "api.targeta.com" in overview
+    assert "auth.targeta.com" in overview
+    assert "/findings targeta.com" in overview
+
+    # Check filtering by Root Scope Domain shows all its subdomains
+    root_a_card = formatter.format_findings_overview(findings_dataset, filter_target="targetA.com")
+    assert "targeta.com" in root_a_card.lower()
+    assert "api.targeta.com" in root_a_card
+    assert "auth.targeta.com" in root_a_card
+    assert "SQL Injection" in root_a_card
+    assert "Authentication Bypass" in root_a_card
+    assert "targetb.com" not in root_a_card.lower()
+
+    # Check filtering by specific Subdomain isolates only that host
+    sub_api_card = formatter.format_findings_overview(findings_dataset, filter_target="api.targetA.com")
+    assert "api.targeta.com" in sub_api_card
+    assert "SQL Injection" in sub_api_card
+    assert "auth.targeta.com" not in sub_api_card
+    assert "targetb.com" not in sub_api_card.lower()
+    print("  [PASS] Test 6: 2-tier Hierarchical scope grouping and subdomain filtering verified.")
+
+    print("\nAll 6 Channel Card Formatter self-tests PASSED successfully!")
+    return True
+
+
+
+
+# Alias TerminalHUD
+TerminalHUD = HunterHUD
+
+
+def run_self_tests() -> bool:
+    """Run comprehensive test suite across Autonomous Hunter, Terminal HUD & Channel Card Formatter."""
+    print("==========================================================")
+    print("  NIGHTFANG Consolidated Autonomous Hunter Daemon Self-Tests")
+    print("==========================================================\n")
+    ok1 = run_daemon_tests()
+    print()
+    ok2 = run_hud_tests()
+    print()
+    ok3 = run_channel_card_tests()
+    print()
+    if ok1 and ok2 and ok3:
+        print("[*] All 17 Autonomous Hunter, HUD & Channel Card self-tests PASSED successfully!")
+        return True
+    return False
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="NIGHTFANG Consolidated Autonomous Hunter Daemon & Channel Card Formatter"
+    )
+    parser.add_argument("--test", action="store_true", help="Run automated self-tests across daemon, HUD, and cards")
+    parser.add_argument("--target", type=str, help="Target domain, IP, or scope to hunt or filter")
     parser.add_argument("--tier", type=str, default="SEMI_AUTONOMOUS", choices=["REACTIVE", "SEMI_AUTONOMOUS", "FULL_AUTONOMOUS"], help="Autonomy tier")
-    parser.add_argument("--continuous", action="store_true", help="Run continuous hunting loop")
+    parser.add_argument("--continuous", "--hunt", dest="continuous", action="store_true", help="Run continuous autonomous hunting loop")
     parser.add_argument("--max-cycles", type=int, default=50, help="Maximum execution cycles")
     parser.add_argument("--dry-run", action="store_true", help="Evaluate policy and log decisions without executing tool commands")
-    args = parser.parse_args()
+    parser.add_argument("--approve", dest="approve_token", type=str, help="Approve a pending HITL request token")
+    parser.add_argument("--deny", dest="deny_token", type=str, help="Deny a pending HITL request token")
+    parser.add_argument("--card", type=str, choices=["status", "findings", "scope"], help="Render a Telegram/remote channel card")
+    parser.add_argument("--status", "--status-card", dest="status_card", action="store_true", help="Print formatted Telegram status card")
+    parser.add_argument("--findings", dest="findings_card", action="store_true", help="Print formatted Telegram findings card")
+    parser.add_argument("--scope", dest="scope_card", action="store_true", help="Print formatted Telegram scope card")
+    parser.add_argument("--hud", action="store_true", help="Render real-time terminal HUD display")
+
+    args, unknown = parser.parse_known_args()
 
     if args.test:
         success = run_self_tests()
         sys.exit(0 if success else 1)
 
-    if not args.target:
-        print("[!] No target specified. Running self-test suite by default...\n")
-        run_self_tests()
+    # HITL token approval/denial
+    if args.approve_token:
+        cfg = EngagementConfig(engagement_id="ENG-HITL", authorized_operator="operator", authorized_domains=[args.target or "target.corp"])
+        d = AutonomousHunterDaemon(cfg)
+        ok = d.approve_hitl(args.approve_token)
+        print(f"[*] Operator APPROVE token '{args.approve_token}': {'SUCCESS - Task resumed' if ok else 'FAILED - Token not found'}")
+        sys.exit(0 if ok else 1)
+
+    if args.deny_token:
+        cfg = EngagementConfig(engagement_id="ENG-HITL", authorized_operator="operator", authorized_domains=[args.target or "target.corp"])
+        d = AutonomousHunterDaemon(cfg)
+        ok = d.deny_hitl(args.deny_token)
+        print(f"[*] Operator DENY token '{args.deny_token}': {'SUCCESS - Task aborted' if ok else 'FAILED - Token not found'}")
+        sys.exit(0 if ok else 1)
+
+    # Channel card formatting
+    formatter = ChannelCardFormatter()
+
+    if args.card == "findings" or args.findings_card:
+        try:
+            from tools.findings import FindingSyncManager
+        except ImportError:
+            try:
+                from tools.finding_sync import FindingSyncManager
+            except ImportError:
+                FindingSyncManager = None
+        if FindingSyncManager:
+            mgr = FindingSyncManager()
+            findings = mgr.get_all_findings()
+        else:
+            findings = []
+        card = formatter.format_findings_overview(findings, filter_target=args.target)
+        print(card)
         sys.exit(0)
 
-    # Live launch
-    autonomy = AutonomyTier(args.tier)
-    cfg = EngagementConfig(
-        engagement_id=f"ENG-{int(time.time())}",
-        authorized_operator="operator",
-        authorized_domains=[args.target, f"*.{args.target}"],
-        autonomy_tier=autonomy,
-    )
-    daemon = AutonomousHunterDaemon(cfg)
-    daemon.seed_target(args.target)
-    daemon.run_continuous(max_cycles=args.max_cycles, dry_run=args.dry_run)
+    if args.card == "scope" or args.scope_card:
+        scope_cfg = {
+            "target": args.target or "target.corp",
+            "allowed_domains": [args.target] if args.target else ["target.corp", "api.target.corp"],
+            "allowed_cidrs": ["10.0.0.0/8"],
+            "out_of_scope_exclusions": ["169.254.169.254 (IMDS)"],
+            "max_requests_per_second": 20,
+        }
+        card = formatter.format_scope_card(scope_cfg)
+        print(card)
+        sys.exit(0)
+
+    if args.card == "status" or args.status_card:
+        state = get_aggregated_state(target_scope=[args.target] if args.target else None)
+        card = formatter.format_status_card(state)
+        print(card)
+        sys.exit(0)
+
+    if args.hud:
+        hud = HunterHUD()
+        state = get_aggregated_state(target_scope=[args.target] if args.target else None)
+        print(hud.render(state))
+        sys.exit(0)
+
+    # Continuous hunter loop
+    if args.target:
+        autonomy = AutonomyTier(args.tier)
+        cfg = EngagementConfig(
+            engagement_id=f"ENG-{int(time.time())}",
+            authorized_operator="operator",
+            authorized_domains=[args.target, f"*.{args.target}"],
+            autonomy_tier=autonomy,
+        )
+        daemon = AutonomousHunterDaemon(cfg)
+        daemon.seed_target(args.target)
+        daemon.run_continuous(max_cycles=args.max_cycles, dry_run=args.dry_run)
+        sys.exit(0)
+
+    # Default action if no flags provided
+    success = run_self_tests()
+    sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    main()

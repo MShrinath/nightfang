@@ -701,7 +701,8 @@ schemas:
 tools:
   - tools/daemon.py
   - tools/gateway.py
-  - tools/sandbox.py
+  - tools/findings.py
+  - tools/simulation.py
   - scripts/fuzzing_engine.py
   - scripts/generate_sbom.py
   - adapters/hermes/mcp.json

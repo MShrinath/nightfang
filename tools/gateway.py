@@ -16,6 +16,9 @@ import hashlib
 import ipaddress
 import json
 import os
+import shutil
+import sys
+import tempfile
 import re
 import shlex
 import socket
@@ -946,7 +949,703 @@ def hold_request(state: EngagementState, request_id: str) -> bool:
 # Self Test & Verification Routine
 # ============================================================================
 
-def run_self_tests() -> bool:
+# ============================================================================
+# Consolidated Sandbox Runner
+# ============================================================================
+
+class SandboxMode(str, Enum):
+    DOCKER = "DOCKER"
+    SUBPROCESS_FALLBACK = "SUBPROCESS_FALLBACK"
+
+
+# ---------------------------------------------------------------------------
+# Command Allowlist
+# ---------------------------------------------------------------------------
+
+# Categories of commands permitted in the sandbox.
+# Each entry maps a category name to a list of allowed command prefixes.
+# A command is allowed if its executable name matches any entry in the
+# category that is enabled via SandboxConfig.allow_categories.
+COMMAND_ALLOWLIST: Dict[str, List[str]] = {
+    "read_only": [
+        "python", "python3", "py",
+        "echo", "cat", "head", "tail", "wc", "sort", "uniq", "grep", "egrep", "fgrep",
+        "find", "ls", "pwd", "stat", "file", "xxd", "hexdump", "strings", "od",
+        "whoami", "id", "uname", "hostname", "ip", "ifconfig", "netstat",
+        "env", "printenv", "date", "uptime", "df", "du", "ps", "top", "sleep",
+        "sha256sum", "sha1sum", "md5sum", "cksum",
+        "nmap", "nslookup", "dig", "host", "traceroute", "ping",
+        "curl", "wget", "httpx", "nikto",
+        "sublist3r", "theHarvester", "amass", "dnsenum",
+        "whois", "shodan", "censys",
+        "git", "gh",
+        "jq", "yq",
+    ],
+    "write_safe": [
+        "mkdir", "touch", "cp", "mv", "chmod", "chown",
+        "tee",
+    ],
+    "restricted": [
+        "rm", "rmdir", "kill", "pkill",
+        "iptables", "ufw", "dd",
+    ],
+}
+
+
+def _command_name(command: str) -> str:
+    """Extract the base command name from a shell command string using shlex parsing."""
+    import shlex
+    try:
+        tokens = shlex.split(command, posix=(os.name != "nt"))
+    except ValueError:
+        # Fallback: simple split on whitespace
+        tokens = command.strip().split()
+    if not tokens:
+        return ""
+    # Strip leading env assignments and shell builtins
+    cmd = tokens[0]
+    for prefix in ("sh", "bash", "/bin/sh", "/bin/bash"):
+        if cmd == prefix and len(tokens) > 1:
+            cmd = tokens[1]
+            break
+    # Normalize command to base filename (e.g. /usr/bin/python3 -> python3, python.exe -> python)
+    cmd = os.path.basename(cmd)
+    if cmd.lower().endswith(".exe"):
+        cmd = cmd[:-4]
+    return cmd
+
+
+def check_command_allowlist(command: str, allowed_categories: Set[str]) -> Tuple[bool, str]:
+    """Check whether a command is permitted by the allowlist.
+
+    Returns (allowed, reason).
+    """
+    if not command or not command.strip():
+        return False, "Empty command"
+
+    # Forbid newline characters (shell command separation)
+    if "\n" in command or "\r" in command:
+        return False, "Shell chaining forbidden: newline characters detected in command"
+
+    import shlex
+    try:
+        tokens = shlex.split(command, posix=(os.name != "nt"))
+    except ValueError:
+        tokens = command.strip().split()
+
+    # Forbid unquoted shell chaining operators (&, &&, |, ||, ;) across parsed tokens
+    chain_ops = {"&", "&&", "|", "||", ";", ";;"}
+    for tok in tokens:
+        if tok in chain_ops:
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if any(tok.startswith(op) or tok.endswith(op) for op in ("&&", "||")):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith("&") or tok.endswith("&"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith(";") or tok.endswith(";"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+        if tok.startswith("|") or tok.endswith("|"):
+            return False, f"Shell chaining forbidden: command contains chaining operator ({tok})"
+
+    cmd_name = _command_name(command)
+    if not cmd_name:
+        return False, "Empty command"
+
+    # Check basename (strip path and .exe)
+    basename = os.path.basename(cmd_name)
+    base_stem = basename[:-4] if basename.lower().endswith(".exe") else basename
+
+    for category in allowed_categories:
+        allowed_cmds = COMMAND_ALLOWLIST.get(category, [])
+        if basename in allowed_cmds or base_stem in allowed_cmds:
+            return True, f"Allowed via category '{category}'"
+
+    return False, f"Command '{basename}' not found in any allowed category: {allowed_categories}"
+
+
+@dataclass
+class SandboxConfig:
+    image: str = "alpine:latest"
+    memory_limit: str = "512m"
+    cpu_limit: float = 1.0
+    pids_limit: int = 100
+    network_mode: str = "bridge"  # "bridge", "none", or custom network
+    read_only_root: bool = True
+    timeout_seconds: int = 60
+    workdir: str = "/workspace"
+    enable_fallback: bool = True
+    # Command allowlist: set of category names to permit.
+    # Default: read_only + write_safe (no destructive commands).
+    allow_categories: Set[str] = field(
+        default_factory=lambda: {"read_only", "write_safe"}
+    )
+    # When True, enforce the allowlist before execution.
+    enforce_allowlist: bool = True
+    # When True, verify artifact cleanup after each run.
+    verify_cleanup: bool = True
+
+
+@dataclass
+class SandboxProbeReport:
+    daemon_reachable: bool
+    mode: SandboxMode
+    daemon_info: str = ""
+    container_runtime: str = ""
+    isolation_level: str = "HIGH"
+    details: Dict[str, Any] = field(default_factory=dict)
+
+
+class SandboxRunner:
+    """
+    Containerized tool dispatcher modeled after PentAGI's Docker runner.
+    """
+
+    def __init__(self, config: Optional[SandboxConfig] = None):
+        self.config = config or SandboxConfig()
+        self.mode = self._detect_mode()
+
+    def _detect_mode(self) -> SandboxMode:
+        """Probe Docker availability; fallback to subprocess if unavailable."""
+        if shutil.which("docker") is not None:
+            try:
+                proc = subprocess.run(
+                    ["docker", "info", "--format", "{{json .}}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if proc.returncode == 0:
+                    return SandboxMode.DOCKER
+            except Exception:
+                pass
+
+        if self.config.enable_fallback:
+            return SandboxMode.SUBPROCESS_FALLBACK
+        raise RuntimeError("Docker daemon is unreachable and fallback mode is disabled.")
+
+    def probe(self) -> SandboxProbeReport:
+        """Run diagnostic probe similar to PentAGI's sandbox_probe.sh."""
+        if self.mode == SandboxMode.DOCKER:
+            try:
+                proc = subprocess.run(
+                    ["docker", "version", "--format", "{{json .}}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                return SandboxProbeReport(
+                    daemon_reachable=True,
+                    mode=SandboxMode.DOCKER,
+                    container_runtime="docker",
+                    isolation_level="CONTAINER_ISOLATED",
+                    daemon_info="Docker Engine (Daemon Active)",
+                    details={"version_json": proc.stdout.strip()},
+                )
+            except Exception as e:
+                return SandboxProbeReport(
+                    daemon_reachable=False,
+                    mode=SandboxMode.SUBPROCESS_FALLBACK,
+                    isolation_level="LOCAL_PROCESS_RESTRICTED",
+                    daemon_info=f"Docker probe failed: {e}",
+                )
+
+        return SandboxProbeReport(
+            daemon_reachable=False,
+            mode=SandboxMode.SUBPROCESS_FALLBACK,
+            isolation_level="LOCAL_PROCESS_RESTRICTED",
+            daemon_info="Docker CLI not found or daemon down; running in restricted subprocess sandbox",
+        )
+
+    def run(
+        self,
+        command: str,
+        timeout: Optional[int] = None,
+        env: Optional[Dict[str, str]] = None,
+        host_mount_dir: Optional[str] = None,
+        allow_categories: Optional[Set[str]] = None,
+    ) -> Dict[str, Any]:
+        """Execute command inside the sandbox container (or fallback isolated subprocess).
+
+        Returns a dict matching the tool_result schema:
+        {
+            "status": "SUCCESS" | "FAILED" | "TIMEOUT" | "ALLOWLIST_BLOCKED",
+            "exit_code": int,
+            "stdout": str,
+            "stderr": str,
+            "duration_ms": int,
+            "mode": str,
+            "allowlist_reason": str (only when blocked),
+            "cleanup_verified": bool (only when verify_cleanup is enabled),
+        }
+        """
+        effective_timeout = timeout or self.config.timeout_seconds
+
+        # 1. Command Allowlist Check
+        if self.config.enforce_allowlist:
+            categories = allow_categories or self.config.allow_categories
+            allowed, reason = check_command_allowlist(command, categories)
+            if not allowed:
+                return {
+                    "status": "ALLOWLIST_BLOCKED",
+                    "exit_code": -1,
+                    "stdout": "",
+                    "stderr": reason,
+                    "duration_ms": 0,
+                    "mode": self.mode.value,
+                    "allowlist_reason": reason,
+                }
+
+        # 2. Execute
+        if self.mode == SandboxMode.DOCKER:
+            result = self._run_docker(command, effective_timeout, env, host_mount_dir)
+        else:
+            result = self._run_subprocess(command, effective_timeout, env, host_mount_dir)
+
+        # 3. Artifact Cleanup Verification
+        if self.config.verify_cleanup:
+            result["cleanup_verified"] = self._verify_cleanup(host_mount_dir)
+
+        return result
+
+    def _verify_cleanup(self, host_mount_dir: Optional[str]) -> bool:
+        """Verify that temporary artifacts from the last run were cleaned up."""
+        import glob
+        if host_mount_dir and os.path.exists(host_mount_dir):
+            leftovers = glob.glob(os.path.join(host_mount_dir, "nf_sandbox_*"))
+            return len(leftovers) == 0
+        leftovers = glob.glob(os.path.join(tempfile.gettempdir(), "nf_sandbox_*"))
+        return len(leftovers) == 0
+
+    def _run_docker(
+        self,
+        command: str,
+        timeout: int,
+        env: Optional[Dict[str, str]] = None,
+        host_mount_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        t0 = time.time()
+        docker_cmd = [
+            "docker", "run", "--rm",
+            "--network", self.config.network_mode,
+            "--memory", self.config.memory_limit,
+            f"--cpus={self.config.cpu_limit}",
+            f"--pids-limit={self.config.pids_limit}",
+            "--security-opt", "no-new-privileges:true",
+        ]
+
+        if self.config.read_only_root:
+            docker_cmd.extend(["--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,size=64m"])
+
+        if host_mount_dir and os.path.exists(host_mount_dir):
+            abs_mount = os.path.abspath(host_mount_dir).replace("\\", "/")
+            docker_cmd.extend(["-v", f"{abs_mount}:{self.config.workdir}:rw"])
+            docker_cmd.extend(["-w", self.config.workdir])
+
+        if env:
+            for k, v in env.items():
+                docker_cmd.extend(["-e", f"{k}={v}"])
+
+        docker_cmd.extend([self.config.image, "sh", "-c", command])
+
+        try:
+            proc = subprocess.run(
+                docker_cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            duration_ms = int((time.time() - t0) * 1000)
+            status = "SUCCESS" if proc.returncode == 0 else "FAILED"
+            return {
+                "status": status,
+                "exit_code": proc.returncode,
+                "stdout": proc.stdout,
+                "stderr": proc.stderr,
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.DOCKER.value,
+            }
+        except subprocess.TimeoutExpired:
+            duration_ms = int((time.time() - t0) * 1000)
+            return {
+                "status": "TIMEOUT",
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Sandbox container execution timed out after {timeout} seconds.",
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.DOCKER.value,
+            }
+        except Exception as e:
+            duration_ms = int((time.time() - t0) * 1000)
+            return {
+                "status": "FAILED",
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Docker runner execution error: {e}",
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.DOCKER.value,
+            }
+
+    def _run_subprocess(
+        self,
+        command: str,
+        timeout: int,
+        env: Optional[Dict[str, str]] = None,
+        host_mount_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Subprocess fallback running in an isolated temp directory with sanitized environment."""
+        t0 = time.time()
+        temp_dir = tempfile.mkdtemp(prefix="nf_sandbox_")
+        work_dir = host_mount_dir if (host_mount_dir and os.path.exists(host_mount_dir)) else temp_dir
+
+        # Sanitize environment: only permit essential system variables
+        safe_env = {
+            "PATH": os.environ.get("PATH", ""),
+            "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
+            "SYSTEMDRIVE": os.environ.get("SYSTEMDRIVE", "C:"),
+            "COMSPEC": os.environ.get("COMSPEC", ""),
+            "PATHEXT": os.environ.get("PATHEXT", ""),
+            "WINDIR": os.environ.get("WINDIR", ""),
+            "TEMP": temp_dir,
+            "TMP": temp_dir,
+        }
+        if os.name != "nt":
+            safe_env["HOME"] = temp_dir
+            safe_env["USER"] = "sandbox"
+        if env:
+            safe_env.update(env)
+
+        try:
+            # Parse command into tokens and execute with shell=False to prevent injection
+            import shlex as _shlex
+            try:
+                cmd_tokens = _shlex.split(command, posix=(os.name != "nt"))
+            except ValueError:
+                cmd_tokens = command.strip().split()
+            if not cmd_tokens:
+                raise ValueError("Empty command")
+
+            if os.name == "nt":
+                cmd_tokens = [tok[1:-1] if ((tok.startswith('"') and tok.endswith('"')) or (tok.startswith("'") and tok.endswith("'"))) and len(tok) >= 2 else tok for tok in cmd_tokens]
+
+            # Windows shell builtins need cmd.exe /c wrapper when shell=False
+            exec_tokens = list(cmd_tokens)
+            if os.name == "nt" and cmd_tokens and cmd_tokens[0].lower() in (
+                "echo", "dir", "type", "cls", "ver", "cd", "chdir", "ren", "rename",
+                "move", "copy", "del", "erase", "mkdir", "md", "rmdir", "rd",
+            ):
+                exec_tokens = ["cmd.exe", "/c"] + exec_tokens
+
+            proc = subprocess.run(
+                exec_tokens,
+                shell=False,
+                cwd=work_dir,
+                env=safe_env,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            duration_ms = int((time.time() - t0) * 1000)
+            status = "SUCCESS" if proc.returncode == 0 else "FAILED"
+            return {
+                "status": status,
+                "exit_code": proc.returncode,
+                "stdout": proc.stdout,
+                "stderr": proc.stderr,
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.SUBPROCESS_FALLBACK.value,
+            }
+        except subprocess.TimeoutExpired:
+            duration_ms = int((time.time() - t0) * 1000)
+            return {
+                "status": "TIMEOUT",
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Subprocess execution timed out after {timeout} seconds.",
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.SUBPROCESS_FALLBACK.value,
+            }
+        except Exception as e:
+            duration_ms = int((time.time() - t0) * 1000)
+            return {
+                "status": "FAILED",
+                "exit_code": -1,
+                "stdout": "",
+                "stderr": f"Subprocess runner error: {e}",
+                "duration_ms": duration_ms,
+                "mode": SandboxMode.SUBPROCESS_FALLBACK.value,
+            }
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+
+# ============================================================================
+# Consolidated MCP Gateway Proxy Middleware
+# ============================================================================
+
+DANGEROUS_MCP_TOOLS: Set[str] = {
+    "browser_run_code_unsafe",
+    "execute_arbitrary_code",
+    "system_exec",
+    "run_destructive_exploit",
+    "shell_exec",
+    "file_delete",
+    "write_root_file",
+}
+
+
+class MCPGatewayProxy:
+    """Interceps MCP JSON-RPC tool calls, evaluates scope and OPSEC, and cryptographically tags evidence."""
+
+    def __init__(
+        self,
+        gateway: Optional[ExecutionPolicyGateway] = None,
+        config: Optional[EngagementConfig] = None,
+    ) -> None:
+        if gateway is not None:
+            self.gateway = gateway
+        else:
+            cfg = config or EngagementConfig(
+                engagement_id=f"ENG-MCP-{int(time.time())}",
+                authorized_operator="hermes-operator",
+                authorized_cidrs=["10.0.0.0/8", "127.0.0.1/32"],
+                authorized_domains=["target.corp", "*.target.corp", "localhost"],
+                autonomy_tier=AutonomyTier.SEMI_AUTONOMOUS,
+            )
+            self.gateway = ExecutionPolicyGateway(cfg)
+
+    def extract_targets(self, tool_name: str, arguments: Dict[str, Any]) -> List[str]:
+        """Extract candidate target hostnames, URLs, or IPs from tool call arguments."""
+        if not isinstance(arguments, dict):
+            return ["localhost"]
+
+        targets: List[str] = []
+        target_keys = ["url", "target", "domain", "host", "ip", "hostname", "endpoint", "uri"]
+
+        for k in target_keys:
+            if k in arguments and isinstance(arguments[k], str) and arguments[k].strip():
+                targets.append(arguments[k].strip())
+
+        # Also search command or script arguments for embedded URLs or domains
+        for k in ["command", "cmd", "script", "query"]:
+            if k in arguments and isinstance(arguments[k], str):
+                text = arguments[k]
+                found_urls = re.findall(r"https?://[^\s\"'>]+", text)
+                targets.extend(found_urls)
+
+        # Parse and normalize hostnames
+        normalized: List[str] = []
+        for t in targets:
+            if "://" in t:
+                try:
+                    parsed = urllib.parse.urlparse(t)
+                    if parsed.hostname:
+                        normalized.append(parsed.hostname)
+                    else:
+                        normalized.append(t)
+                except Exception:
+                    normalized.append(t)
+            else:
+                # Handle bracketed IPv6 addresses: e.g. [::1]:8080 or [::1]
+                if t.startswith("["):
+                    bracket_end = t.find("]")
+                    if bracket_end != -1:
+                        normalized.append(t[1:bracket_end])
+                    else:
+                        normalized.append(t)
+                else:
+                    # Strip port if present
+                    h = t.split(":")[0] if ":" in t else t
+                    normalized.append(h)
+
+        return list(dict.fromkeys(normalized)) if normalized else ["localhost"]
+
+    def classify_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Tuple[ActionType, NoiseProfile, bool]:
+        """Classify tool action type, noise level, and whether it requires strict HITL."""
+        name_lower = tool_name.lower()
+        if name_lower in DANGEROUS_MCP_TOOLS or any(bad in name_lower for bad in ["unsafe", "destroy", "drop_db", "overwrite"]):
+            return ActionType.EXPLOIT_POC, NoiseProfile.LOUD, True
+
+        if any(term in name_lower for term in ["exploit", "inject", "payload", "poc"]):
+            return ActionType.EXPLOIT_POC, NoiseProfile.LOUD, True
+
+        if any(term in name_lower for term in ["scan", "fuzz", "nuclei", "zap", "audit", "security_scanner"]):
+            return ActionType.ACTIVE_PROBE, NoiseProfile.MODERATE, False
+
+        # Default to PASSIVE_READ / QUIET
+        return ActionType.PASSIVE_READ, NoiseProfile.QUIET, False
+
+    def filter_tool_call(
+        self, tool_name: str, arguments: Optional[Dict[str, Any]] = None
+    ) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
+        """
+        Evaluate tool call against Execution Policy Gateway.
+        Returns:
+            (is_allowed: bool, rejection_reason: Optional[str], modified_arguments: Optional[dict])
+        """
+        args_dict = arguments if isinstance(arguments, dict) else {}
+        targets = self.extract_targets(tool_name, args_dict)
+        action_type, noise_profile, is_dangerous = self.classify_tool(tool_name, args_dict)
+
+        # Verify scope for all extracted targets
+        for tgt in targets:
+            if not self.gateway._is_in_scope(tgt):
+                reason = f"POLICY VIOLATION: Target '{tgt}' is outside authorized engagement scope."
+                self.gateway.state.log_audit("MCP_SCOPE_REJECTED", {"tool": tool_name, "target": tgt, "reason": reason})
+                return False, reason, None
+
+        # Check dangerous tool restrictions
+        if is_dangerous:
+            if self.gateway.state.config.strict_hitl or self.gateway.state.config.autonomy_tier != AutonomyTier.FULL_AUTONOMOUS:
+                reason = f"HITL REQUIRED: Tool '{tool_name}' performs dangerous/invasive operations requiring operator authorization."
+                self.gateway.state.log_audit("MCP_HITL_TRIGGERED", {"tool": tool_name, "reason": reason})
+                return False, reason, None
+
+        # Construct ToolInvocationRequest
+        primary_target = targets[0] if targets else "localhost"
+        req = ToolInvocationRequest(
+            request_id=f"mcp-req-{int(time.time() * 1000)}",
+            engagement_id=self.gateway.state.config.engagement_id,
+            agent_id="mcp-agent",
+            skill_id="mcp-policy-gate",
+            tool_name=tool_name,
+            target=TargetSpec(raw_target=primary_target, hostname=primary_target),
+            opsec=OpsecSpec(noise=noise_profile, rationale="MCP tool invocation intercept"),
+            command_template=json.dumps(args_dict),
+            action_type=action_type,
+            technique="MCP_INVOCATION",
+        )
+
+        disp = self.gateway.evaluate(req)
+        if disp.status != DispositionStatus.APPROVED:
+            return False, f"GATEWAY DISPOSITION: {disp.reason} (code: {disp.code})", None
+
+        return True, None, args_dict
+
+    @staticmethod
+    def hash_and_tag_evidence(response_data: Any) -> Tuple[str, str]:
+        """Compute SHA-256 evidence hash and format standard NIGHTFANG evidence tag [EVD-XXXXXXXX]."""
+        if isinstance(response_data, (dict, list)):
+            serialized = json.dumps(response_data, sort_keys=True)
+        else:
+            serialized = str(response_data)
+        digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+        tag = f"[EVD-{digest[:8].upper()}]"
+        return tag, digest
+
+    def process_jsonrpc_message(self, message_str: str) -> str:
+        """Parse, evaluate, and handle a JSON-RPC message string."""
+        if not message_str or not message_str.strip():
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32600, "message": "Invalid Request: empty input"},
+            })
+
+        # Strip Content-Length / LSP style header prefixes if present
+        clean_msg = message_str.strip()
+        if clean_msg.startswith("Content-Length:"):
+            parts = clean_msg.split("\r\n\r\n", 1)
+            if len(parts) == 1:
+                parts = clean_msg.split("\n\n", 1)
+            if len(parts) > 1:
+                clean_msg = parts[1].strip()
+
+        try:
+            req_json = json.loads(clean_msg)
+        except Exception as e:
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32700, "message": f"Parse error: {str(e)}"},
+            })
+
+        if not isinstance(req_json, dict):
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32600, "message": "Invalid Request: expected JSON-RPC object"},
+            })
+
+        req_id = req_json.get("id")
+        method = req_json.get("method")
+        raw_params = req_json.get("params")
+        params = raw_params if isinstance(raw_params, dict) else {}
+
+        if method == "tools/call":
+            tool_name = params.get("name", "") if isinstance(params.get("name"), str) else ""
+            raw_args = params.get("arguments")
+            arguments = raw_args if isinstance(raw_args, dict) else {}
+
+            allowed, reason, modified_args = self.filter_tool_call(tool_name, arguments)
+            if not allowed:
+                return json.dumps({
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "error": {
+                        "code": -32000,
+                        "message": f"Execution Policy Gateway Blocked: {reason}",
+                        "data": {"tool": tool_name, "arguments": arguments, "blocked": True},
+                    },
+                })
+
+            # Simulate or forward execution
+            mock_output = {
+                "status": "SUCCESS",
+                "tool": tool_name,
+                "output": f"Executed {tool_name} successfully within policy.",
+            }
+            evd_tag, digest = self.hash_and_tag_evidence(mock_output)
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"{evd_tag} {json.dumps(mock_output)}",
+                        }
+                    ],
+                    "evidence_tag": evd_tag,
+                    "evidence_sha256": digest,
+                },
+            })
+
+        elif method == "tools/list":
+            return json.dumps({
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "tools": [
+                        {"name": "browser_navigate", "description": "Navigate to URL within scope"},
+                        {"name": "security_scan", "description": "Run non-destructive scan"},
+                    ]
+                },
+            })
+
+        return json.dumps({
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {"status": "ok", "message": f"Echoed unintercepted method {method}"},
+        })
+
+    def run_proxy(self) -> None:
+        """Run stdio JSON-RPC loop reading lines from stdin."""
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            response = self.process_jsonrpc_message(line)
+            sys.stdout.write(response + "\n")
+            sys.stdout.flush()
+
+
+
+# ============================================================================
+# Test Suites
+# ============================================================================
+
+def run_gateway_tests() -> bool:
     """Verifies all 6 stages of the Execution Policy Gateway."""
     print("Running NIGHTFANG Execution Policy Gateway Self-Tests...")
 
@@ -1205,5 +1904,195 @@ def run_self_tests() -> bool:
     return True
 
 
+
+def run_sandbox_tests() -> bool:
+    print("Running NIGHTFANG Sandbox Runner Self-Tests...")
+    sandbox = SandboxRunner()
+    probe = sandbox.probe()
+    print(f"  [INFO] Detected mode: {probe.mode.value} | Isolation: {probe.isolation_level}")
+
+    # Test 1: Basic command execution
+    res = sandbox.run("echo 'NIGHTFANG_SANDBOX_OK'", timeout=10)
+    assert res["status"] == "SUCCESS", f"Execution failed: {res}"
+    assert "NIGHTFANG_SANDBOX_OK" in res["stdout"], f"Output missing: {res}"
+    print("  [PASS] Test 1: Command dispatch and output capture verified.")
+
+    # Test 2: Timeout enforcement
+    t_start = time.time()
+    # Use a command that will run long enough to timeout
+    # ping is in read_only allowlist; use it without shell redirects
+    if os.name == "nt":
+        sleep_cmd = "ping -n 5 127.0.0.1"
+    else:
+        sleep_cmd = "sleep 3"
+    res_timeout = sandbox.run(sleep_cmd, timeout=1)
+    duration = time.time() - t_start
+    assert res_timeout["status"] == "TIMEOUT", f"Expected TIMEOUT, got: {res_timeout}"
+    assert duration < 2.5, f"Timeout took too long: {duration}s"
+    print("  [PASS] Test 2: Timeout guardrail properly terminated execution.")
+
+    # Test 3: Command allowlist enforcement
+    res_block = sandbox.run("rm -rf /", timeout=5)
+    assert res_block["status"] == "ALLOWLIST_BLOCKED", f"Expected ALLOWLIST_BLOCKED, got: {res_block}"
+    assert "rm" in res_block.get("allowlist_reason", ""), f"Expected rm in reason: {res_block}"
+    print("  [PASS] Test 3: Command allowlist blocked destructive command (rm).")
+
+    # Test 4: Allowed write command
+    res_write = sandbox.run("mkdir nf_test_dir", timeout=10)
+    assert res_write["status"] == "SUCCESS", f"Write command failed: {res_write}"
+    print("  [PASS] Test 4: Allowed write command (mkdir) executed successfully.")
+
+    # Test 5: Cleanup verification
+    assert "cleanup_verified" in res, f"Expected cleanup_verified in result: {res}"
+    print("  [PASS] Test 5: Artifact cleanup verification present.")
+
+    # Test 6: Shell chaining operators blocked
+    chain_cmds = [
+        "echo safe & whoami",
+        "echo safe && whoami",
+        "echo safe | whoami",
+        "echo safe || whoami",
+        "echo safe ; whoami",
+        "echo safe\nwhoami",
+    ]
+    for c in chain_cmds:
+        res_chain = sandbox.run(c, timeout=5)
+        assert res_chain["status"] == "ALLOWLIST_BLOCKED", f"Expected chaining blocked for {c}, got: {res_chain}"
+        assert "chaining" in res_chain.get("allowlist_reason", "").lower()
+    print("  [PASS] Test 6: Shell chaining operators blocked (&, &&, |, ||, ;, newlines).")
+
+    # Test 7: Reconciled destructive dd classification blocked
+    res_dd = sandbox.run("dd if=/dev/zero of=test bs=1 count=1", timeout=5)
+    assert res_dd["status"] == "ALLOWLIST_BLOCKED", f"Expected dd blocked, got: {res_dd}"
+    print("  [PASS] Test 7: Destructive command (dd) blocked under default allow_categories.")
+
+    print("\nAll Sandbox Runner self-tests PASSED successfully!")
+    return True
+
+
+
+def run_mcp_proxy_tests() -> bool:
+    """Run automated verification suite for MCP Gateway Policy Proxy."""
+    print("Running NIGHTFANG MCP Gateway Policy Proxy Self-Tests...")
+
+    cfg = EngagementConfig(
+        engagement_id="ENG-TEST-MCP",
+        authorized_operator="test-operator",
+        authorized_cidrs=["10.0.0.0/8"],
+        authorized_domains=["target.corp", "*.target.corp"],
+        autonomy_tier=AutonomyTier.SEMI_AUTONOMOUS,
+    )
+    proxy = MCPGatewayProxy(config=cfg)
+
+    # Test 1: Scope enforcement - In-scope target passes
+    allowed, reason, _ = proxy.filter_tool_call(
+        "browser_navigate", {"url": "https://api.target.corp/v1/health"}
+    )
+    assert allowed, f"In-scope target was unexpectedly rejected: {reason}"
+    print("  [PASS] Test 1: In-scope target allowed through gateway policy.")
+
+    # Test 2: Scope enforcement - Out-of-scope target blocked
+    allowed, reason, _ = proxy.filter_tool_call(
+        "browser_navigate", {"url": "https://evil.corp/leak"}
+    )
+    assert not allowed, "Out-of-scope target was unexpectedly allowed!"
+    assert "POLICY VIOLATION" in reason, f"Unexpected reason: {reason}"
+    print("  [PASS] Test 2: Out-of-scope target blocked by gateway policy.")
+
+    # Test 3: Dangerous MCP tool blocking / HITL required
+    allowed, reason, _ = proxy.filter_tool_call(
+        "browser_run_code_unsafe", {"code": "process.exit(1)", "target": "https://api.target.corp"}
+    )
+    assert not allowed, "Dangerous tool was unexpectedly allowed without HITL!"
+    assert "HITL REQUIRED" in reason, f"Unexpected reason: {reason}"
+    print("  [PASS] Test 3: Dangerous MCP tool triggers mandatory HITL gate.")
+
+    # Test 4: Evidence hashing and tagging
+    sample_data = {"vuln": "SQLi", "payload": "' OR 1=1--"}
+    tag, sha = proxy.hash_and_tag_evidence(sample_data)
+    assert tag.startswith("[EVD-") and tag.endswith("]"), f"Invalid tag format: {tag}"
+    assert len(sha) == 64, f"Invalid SHA-256 length: {sha}"
+    assert sha[:8].upper() in tag, f"Tag did not embed hash prefix: {tag} vs {sha}"
+    print("  [PASS] Test 4: Cryptographic evidence hashing and tag generation verified.")
+
+    # Test 5: JSON-RPC message handling and malformed error parsing
+    malformed_resp = json.loads(proxy.process_jsonrpc_message("{invalid_json"))
+    assert malformed_resp.get("error", {}).get("code") == -32700, f"Expected -32700 error: {malformed_resp}"
+
+    valid_req = json.dumps({
+        "jsonrpc": "2.0",
+        "id": "req-1",
+        "method": "tools/call",
+        "params": {
+            "name": "browser_navigate",
+            "arguments": {"url": "https://api.target.corp/login"},
+        },
+    })
+    valid_resp = json.loads(proxy.process_jsonrpc_message(valid_req))
+    assert "result" in valid_resp, f"Expected result in response: {valid_resp}"
+    assert "evidence_tag" in valid_resp["result"], "Missing evidence_tag in result"
+    print("  [PASS] Test 5: JSON-RPC tool intercept and JSON-RPC error dispatch verified.")
+
+    # Test 6: Robustness on edge cases (null arguments, null params, non-dict payloads, Content-Length header)
+    null_args_req = json.dumps({"jsonrpc": "2.0", "id": "req-2", "method": "tools/call", "params": {"name": "test", "arguments": None}})
+    null_args_resp = json.loads(proxy.process_jsonrpc_message(null_args_req))
+    assert "result" in null_args_resp or "error" in null_args_resp
+
+    null_params_req = json.dumps({"jsonrpc": "2.0", "id": "req-3", "method": "tools/call", "params": None})
+    null_params_resp = json.loads(proxy.process_jsonrpc_message(null_params_req))
+    assert "result" in null_params_resp or "error" in null_params_resp
+
+    non_dict_resp = json.loads(proxy.process_jsonrpc_message("12345"))
+    assert non_dict_resp.get("error", {}).get("code") == -32600
+
+    content_len_msg = f"Content-Length: {len(valid_req)}\r\n\r\n{valid_req}"
+    cl_resp = json.loads(proxy.process_jsonrpc_message(content_len_msg))
+    assert "result" in cl_resp
+    print("  [PASS] Test 6: Edge cases (null arguments/params, non-dict input, Content-Length header) handled cleanly.")
+
+    print("\nAll 6 MCP Gateway Proxy self-tests PASSED successfully!")
+    return True
+
+
+
+
+def run_self_tests() -> bool:
+    """Run comprehensive test suite across Execution Gateway, Sandbox Runner & MCP Proxy."""
+    print("==========================================================")
+    print("  NIGHTFANG Consolidated Execution Gateway Self-Tests")
+    print("==========================================================\n")
+    ok1 = run_gateway_tests()
+    print()
+    ok2 = run_sandbox_tests()
+    print()
+    ok3 = run_mcp_proxy_tests()
+    print()
+    if ok1 and ok2 and ok3:
+        print("[*] All 26 Execution Gateway, Sandbox & MCP Proxy self-tests PASSED successfully!")
+        return True
+    return False
+
+
 if __name__ == "__main__":
-    run_self_tests()
+    import argparse
+    parser = argparse.ArgumentParser(description="NIGHTFANG Consolidated Execution Policy Gateway & Sandbox")
+    parser.add_argument("--test", action="store_true", help="Run all 26 automated self-tests")
+    parser.add_argument("--stdio", action="store_true", help="Run stdio JSON-RPC MCP proxy middleware loop")
+    parser.add_argument("--sandbox", dest="sandbox_cmd", type=str, help="Execute a command inside the containerized sandbox")
+    parser.add_argument("--timeout", type=int, default=30, help="Sandbox execution timeout in seconds")
+    args, unknown = parser.parse_known_args()
+
+    if args.stdio:
+        proxy = MCPGatewayProxy()
+        proxy.run_proxy()
+        sys.exit(0)
+
+    if args.sandbox_cmd:
+        runner = SandboxRunner()
+        res = runner.run(args.sandbox_cmd, timeout=args.timeout)
+        print(json.dumps(res, indent=2))
+        sys.exit(0 if res.get("status") == "SUCCESS" else 1)
+
+    # Default: run self-tests
+    success = run_self_tests()
+    sys.exit(0 if success else 1)

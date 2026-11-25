@@ -228,3 +228,14 @@ When reporting findings or requesting approval, NIGHTFANG emits structured alert
 Action: [ APPROVE ] or [ DENY ]
 Reply: approve [N] or deny [N]  (or: /go [N] / /hold [N])
 ```
+
+### Swarm Engine Invocations:
+Agents and operator interfaces interact directly through NIGHTFANG's 3 consolidated engines in `tools/`:
+- **Execution Policy Gateway & Sandbox**: `python tools/gateway.py` (enforces 6-stage execution policy, Command Sandbox runner, and MCP Stdio Proxy).
+- **Autonomous Hunter & Status Cards**: `python tools/daemon.py --card status [--target <domain>]` (renders Telegram/Hermes status cards, manages PriorityDAG queue, and processes HITL tokens).
+- **Findings Ingestion, Verification & Sync**:
+  - `python tools/findings.py --ingest <scan_output>` (normalizes Nuclei, Nmap, Semgrep, and ZAP outputs).
+  - `python tools/findings.py --verify <findings_file>` (evaluates findings against the 7-question adversarial gate).
+  - `python tools/findings.py --verify-canary <canary_id>` (verifies SOP-05 canary cleanup).
+  - `python tools/findings.py --sync <findings_file>` (persists findings and updates MCP knowledge graph).
+  - `python tools/findings.py --list-findings [--target <domain>]` (queries 2-tier hierarchical scope findings).

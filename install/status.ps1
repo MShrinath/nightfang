@@ -30,9 +30,10 @@ $checks = @(
     @{ Name = "Gateway Wrapper"; Path = "$HermesBinDir\nightfang-gate.cmd"; Type = "File" },
     @{ Name = "Launcher CLI"; Path = "$HermesBinDir\nightfang.cmd"; Type = "File" },
     @{ Name = "Metadata Record"; Path = "$NfHermesHome\installation.json"; Type = "File" },
-    @{ Name = "Channel Card Formatter"; Path = "$NightfangRoot\tools\channel_card.py"; Type = "File" },
-    @{ Name = "Finding Sync Manager"; Path = "$NightfangRoot\tools\finding_sync.py"; Type = "File" },
-    @{ Name = "Adversarial Verifier"; Path = "$NightfangRoot\tools\verifier.py"; Type = "File" }
+    @{ Name = "Execution Policy Gateway & Sandbox"; Path = "$NightfangRoot\tools\gateway.py"; Type = "File" },
+    @{ Name = "Autonomous Hunter Daemon & Cards"; Path = "$NightfangRoot\tools\daemon.py"; Type = "File" },
+    @{ Name = "Findings Engine & Adversarial Gate"; Path = "$NightfangRoot\tools\findings.py"; Type = "File" },
+    @{ Name = "E2E Lifecycle Simulation"; Path = "$NightfangRoot\tools\simulation.py"; Type = "File" }
 )
 
 $allPassed = $true
@@ -74,7 +75,7 @@ $launcher = Join-Path $HermesBinDir "nightfang.cmd"
 if (Test-Path $launcher) {
     & $launcher --test-all 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [OK] NIGHTFANG Self-Tests (All 10 Core Engines & E2E Simulation PASS)" -ForegroundColor Green
+        Write-Host "  [OK] NIGHTFANG Self-Tests (All 3 Unified Engines & E2E Simulation PASS)" -ForegroundColor Green
     } else {
         Write-Host "  [FAIL] NIGHTFANG Self-Tests failed" -ForegroundColor Red
         $allPassed = $false

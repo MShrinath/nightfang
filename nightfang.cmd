@@ -25,35 +25,25 @@ if "%~1"=="--status-card" goto :run_status_card
 if "%~1"=="--sync" goto :run_sync
 if "%~1"=="--verify" goto :run_verify
 if "%~1"=="--verify-canary" goto :run_verify_canary
+if "%~1"=="--ingest" goto :run_ingest
+if "%~1"=="--list-findings" goto :run_list_findings
 if "%~1"=="--test" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\gateway.py" || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\sandbox.py" || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\gateway.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\schemas\validator.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\ingest.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\hud.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\channel_card.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\verifier.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\findings.py" --test || exit /b 1
     echo.
-    echo [*] All 10 tool self-tests passed successfully!
+    echo [*] All 3 unified engine self-tests and schema validator passed successfully!
     goto :eof
 )
 if "%~1"=="--test-all" (
     python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\gateway.py" || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\sandbox.py" || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\gateway.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\schemas\validator.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\mcp_proxy.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\ingest.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\hud.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\channel_card.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\verifier.py" --test || exit /b 1
+    python "%NIGHTFANG_ROOT%\tools\findings.py" --test || exit /b 1
     python "%NIGHTFANG_ROOT%\tools\simulation.py" --test || exit /b 1
     echo.
-    echo [*] All 10 tool self-tests and E2E simulation passed successfully!
+    echo [*] All 3 unified engines and E2E simulation passed successfully!
     goto :eof
 )
 
@@ -110,7 +100,7 @@ if not "%~1"=="" (
     shift
     goto :status_loop
 )
-python "%NIGHTFANG_ROOT%\tools\channel_card.py" --status-card!NF_ARGS!
+python "%NIGHTFANG_ROOT%\tools\daemon.py" --card status!NF_ARGS!
 goto :eof
 
 :run_sync
@@ -122,7 +112,7 @@ if not "%~1"=="" (
     shift
     goto :sync_loop
 )
-python "%NIGHTFANG_ROOT%\tools\finding_sync.py" --sync!NF_ARGS!
+python "%NIGHTFANG_ROOT%\tools\findings.py" --sync!NF_ARGS!
 goto :eof
 
 :run_verify
@@ -134,7 +124,7 @@ if not "%~1"=="" (
     shift
     goto :verify_loop
 )
-python "%NIGHTFANG_ROOT%\tools\verifier.py" --verify!NF_ARGS!
+python "%NIGHTFANG_ROOT%\tools\findings.py" --verify!NF_ARGS!
 goto :eof
 
 :run_verify_canary
@@ -146,5 +136,29 @@ if not "%~1"=="" (
     shift
     goto :canary_loop
 )
-python "%NIGHTFANG_ROOT%\tools\verifier.py" --verify-canary!NF_ARGS!
+python "%NIGHTFANG_ROOT%\tools\findings.py" --verify-canary!NF_ARGS!
+goto :eof
+
+:run_ingest
+shift
+set "NF_ARGS="
+:ingest_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :ingest_loop
+)
+python "%NIGHTFANG_ROOT%\tools\findings.py" --ingest!NF_ARGS!
+goto :eof
+
+:run_list_findings
+shift
+set "NF_ARGS="
+:list_loop
+if not "%~1"=="" (
+    set "NF_ARGS=!NF_ARGS! %1"
+    shift
+    goto :list_loop
+)
+python "%NIGHTFANG_ROOT%\tools\findings.py" --list-findings!NF_ARGS!
 goto :eof
