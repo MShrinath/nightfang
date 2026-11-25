@@ -282,7 +282,8 @@ NIGHTFANG includes built-in automated test suites across all core subsystems:
 .\nightfang.cmd --test
 ```
 
-- **Execution Policy Gateway** (`tools/gateway.py`): 9 self-tests validating scope checks, OPSEC enforcement, emergency stop, rate injection, 5-D HITL token validation, destructive payload filtering, and rate ceilings.
-- **Autonomous Hunter Daemon** (`tools/daemon.py`): 5 self-tests validating priority queue ordering, semi-autonomous execution, non-blocking HITL queueing, token resumption, and self-healing rate backoff.
-- **Finding Schema Validator** (`schemas/validator.py`): 2 self-tests validating complete findings and catching 24 schema violations on malformed records.
-- **Sandbox Runner** (`tools/sandbox.py`): 2 self-tests validating subprocess fallback, process containment, and timeout termination.
+- **Execution Policy Gateway & Sandbox** (`tools/gateway.py`): 26 self-tests validating scope checks, OPSEC enforcement, emergency stop, rate injection, 5-D HITL token validation, destructive payload filtering, rate ceilings, sandbox containment, and MCP gateway policy.
+- **Autonomous Hunter Daemon & HUD** (`tools/daemon.py`): 17 self-tests validating priority queue ordering, semi-autonomous execution, non-blocking HITL queueing, token resumption, self-healing rate backoff, terminal HUD layout, and channel cards.
+- **Finding Schema Validator** (`schemas/validator.py`): 4 self-tests validating complete findings and catching 24 schema violations on malformed records.
+- **Findings Engine & Knowledge Graph** (`tools/findings.py`): 17 self-tests validating multi-tool ingestion, deterministic deduplication, MCP memory knowledge graph sync, adversarial verifier, and canary lifecycle.
+- **End-to-End Engagement Simulation** (`tools/simulation.py`): 8-phase full engagement lifecycle verification.

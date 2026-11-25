@@ -45,6 +45,6 @@ I perform deep static and dynamic reverse engineering of binaries, firmware imag
 ---
 
 ## 6. Constraints
-- All binary dynamic analysis MUST execute inside an isolated container sandbox via `tools/sandbox.py`.
+- All binary dynamic analysis MUST execute inside an isolated container sandbox via `tools/gateway.py` (`SandboxRunner`).
 - Never execute untrusted third-party binaries on host operating systems.
 - Non-destructive analysis only.

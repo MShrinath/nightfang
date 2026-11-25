@@ -24,6 +24,10 @@ from enum import Enum
 from typing import List, Dict, Any, Optional, Set, Tuple
 from dataclasses import dataclass, field, asdict
 
+repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if repo_root not in sys.path:
+    sys.path.insert(0, repo_root)
+
 # Import Execution Policy Gateway & Sandbox
 try:
     from tools.gateway import (
@@ -40,8 +44,8 @@ try:
         HitlApprovalToken,
         approve_request,
         deny_request,
+        SandboxRunner,
     )
-    from tools.sandbox import SandboxRunner
 except ImportError:
     # Handle direct invocation from tools/ directory
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -59,8 +63,8 @@ except ImportError:
         HitlApprovalToken,
         approve_request,
         deny_request,
+        SandboxRunner,
     )
-    from sandbox import SandboxRunner
 
 
 # ============================================================================
@@ -1625,7 +1629,7 @@ def main() -> None:
             from tools.findings import FindingSyncManager
         except ImportError:
             try:
-                from tools.finding_sync import FindingSyncManager
+                from findings import FindingSyncManager
             except ImportError:
                 FindingSyncManager = None
         if FindingSyncManager:

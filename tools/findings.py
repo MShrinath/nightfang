@@ -226,7 +226,7 @@ class FindingIngestor:
                 },
                 "validation_gate": {
                     "status": "PASS",
-                    "evaluator": "tools/ingest.py",
+                    "evaluator": "tools/findings.py",
                     "timestamp": now_iso,
                     "provenance_hash": prov_hash,
                     "q1_in_scope": {"result": True, "notes": f"Target {target} in engagement boundary"},
