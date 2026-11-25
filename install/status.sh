@@ -70,6 +70,15 @@ if [[ -f "$HERMES_HOME/config.yaml" ]]; then
     fi
 fi
 
+if [[ -x "$HERMES_BIN_DIR/nightfang-gate" ]]; then
+    if "$HERMES_BIN_DIR/nightfang-gate" --test >/dev/null 2>&1; then
+        printf "  ${GREEN}[OK]${NC} Gateway Wrapper Execution (nightfang-gate operational)\n"
+    else
+        printf "  ${RED}[FAIL]${NC} Gateway Wrapper Execution failed\n"
+        ALL_PASSED=0
+    fi
+fi
+
 if [[ -x "$HERMES_BIN_DIR/nightfang" ]]; then
     if "$HERMES_BIN_DIR/nightfang" --test-all >/dev/null 2>&1; then
         printf "  ${GREEN}[OK]${NC} NIGHTFANG Self-Tests (All 3 Unified Engines & E2E Simulation PASS)\n"

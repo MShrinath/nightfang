@@ -7,6 +7,15 @@ if exist "%~dp0tools\gateway.py" (
     set "NIGHTFANG_ROOT=%~dp0"
 ) else if exist "%~dp0..\..\tools\gateway.py" (
     set "NIGHTFANG_ROOT=%~dp0..\.."
+) else if exist "%HERMES_HOME%\nightfang\installation.json" (
+    for /f "delims=" %%I in ('python -c "import json; d=json.load(open(r'%HERMES_HOME%\nightfang\installation.json', encoding='utf-8-sig')); print(d.get('nightfang_root') or d.get('root', ''))" 2^>nul') do (
+        set "NIGHTFANG_ROOT=%%~I"
+    )
+    if not exist "!NIGHTFANG_ROOT!\tools\gateway.py" (
+        for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "(Get-Content -Raw -Encoding UTF8 '%HERMES_HOME%\nightfang\installation.json' | ConvertFrom-Json).nightfang_root" 2^>nul`) do (
+            if exist "%%~I\tools\gateway.py" set "NIGHTFANG_ROOT=%%~I"
+        )
+    )
 ) else (
     set "NIGHTFANG_ROOT=%~dp0"
 )
@@ -27,25 +36,8 @@ if "%~1"=="--verify" goto :run_verify
 if "%~1"=="--verify-canary" goto :run_verify_canary
 if "%~1"=="--ingest" goto :run_ingest
 if "%~1"=="--list-findings" goto :run_list_findings
-if "%~1"=="--test" (
-    python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\gateway.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\schemas\validator.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\findings.py" --test || exit /b 1
-    echo.
-    echo [*] All 3 unified engine self-tests and schema validator passed successfully!
-    goto :eof
-)
-if "%~1"=="--test-all" (
-    python "%NIGHTFANG_ROOT%\tools\daemon.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\gateway.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\schemas\validator.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\findings.py" --test || exit /b 1
-    python "%NIGHTFANG_ROOT%\tools\simulation.py" --test || exit /b 1
-    echo.
-    echo [*] All 3 unified engines and E2E simulation passed successfully!
-    goto :eof
-)
+if "%~1"=="--test" goto :run_test
+if "%~1"=="--test-all" goto :run_test_all
 
 where hermes >nul 2>&1
 if %ERRORLEVEL% equ 0 (
@@ -162,3 +154,32 @@ if not "%~1"=="" (
 )
 python "%NIGHTFANG_ROOT%\tools\findings.py" --list-findings!NF_ARGS!
 goto :eof
+
+:run_test
+python "%NIGHTFANG_ROOT%\tools\daemon.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\tools\gateway.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\schemas\validator.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\tools\findings.py" --test
+if errorlevel 1 exit /b 1
+echo.
+echo [*] All 3 unified engine self-tests and schema validator passed successfully!
+exit /b 0
+
+:run_test_all
+python "%NIGHTFANG_ROOT%\tools\daemon.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\tools\gateway.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\schemas\validator.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\tools\findings.py" --test
+if errorlevel 1 exit /b 1
+python "%NIGHTFANG_ROOT%\tools\simulation.py" --test
+if errorlevel 1 exit /b 1
+echo.
+echo [*] All 3 unified engines and E2E simulation passed successfully!
+exit /b 0
+

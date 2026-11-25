@@ -8,7 +8,8 @@ if [ -z "${NIGHTFANG_ROOT:-}" ]; then
     elif [ -f "$(dirname "${BASH_SOURCE[0]}")/../../tools/gateway.py" ]; then
         NIGHTFANG_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
     elif [ -f "$HERMES_HOME/nightfang/installation.json" ]; then
-        NIGHTFANG_ROOT="$(grep -E -o '"(nightfang_)?root": *"[^"]*"' "$HERMES_HOME/nightfang/installation.json" | head -n1 | cut -d'"' -f4)"
+        INST_FILE="$HERMES_HOME/nightfang/installation.json"
+        NIGHTFANG_ROOT="$(python3 -c "import json; d=json.load(open('$INST_FILE', encoding='utf-8-sig')); print(d.get('nightfang_root') or d.get('root', ''))" 2>/dev/null || python -c "import json; d=json.load(open('$INST_FILE', encoding='utf-8-sig')); print(d.get('nightfang_root') or d.get('root', ''))" 2>/dev/null || grep -E -o '"(nightfang_)?root": *"[^"]*"' "$INST_FILE" | head -n1 | cut -d'"' -f4)"
     fi
 fi
 

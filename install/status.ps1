@@ -71,6 +71,17 @@ if (Test-Path "$HermesHome\config.yaml") {
     } catch {}
 }
 
+$gateWrapper = Join-Path $HermesBinDir "nightfang-gate.cmd"
+if (Test-Path $gateWrapper) {
+    & $gateWrapper --test 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  [OK] Gateway Wrapper Execution (nightfang-gate.cmd operational)" -ForegroundColor Green
+    } else {
+        Write-Host "  [FAIL] Gateway Wrapper Execution failed" -ForegroundColor Red
+        $allPassed = $false
+    }
+}
+
 $launcher = Join-Path $HermesBinDir "nightfang.cmd"
 if (Test-Path $launcher) {
     & $launcher --test-all 2>$null | Out-Null
